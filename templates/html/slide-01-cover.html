@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Brand Guidelines - Cover Slide</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, {{PRIMARY_COLOR}} 0%, {{SECONDARY_COLOR}} 100%);
+            width: 1280px;
+            height: 720px;
+            overflow: hidden;
+        }
+        
+        .slide {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 60px;
+        }
+        
+        .brand-name {
+            font-size: 72px;
+            font-weight: bold;
+            color: #FFFFFF;
+            margin-bottom: 20px;
+            text-transform: uppercase;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+        
+        .subtitle {
+            font-size: 36px;
+            color: #FFFFFF;
+            margin-bottom: 40px;
+            text-shadow: 1px 1px 3px rgba(0,0,0,0.2);
+        }
+        
+        .date {
+            font-size: 18px;
+            color: rgba(255,255,255,0.9);
+            margin-top: 60px;
+        }
+    </style>
+</head>
+<body>
+    <div class="slide">
+        <div class="brand-name">{{BRAND_NAME}}</div>
+        <div class="subtitle">{{TAGLINE}}</div>
+        <div class="date">{{DATE}}</div>
+    </div>
+</body>
+</html>

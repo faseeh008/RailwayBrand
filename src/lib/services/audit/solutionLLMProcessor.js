@@ -1,0 +1,415 @@
+// @ts-nocheck
+import { GoogleGenerativeAI } from '@google/generative-ai';
+import { getGoogleAIAPIKey } from '../../config/llmConfig.js';
+
+/**
+ * Solution-focused LLM processor that provides actionable fixes
+ */
+export class SolutionLLMProcessor {
+  constructor() {
+    this.apiKey = getGoogleAIAPIKey();
+    this.genAI = new GoogleGenerativeAI(this.apiKey);
+    this.model = this.genAI.getGenerativeModel({ 
+      model: 'gemini-flash-latest',
+      generationConfig: {
+        temperature: 0.1,
+        maxOutputTokens: 3000,
+      }
+    });
+  }
+
+  /**
+   * Generate actionable solutions for brand compliance issues
+   */
+  async generateActionableSolutions(issues, brandGuidelines, scrapedData) {
+    if (!issues || issues.length === 0) return [];
+
+    try {
+      const prompt = this.buildSolutionsPrompt(issues, brandGuidelines, scrapedData);
+      const response = await this.generateContentWithRetry(prompt);
+      
+      if (!response) {
+        console.warn('⚠️ LLM solutions failed, using fallback');
+        return this.fallbackGenerateSolutions(issues, brandGuidelines);
+      }
+
+      const solutions = this.parseLLMResponse(response);
+      
+      if (Array.isArray(solutions) && solutions.length > 0) {
+        console.log(`✅ Generated ${solutions.length} actionable solutions`);
+        return solutions;
+      } else {
+        console.warn('⚠️ LLM returned empty or invalid solutions, using fallback');
+        return this.fallbackGenerateSolutions(issues, brandGuidelines);
+      }
+      
+    } catch (error) {
+      console.error('❌ LLM solutions generation failed:', error);
+      return this.fallbackGenerateSolutions(issues, brandGuidelines);
+    }
+  }
+
+  buildSolutionsPrompt(issues, brandGuidelines, scrapedData) {
+    const brandName = brandGuidelines?.brandName || 'the brand';
+    const primaryColor = brandGuidelines?.colors?.primary?.hex || '#000000';
+    const secondaryColor = brandGuidelines?.colors?.secondary?.hex || '#666666';
+    const primaryFont = brandGuidelines?.typography?.primary?.font || 'Arial';
+    const secondaryFont = brandGuidelines?.typography?.secondary?.font || 'Arial';
+
+    // Extract current implementation details
+    const currentFonts = scrapedData?.typography?.fonts?.join(', ') || 'Unknown';
+    const currentColors = scrapedData?.colors?.palette?.slice(0, 5).join(', ') || 'Unknown';
+
+    return `
+You are a senior web developer and brand compliance expert. Your task is to provide SPECIFIC, ACTIONABLE SOLUTIONS to fix brand compliance issues.
+
+BRAND GUIDELINES FOR ${brandName.toUpperCase()}:
+- Primary Color: ${primaryColor}
+- Secondary Color: ${secondaryColor} 
+- Primary Font: ${primaryFont}
+- Secondary Font: ${secondaryFont}
+
+CURRENT IMPLEMENTATION:
+- Current Fonts: ${currentFonts}
+- Current Colors: ${currentColors}
+
+ISSUES THAT NEED SOLUTIONS:
+${JSON.stringify(issues, null, 2)}
+
+CRITICAL REQUIREMENTS:
+1. ONLY provide solutions for the issues listed above
+2. DO NOT create solutions for categories NOT mentioned in the issues
+3. If issues only mention typography and logo, DO NOT include color solutions
+4. Each solution must be ACTIONABLE and IMPLEMENTABLE
+5. Include EXACT CSS code, HTML changes, or specific steps
+6. Solutions must use the EXACT brand values from guidelines
+7. Focus on HOW to fix, not just what's wrong
+
+IMPORTANT: Only generate solutions for the specific issue categories mentioned in the issues array above.
+
+SOLUTION FORMAT - Return JSON array with:
+[
+  {
+    "issueTitle": "Short description of the problem",
+    "problem": "What exactly is wrong",
+    "solution": "Specific, step-by-step solution",
+    "implementation": {
+      "css": "Exact CSS code to implement",
+      "html": "HTML changes if needed", 
+      "steps": ["Step 1", "Step 2", "Step 3"]
+    },
+    "priority": "high/medium/low",
+    "estimatedTime": "15 minutes, 1 hour, etc.",
+    "expectedResult": "What will be fixed after implementation"
+  }
+]
+
+Generate 3-5 most critical solutions. Focus on SPECIFIC IMPLEMENTATION STEPS.
+
+Return ONLY the JSON array, no other text.
+`;
+  }
+
+  /**
+   * Robust content generation
+   */
+  async generateContentWithRetry(prompt, maxRetries = 2) {
+    for (let attempt = 0; attempt <= maxRetries; attempt++) {
+      try {
+        // Truncate prompt if too long (Gemini has limits)
+        const truncatedPrompt = prompt.length > 28000 ? prompt.substring(0, 28000) + '...' : prompt;
+        
+        const result = await this.model.generateContent(truncatedPrompt);
+        const response = await result.response;
+        
+        if (!response) throw new Error('Empty response object');
+        
+        const text = response.text();
+        if (!text || text.trim().length < 10) throw new Error('Response too short or empty');
+        
+        console.log(`✅ LLM attempt ${attempt + 1} succeeded, response length: ${text.length}`);
+        return text.trim();
+        
+      } catch (error) {
+        console.warn(`⚠️ LLM attempt ${attempt + 1} failed:`, error.message);
+        if (attempt === maxRetries) {
+          console.error('❌ All LLM attempts failed');
+          throw error;
+        }
+        await new Promise(resolve => setTimeout(resolve, 2000 * (attempt + 1))); // Exponential backoff
+      }
+    }
+    return null;
+  }
+
+  /**
+   * Fallback solutions when LLM fails
+   */
+  fallbackGenerateSolutions(issues, brandGuidelines) {
+    const brandName = brandGuidelines?.brandName || 'the brand';
+    const primaryColor = brandGuidelines?.colors?.primary?.hex || '#000000';
+    const primaryFont = brandGuidelines?.typography?.primary?.font || 'Arial';
+
+    const solutions = [];
+    
+    console.log('🔍 Fallback solutions: Filtering issues by category...');
+    console.log('🔍 Available issues:', issues.map(i => i.category || i.type));
+
+    // Color issues solution - ONLY if color issues exist
+    const hasColorIssue = issues.some(issue => 
+      issue.category === 'colors' || 
+      issue.type?.includes('color') ||
+      issue.type === 'primary_color_mismatch' ||
+      issue.type === 'secondary_colors_missing' ||
+      issue.type === 'brand_palette_underused'
+    );
+    
+    if (hasColorIssue) {
+      console.log('📋 Adding color solution because color issues were detected');
+      solutions.push({
+        issueTitle: "Brand Colors Not Implemented",
+        problem: `Website is not using brand colors ${primaryColor} sufficiently`,
+        solution: `Strategic implementation of brand colors: use for brand elements like logos, CTAs, and accents - NOT for all text`,
+        implementation: {
+          css: `/* Strategic Brand Color Implementation - Do NOT apply to all text! */\n/* Use for key brand elements only */\n.primary-button, .cta-button {\n  background-color: ${primaryColor};\n  color: #FFFFFF;\n}\n\n.brand-logo {\n  color: ${primaryColor};\n}\n\n.accent-border, .focus-ring {\n  border-color: ${primaryColor};\n}`,
+          html: "Add CSS classes to relevant HTML elements",
+          steps: [
+            `Add the CSS above to your stylesheet`,
+            `Apply 'primary-button' class ONLY to main CTA/action buttons`,
+            `Use brand color for logos, important accents, and borders`,
+            `DO NOT apply to all text - keep body text readable with appropriate contrast`,
+            `Test that ${primaryColor} appears appropriately in key brand elements`
+          ]
+        },
+        priority: "high",
+        estimatedTime: "25 minutes",
+        expectedResult: `Brand color ${primaryColor} will be visible in strategic locations (CTAs, logos, accents)`
+      });
+    }
+
+    // Typography issues solution - ONLY if typography issues exist
+    const hasTypographyIssue = issues.some(issue => 
+      issue.category === 'typography' || 
+      issue.type?.includes('font') ||
+      issue.type === 'primary_font_mismatch' ||
+      issue.type === 'secondary_font_mismatch' ||
+      issue.type === 'font_weights_missing' ||
+      issue.type === 'typography'
+    );
+    
+    if (hasTypographyIssue) {
+      console.log('📋 Adding typography solution because typography issues were detected');
+      solutions.push({
+        issueTitle: "Incorrect Font Family",
+        problem: `Website using incorrect fonts instead of ${primaryFont}`,
+        solution: `Update global font stack to use ${primaryFont}`,
+        implementation: {
+          css: `/* Global Font Update */\nbody, h1, h2, h3, h4, h5, h6, p, button, a, input, textarea {\n  font-family: '${primaryFont}', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;\n}`,
+          html: "Ensure font is loaded via CDN or local files",
+          steps: [
+            `Add font import if using Google Fonts: @import url('https://fonts.googleapis.com/css2?family=...')`,
+            `Replace existing font-family declarations with the CSS above`,
+            `Test all text elements to ensure ${primaryFont} is applied`
+          ]
+        },
+        priority: "high",
+        estimatedTime: "30 minutes",
+        expectedResult: `All text will display in ${primaryFont} as required`
+      });
+    }
+
+    // Logo issues solution
+    if (issues.some(issue => issue.category === 'logo' || issue.type === 'logo')) {
+      solutions.push({
+        issueTitle: "Brand Logo Missing",
+        problem: "Official brand logo is not present on the page",
+        solution: "Add the official brand logo to the header area",
+        implementation: {
+          css: `.brand-logo {\n  height: 40px;\n  width: auto;\n  display: block;\n}`,
+          html: `<header>\n  <a href="/" class="brand-logo">\n    <img src="/assets/brand-logo.svg" alt="${brandName} Logo" />\n  </a>\n</header>`,
+          steps: [
+            "Add the HTML structure to your header",
+            "Upload the official logo to /assets/brand-logo.svg",
+            "Apply the CSS for proper sizing",
+            "Test logo visibility and linking"
+          ]
+        },
+        priority: "high",
+        estimatedTime: "15 minutes",
+        expectedResult: "Official brand logo will be visible in the header"
+      });
+    }
+
+    return solutions.slice(0, 3); // Return top 3 solutions
+  }
+
+  /**
+   * JSON parsing with error handling and repair
+   */
+  parseLLMResponse(text) {
+    try {
+      let cleanText = text.trim()
+        .replace(/```json\s*/g, '')
+        .replace(/\s*```/g, '')
+        .replace(/```/g, ''); // Remove any remaining markdown
+      
+      const jsonStart = cleanText.indexOf('[');
+      const jsonEnd = cleanText.lastIndexOf(']') + 1;
+      
+      if (jsonStart === -1 || jsonEnd === 0) {
+        console.error('❌ No JSON array found in response');
+        return []; // Return empty array instead of throwing
+      }
+      
+      cleanText = cleanText.substring(jsonStart, jsonEnd);
+      
+      // IMPROVED: Try multiple repair strategies
+      let parseAttempts = [
+        () => JSON.parse(cleanText), // Try original first
+        () => JSON.parse(this.repairJson(cleanText)), // Try basic repair
+        () => JSON.parse(this.repairJsonAdvanced(cleanText)), // Try advanced repair
+      ];
+      
+      for (const attempt of parseAttempts) {
+        try {
+          const parsed = attempt();
+          if (Array.isArray(parsed)) {
+            console.log(`✅ JSON parsed successfully with ${parseAttempts.indexOf(attempt) === 0 ? 'no' : 'repaired'} JSON`);
+            return parsed;
+          }
+        } catch (e) {
+          // Try next method
+        }
+      }
+      
+      console.error('❌ All JSON parsing attempts failed');
+      return [];
+      
+    } catch (error) {
+      console.error('❌ JSON parsing failed:', error.message);
+      console.error('📄 Failed text snippet:', text.substring(0, 300));
+      return []; // Return empty array instead of throwing
+    }
+  }
+  
+  /**
+   * Advanced JSON repair for multiline strings
+   */
+  repairJsonAdvanced(jsonText) {
+    let repaired = jsonText;
+    
+    // Step 1: Fix basic issues
+    repaired = repaired.replace(/,(\s*[}\]])/g, '$1');
+    repaired = repaired.replace(/}([\s\n]*){/g, '},{');
+    
+    // Step 2: Fix newlines in string values more aggressively
+    // Find all string:value pairs and fix them
+    const lines = repaired.split('\n');
+    const fixedLines = [];
+    let inString = false;
+    let currentKey = '';
+    
+    for (let i = 0; i < lines.length; i++) {
+      const line = lines[i].trim();
+      
+      // Detect if we're starting a new string value
+      if (line.match(/:\s*"[^"]*$/)) {
+        inString = true;
+        fixedLines.push(line);
+        continue;
+      }
+      
+      // If we're in a string and hit a closing quote
+      if (inString && line.includes('"')) {
+        inString = false;
+        // Combine previous line with this one
+        fixedLines[fixedLines.length - 1] += ' ' + line;
+        continue;
+      }
+      
+      // If we're in a string but haven't closed it
+      if (inString && !line.includes('"')) {
+        // Continue the string
+        fixedLines[fixedLines.length - 1] += ' ' + line.replace(/^[\s"]*/, '');
+        continue;
+      }
+      
+      fixedLines.push(line);
+    }
+    
+    repaired = fixedLines.join('\n');
+    
+    // Step 3: Finally escape all remaining newlines in strings
+    repaired = repaired.replace(/"([^"]*?)"/g, (match, content) => {
+      return `"${content.replace(/\n/g, ' ').replace(/\r/g, ' ').trim()}"`;
+    });
+    
+    return repaired;
+  }
+
+  /**
+   * Repair common JSON issues including newlines in strings
+   */
+  repairJson(jsonText) {
+    let repaired = jsonText;
+    
+    // Fix trailing commas
+    repaired = repaired.replace(/,(\s*[}\]])/g, '$1');
+    
+    // Fix missing commas between properties
+    repaired = repaired.replace(/}([\s\n]*){/g, '},{');
+    
+    // Fix multiline strings - escape newlines within string values
+    // This is the main fix: find "key": "value
+    //                           that spans
+    //                           multiple lines"
+    repaired = repaired.replace(/"([^"]*(?:\\.[^"]*)*)"/g, (match, content) => {
+      // Replace actual newlines with escaped versions
+      const escaped = content.replace(/\n/g, '\\n')
+                            .replace(/\r\n/g, '\\n')
+                            .replace(/\r/g, '\\n');
+      return `"${escaped}"`;
+    });
+    
+    // Handle special case: unclosed string quotes with newlines
+    // Pattern: "value
+    //          continuation"
+    repaired = repaired.replace(/:\\s*"([^"]*?)\\r?\\n([^"]*?)"/g, ':"$1 $2"');
+    
+    // Fix common control characters
+    repaired = repaired.replace(/\r\n/g, '\\n');
+    repaired = repaired.replace(/\r/g, '\\n');
+    
+    // Remove comments
+    repaired = repaired.replace(/\/\/.*$/gm, '');
+    repaired = repaired.replace(/\/\*[\s\S]*?\*\//g, '');
+    
+    return repaired;
+  }
+
+  /**
+   * Main processing method
+   */
+  async processIssues(issues, brandGuidelines, scrapedData) {
+    console.log('🛠️ Generating actionable solutions...');
+    
+    const solutions = await this.generateActionableSolutions(issues, brandGuidelines, scrapedData);
+    
+    return {
+      solutions: solutions,
+      summary: this.generateSummary(solutions)
+    };
+  }
+
+  generateSummary(solutions) {
+    const highPriority = solutions.filter(s => s.priority === 'high').length;
+    
+    return {
+      totalSolutions: solutions.length,
+      highPriorityIssues: highPriority,
+      recommendation: `Start with the ${highPriority} high-priority solutions for maximum impact`
+    };
+  }
+}
+
+export default SolutionLLMProcessor;

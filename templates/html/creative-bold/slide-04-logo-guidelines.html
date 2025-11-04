@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Logo Guidelines</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Poppins', sans-serif; background: #1A1A1A; width: 1280px; height: 720px; overflow: hidden; }
+        .slide { width: 100%; height: 100%; padding: 60px 80px; }
+        .title { font-size: 64px; font-weight: 900; color: #FF6B6B; text-transform: uppercase; margin-bottom: 50px; letter-spacing: -2px; }
+        .logo-display { background: white; padding: 80px; margin-bottom: 40px; display: flex; align-items: center; justify-content: center; box-shadow: 0 8px 0px #FF6B6B; transform: rotate(-0.5deg); }
+        .logo-text { font-size: 72px; font-weight: 900; color: #1A1A1A; }
+        .specs { display: flex; gap: 20px; }
+        .spec { flex: 1; background: #FF6B6B; padding: 30px; color: white; transform: rotate(-1deg); box-shadow: 4px 4px 0px rgba(0,0,0,0.2); }
+        .spec-label { font-size: 12px; font-weight: 800; text-transform: uppercase; margin-bottom: 15px; }
+        .spec-value { font-size: 18px; font-weight: 600; }
+    </style>
+</head>
+<body>
+    <div class="slide">
+        <div class="title">LOGO</div>
+        <div class="logo-display">
+            <div class="logo-text">{{LOGO_PLACEHOLDER}}</div>
+        </div>
+        <div class="specs">
+            <div class="spec"><div class="spec-label">MIN SIZE</div><div class="spec-value">{{MIN_SIZE}}</div></div>
+            <div class="spec"><div class="spec-label">SPACE</div><div class="spec-value">{{CLEAR_SPACE}}</div></div>
+            <div class="spec"><div class="spec-label">VARIANTS</div><div class="spec-value">{{VARIANTS}}</div></div>
+            <div class="spec"><div class="spec-label">USAGE</div><div class="spec-value">{{USAGE}}</div></div>
+        </div>
+    </div>
+</body>
+</html>
+

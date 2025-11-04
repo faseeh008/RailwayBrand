@@ -1,0 +1,3264 @@
+{
+  "template_id": "brown-and-beige-modern-real-estate-pitch-deck-presentation",
+  "name": "Brown and Beige Modern Real Estate Pitch Deck Presentation",
+  "industries": [
+    "business",
+    "pitch-deck",
+    "presentation",
+    "startup",
+    "corporate"
+  ],
+  "description": "Converted from Brown and Beige Modern Real Estate Pitch Deck Presentation.pptx",
+  "color_palette": [],
+  "fonts": [],
+  "slides": [
+    {
+      "index": 256,
+      "layout": "Blank",
+      "background": {
+        "type": "color",
+        "value": "#fff5ec"
+      },
+      "elements": [
+        {
+          "type": "shape",
+          "name": "Group 2",
+          "bbox": {
+            "left": 149,
+            "top": -54,
+            "width": 482,
+            "height": 1197
+          }
+        },
+        {
+          "type": "shape",
+          "name": "Group 5",
+          "bbox": {
+            "left": 235,
+            "top": 239,
+            "width": 643,
+            "height": 841
+          }
+        },
+        {
+          "type": "text",
+          "text": "",
+          "runs": [
+            {
+              "runs": [],
+              "alignment": null
+            }
+          ],
+          "bbox": {
+            "left": 1703,
+            "top": 145,
+            "width": 63,
+            "height": 54
+          },
+          "placeholder_type": null
+        },
+        {
+          "type": "text",
+          "text": "www.reallygreatsite.com",
+          "runs": [
+            {
+              "runs": [
+                {
+                  "text": "www.reallygreatsite.com",
+                  "bold": false,
+                  "italic": false,
+                  "underline": false,
+                  "font": "Poppins",
+                  "size": 24.0,
+                  "color": "#4b3932"
+                }
+              ],
+              "alignment": 3
+            }
+          ],
+          "bbox": {
+            "left": 1225,
+            "top": 911,
+            "width": 477,
+            "height": 45
+          },
+          "placeholder_type": null
+        },
+        {
+          "type": "shape",
+          "name": "Group 9",
+          "bbox": {
+            "left": 1614,
+            "top": 652,
+            "width": 324,
+            "height": 210
+          }
+        },
+        {
+          "type": "shape",
+          "name": "Group 12",
+          "bbox": {
+            "left": 1204,
+            "top": 886,
+            "width": 67,
+            "height": 70
+          }
+        },
+        {
+          "type": "text",
+          "text": "",
+          "runs": [
+            {
+              "runs": [],
+              "alignment": null
+            }
+          ],
+          "bbox": {
+            "left": 960,
+            "top": 131,
+            "width": 183,
+            "height": 68
+          },
+          "placeholder_type": null
+        },
+        {
+          "type": "text",
+          "text": "PITCH DECK",
+          "runs": [
+            {
+              "runs": [
+                {
+                  "text": "PITCH DECK",
+                  "bold": true,
+                  "italic": false,
+                  "underline": false,
+                  "font": "Agrandir Bold",
+                  "size": 68.0,
+                  "color": "#4b3932"
+                }
+              ],
+              "alignment": 1
+            }
+          ],
+          "bbox": {
+            "left": 960,
+            "top": 391,
+            "width": 816,
+            "height": 141
+          },
+          "placeholder_type": null
+        },
+        {
+          "type": "text",
+          "text": "Strategic Properties. Sustainable Value. Scalable Growth.",
+          "runs": [
+            {
+              "runs": [
+                {
+                  "text": "Strategic Properties. Sustainable Value. Scalable Growth.",
+                  "bold": false,
+                  "italic": false,
+                  "underline": false,
+                  "font": "Poppins",
+                  "size": 24.0,
+                  "color": "#4b3932"
+                }
+              ],
+              "alignment": 1
+            }
+          ],
+          "bbox": {
+            "left": 960,
+            "top": 537,
+            "width": 617,
+            "height": 89
+          },
+          "placeholder_type": null
+        },
+        {
+          "type": "text",
+          "text": "Real Estate Investment",
+          "runs": [
+            {
+              "runs": [
+                {
+                  "text": "Real Estate Investment",
+                  "bold": false,
+                  "italic": true,
+                  "underline": false,
+                  "font": "Poppins Italics",
+                  "size": 24.0,
+                  "color": "#4b3932"
+                }
+              ],
+              "alignment": 1
+            }
+          ],
+          "bbox": {
+            "left": 960,
+            "top": 376,
+            "width": 430,
+            "height": 45
+          },
+          "placeholder_type": null
+        },
+        {
+          "type": "text",
+          "text": "Timmerman Industries",
+          "runs": [
+            {
+              "runs": [
+                {
+                  "text": "Timmerman Industries",
+                  "bold": false,
+                  "italic": false,
+                  "underline": false,
+                  "font": "Poppins",
+                  "size": 24.0,
+                  "color": "#4b3932"
+                }
+              ],
+              "alignment": 3
+            }
+          ],
+          "bbox": {
+            "left": 1314,
+            "top": 165,
+            "width": 389,
+            "height": 45
+          },
+          "placeholder_type": null
+        },
+        {
+          "type": "text",
+          "text": "Presented By:",
+          "runs": [
+            {
+              "runs": [
+                {
+                  "text": "Presented By:",
+                  "bold": false,
+                  "italic": false,
+                  "underline": false,
+                  "font": "Poppins",
+                  "size": 24.0,
+                  "color": "#4b3932"
+                }
+              ],
+              "alignment": 1
+            }
+          ],
+          "bbox": {
+            "left": 960,
+            "top": 750,
+            "width": 277,
+            "height": 45
+          },
+          "placeholder_type": null
+        },
+        {
+          "type": "text",
+          "text": "Eleanor Fitzgerald",
+          "runs": [
+            {
+              "runs": [
+                {
+                  "text": "Eleanor Fitzgerald",
+                  "bold": true,
+                  "italic": false,
+                  "underline": false,
+                  "font": "Poppins Bold",
+                  "size": 24.0,
+                  "color": "#4b3932"
+                }
+              ],
+              "alignment": 1
+            }
+          ],
+          "bbox": {
+            "left": 1193,
+            "top": 750,
+            "width": 399,
+            "height": 45
+          },
+          "placeholder_type": null
+        }
+      ]
+    },
+    {
+      "index": 257,
+      "layout": "Blank",
+      "background": {
+        "type": "color",
+        "value": "#fff5ec"
+      },
+      "elements": [
+        {
+          "type": "shape",
+          "name": "Group 2",
+          "bbox": {
+            "left": -15,
+            "top": 581,
+            "width": 1020,
+            "height": 361
+          }
+        },
+        {
+          "type": "shape",
+          "name": "Group 5",
+          "bbox": {
+            "left": 267,
+            "top": 490,
+            "width": 668,
+            "height": 394
+          }
+        },
+        {
+          "type": "shape",
+          "name": "Group 7",
+          "bbox": {
+            "left": 1028,
+            "top": -25,
+            "width": 324,
+            "height": 422
+          }
+        },
+        {
+          "type": "shape",
+          "name": "Group 10",
+          "bbox": {
+            "left": 1109,
+            "top": 199,
+            "width": 550,
+            "height": 292
+          }
+        },
+        {
+          "type": "shape",
+          "name": "Group 12",
+          "bbox": {
+            "left": 1750,
+            "top": 108,
+            "width": 62,
+            "height": 64
+          }
+        },
+        {
+          "type": "text",
+          "text": "",
+          "runs": [
+            {
+              "runs": [],
+              "alignment": null
+            }
+          ],
+          "bbox": {
+            "left": 531,
+            "top": 99,
+            "width": 268,
+            "height": 99
+          },
+          "placeholder_type": null
+        },
+        {
+          "type": "text",
+          "text": "",
+          "runs": [
+            {
+              "runs": [],
+              "alignment": null
+            }
+          ],
+          "bbox": {
+            "left": 1499,
+            "top": 1033,
+            "width": 251,
+            "height": 93
+          },
+          "placeholder_type": null
+        },
+        {
+          "type": "text",
+          "text": "The real estate sector is transforming as cities expand and modern living standards evolve. With urban populations rising and infrastructure struggling to keep pace, there is a significant opportunity to develop residential and mixed-use properties that meet today’s expectations for convenience, sustainability, and design. Our approach bridges this gap by offering developments that are not only profitable but also improve quality of life.",
+          "runs": [
+            {
+              "runs": [
+                {
+                  "text": "The ",
+                  "bold": false,
+                  "italic": false,
+                  "underline": false,
+                  "font": "Poppins",
+                  "size": 20.0,
+                  "color": "#4b3932"
+                },
+                {
+                  "text": "real estate sector is transforming as cities expand and modern living standards evolve. With urban populations rising and infrastructure struggling to keep pace, there is a significant opportunity to develop residential and mixed-use properties that meet today’s expectations for convenience, sustainability, and design. Our approach bridges this gap by offering developments that are not only profitable but also improve quality of life.",
+                  "bold": false,
+                  "italic": false,
+                  "underline": false,
+                  "font": "Poppins",
+                  "size": 20.0,
+                  "color": "#4b3932"
+                }
+              ],
+              "alignment": 1
+            }
+          ],
+          "bbox": {
+            "left": 1109,
+            "top": 574,
+            "width": 721,
+            "height": 335
+          },
+          "placeholder_type": null
+        },
+        {
+          "type": "text",
+          "text": "The Opportunity",
+          "runs": [
+            {
+              "runs": [
+                {
+                  "text": "The Opportunity",
+                  "bold": true,
+                  "italic": false,
+                  "underline": false,
+                  "font": "Agrandir Bold",
+                  "size": 68.0,
+                  "color": "#4b3932"
+                }
+              ],
+              "alignment": 1
+            }
+          ],
+          "bbox": {
+            "left": 267,
+            "top": 193,
+            "width": 706,
+            "height": 204
+          },
+          "placeholder_type": null
+        }
+      ]
+    },
+    {
+      "index": 258,
+      "layout": "Blank",
+      "background": {
+        "type": "color",
+        "value": "#fff5ec"
+      },
+      "elements": [
+        {
+          "type": "shape",
+          "name": "Group 2",
+          "bbox": {
+            "left": -24,
+            "top": 418,
+            "width": 655,
+            "height": 322
+          }
+        },
+        {
+          "type": "shape",
+          "name": "Group 5",
+          "bbox": {
+            "left": 108,
+            "top": 487,
+            "width": 575,
+            "height": 348
+          }
+        },
+        {
+          "type": "shape",
+          "name": "Group 7",
+          "bbox": {
+            "left": 1531,
+            "top": -57,
+            "width": 324,
+            "height": 422
+          }
+        },
+        {
+          "type": "shape",
+          "name": "Group 10",
+          "bbox": {
+            "left": 899,
+            "top": -58,
+            "width": 862,
+            "height": 504
+          }
+        },
+        {
+          "type": "shape",
+          "name": "Group 12",
+          "bbox": {
+            "left": 183,
+            "top": 871,
+            "width": 50,
+            "height": 50
+          }
+        },
+        {
+          "type": "text",
+          "text": "",
+          "runs": [
+            {
+              "runs": [],
+              "alignment": null
+            }
+          ],
+          "bbox": {
+            "left": 196,
+            "top": 884,
+            "width": 24,
+            "height": 24
+          },
+          "placeholder_type": null
+        },
+        {
+          "type": "text",
+          "text": "Timmerman Industries",
+          "runs": [
+            {
+              "runs": [
+                {
+                  "text": "Timmerman",
+                  "bold": true,
+                  "italic": false,
+                  "underline": false,
+                  "font": "Poppins Bold",
+                  "size": 24.0,
+                  "color": "#4b3932"
+                },
+                {
+                  "text": " Industr",
+                  "bold": true,
+                  "italic": false,
+                  "underline": false,
+                  "font": "Poppins Bold",
+                  "size": 24.0,
+                  "color": "#4b3932"
+                },
+                {
+                  "text": "i",
+                  "bold": true,
+                  "italic": false,
+                  "underline": false,
+                  "font": "Poppins Bold",
+                  "size": 24.0,
+                  "color": "#4b3932"
+                },
+                {
+                  "text": "e",
+                  "bold": true,
+                  "italic": false,
+                  "underline": false,
+                  "font": "Poppins Bold",
+                  "size": 24.0,
+                  "color": "#4b3932"
+                },
+                {
+                  "text": "s",
+                  "bold": true,
+                  "italic": false,
+                  "underline": false,
+                  "font": "Poppins Bold",
+                  "size": 24.0,
+                  "color": "#4b3932"
+                }
+              ],
+              "alignment": 1
+            }
+          ],
+          "bbox": {
+            "left": 159,
+            "top": 163,
+            "width": 439,
+            "height": 45
+          },
+          "placeholder_type": null
+        },
+        {
+          "type": "text",
+          "text": "",
+          "runs": [
+            {
+              "runs": [],
+              "alignment": null
+            }
+          ],
+          "bbox": {
+            "left": 755,
+            "top": 537,
+            "width": 39,
+            "height": 39
+          },
+          "placeholder_type": null
+        },
+        {
+          "type": "text",
+          "text": "",
+          "runs": [
+            {
+              "runs": [],
+              "alignment": null
+            }
+          ],
+          "bbox": {
+            "left": 755,
+            "top": 782,
+            "width": 39,
+            "height": 39
+          },
+          "placeholder_type": null
+        },
+        {
+          "type": "text",
+          "text": "",
+          "runs": [
+            {
+              "runs": [],
+              "alignment": null
+            }
+          ],
+          "bbox": {
+            "left": 1285,
+            "top": 538,
+            "width": 39,
+            "height": 39
+          },
+          "placeholder_type": null
+        },
+        {
+          "type": "text",
+          "text": "",
+          "runs": [
+            {
+              "runs": [],
+              "alignment": null
+            }
+          ],
+          "bbox": {
+            "left": 1285,
+            "top": 784,
+            "width": 39,
+            "height": 39
+          },
+          "placeholder_type": null
+        },
+        {
+          "type": "text",
+          "text": "",
+          "runs": [
+            {
+              "runs": [],
+              "alignment": null
+            }
+          ],
+          "bbox": {
+            "left": 548,
+            "top": 154,
+            "width": 63,
+            "height": 54
+          },
+          "placeholder_type": null
+        },
+        {
+          "type": "text",
+          "text": "",
+          "runs": [
+            {
+              "runs": [],
+              "alignment": null
+            }
+          ],
+          "bbox": {
+            "left": 68,
+            "top": 74,
+            "width": 183,
+            "height": 68
+          },
+          "placeholder_type": null
+        },
+        {
+          "type": "text",
+          "text": "Market Trends",
+          "runs": [
+            {
+              "runs": [
+                {
+                  "text": "Market Trends",
+                  "bold": true,
+                  "italic": false,
+                  "underline": false,
+                  "font": "Agrandir Bold",
+                  "size": 68.0,
+                  "color": "#4b3932"
+                }
+              ],
+              "alignment": 1
+            }
+          ],
+          "bbox": {
+            "left": 159,
+            "top": 206,
+            "width": 699,
+            "height": 120
+          },
+          "placeholder_type": null
+        },
+        {
+          "type": "text",
+          "text": "www.reallygreatsite.com",
+          "runs": [
+            {
+              "runs": [
+                {
+                  "text": "www.reallygreatsite.com",
+                  "bold": false,
+                  "italic": false,
+                  "underline": false,
+                  "font": "Poppins",
+                  "size": 24.0,
+                  "color": "#4b3932"
+                }
+              ],
+              "alignment": 1
+            }
+          ],
+          "bbox": {
+            "left": 246,
+            "top": 871,
+            "width": 419,
+            "height": 45
+          },
+          "placeholder_type": null
+        },
+        {
+          "type": "text",
+          "text": "Major cities are expanding rapidly, increasing demand for centrally located housing and commercial space.",
+          "runs": [
+            {
+              "runs": [
+                {
+                  "text": "Major cities are expanding rapidly, in",
+                  "bold": false,
+                  "italic": false,
+                  "underline": false,
+                  "font": "Poppins",
+                  "size": 20.0,
+                  "color": "#4b3932"
+                },
+                {
+                  "text": "creasing demand for centrally located housing and commercial space.",
+                  "bold": false,
+                  "italic": false,
+                  "underline": false,
+                  "font": "Poppins",
+                  "size": 20.0,
+                  "color": "#4b3932"
+                }
+              ],
+              "alignment": 1
+            }
+          ],
+          "bbox": {
+            "left": 815,
+            "top": 580,
+            "width": 471,
+            "height": 150
+          },
+          "placeholder_type": null
+        },
+        {
+          "type": "text",
+          "text": "Tenants and buyers are prioritizing eco-conscious buildings, driving demand for green-certified properties.",
+          "runs": [
+            {
+              "runs": [
+                {
+                  "text": "Tenants and buyers are prio",
+                  "bold": false,
+                  "italic": false,
+                  "underline": false,
+                  "font": "Poppins",
+                  "size": 20.0,
+                  "color": "#4b3932"
+                },
+                {
+                  "text": "ritizing eco-conscious buildings, driving demand for green-certified properties.",
+                  "bold": false,
+                  "italic": false,
+                  "underline": false,
+                  "font": "Poppins",
+                  "size": 20.0,
+                  "color": "#4b3932"
+                }
+              ],
+              "alignment": 1
+            }
+          ],
+          "bbox": {
+            "left": 815,
+            "top": 825,
+            "width": 471,
+            "height": 150
+          },
+          "placeholder_type": null
+        },
+        {
+          "type": "text",
+          "text": "Urbanization Growth",
+          "runs": [
+            {
+              "runs": [
+                {
+                  "text": "Urbanization",
+                  "bold": true,
+                  "italic": false,
+                  "underline": false,
+                  "font": "Poppins Bold",
+                  "size": 24.0,
+                  "color": "#4b3932"
+                },
+                {
+                  "text": " Growth",
+                  "bold": true,
+                  "italic": false,
+                  "underline": false,
+                  "font": "Poppins Bold",
+                  "size": 24.0,
+                  "color": "#4b3932"
+                }
+              ],
+              "alignment": 1
+            }
+          ],
+          "bbox": {
+            "left": 815,
+            "top": 528,
+            "width": 372,
+            "height": 45
+          },
+          "placeholder_type": null
+        },
+        {
+          "type": "text",
+          "text": "Sustainability Focus",
+          "runs": [
+            {
+              "runs": [
+                {
+                  "text": "Sustainability",
+                  "bold": true,
+                  "italic": false,
+                  "underline": false,
+                  "font": "Poppins Bold",
+                  "size": 24.0,
+                  "color": "#4b3932"
+                },
+                {
+                  "text": " Focus",
+                  "bold": true,
+                  "italic": false,
+                  "underline": false,
+                  "font": "Poppins Bold",
+                  "size": 24.0,
+                  "color": "#4b3932"
+                }
+              ],
+              "alignment": 1
+            }
+          ],
+          "bbox": {
+            "left": 815,
+            "top": 773,
+            "width": 372,
+            "height": 45
+          },
+          "placeholder_type": null
+        },
+        {
+          "type": "text",
+          "text": "A widening gap between housing supply and affordability creates demand for mid-market, well-located developments.",
+          "runs": [
+            {
+              "runs": [
+                {
+                  "text": "A widening gap between housing ",
+                  "bold": false,
+                  "italic": false,
+                  "underline": false,
+                  "font": "Poppins",
+                  "size": 20.0,
+                  "color": "#4b3932"
+                },
+                {
+                  "text": "supply and affordability creates demand for mid-market, well-located developments.",
+                  "bold": false,
+                  "italic": false,
+                  "underline": false,
+                  "font": "Poppins",
+                  "size": 20.0,
+                  "color": "#4b3932"
+                }
+              ],
+              "alignment": 1
+            }
+          ],
+          "bbox": {
+            "left": 1345,
+            "top": 581,
+            "width": 493,
+            "height": 150
+          },
+          "placeholder_type": null
+        },
+        {
+          "type": "text",
+          "text": "Mixed-use properties that blend residential, work, and leisure appeal to the new generation of mobile professionals.",
+          "runs": [
+            {
+              "runs": [
+                {
+                  "text": "Mixed-use properties that blend residential, work, and l",
+                  "bold": false,
+                  "italic": false,
+                  "underline": false,
+                  "font": "Poppins",
+                  "size": 20.0,
+                  "color": "#4b3932"
+                },
+                {
+                  "text": "eisure appeal to the new generation of mobile professionals.",
+                  "bold": false,
+                  "italic": false,
+                  "underline": false,
+                  "font": "Poppins",
+                  "size": 20.0,
+                  "color": "#4b3932"
+                }
+              ],
+              "alignment": 1
+            }
+          ],
+          "bbox": {
+            "left": 1345,
+            "top": 827,
+            "width": 467,
+            "height": 150
+          },
+          "placeholder_type": null
+        },
+        {
+          "type": "text",
+          "text": "Affordability Gap",
+          "runs": [
+            {
+              "runs": [
+                {
+                  "text": "Affordability",
+                  "bold": true,
+                  "italic": false,
+                  "underline": false,
+                  "font": "Poppins Bold",
+                  "size": 24.0,
+                  "color": "#4b3932"
+                },
+                {
+                  "text": " Gap",
+                  "bold": true,
+                  "italic": false,
+                  "underline": false,
+                  "font": "Poppins Bold",
+                  "size": 24.0,
+                  "color": "#4b3932"
+                }
+              ],
+              "alignment": 1
+            }
+          ],
+          "bbox": {
+            "left": 1345,
+            "top": 530,
+            "width": 372,
+            "height": 45
+          },
+          "placeholder_type": null
+        },
+        {
+          "type": "text",
+          "text": "Hybrid Lifestyle Demand",
+          "runs": [
+            {
+              "runs": [
+                {
+                  "text": "Hybrid Lifestyl",
+                  "bold": true,
+                  "italic": false,
+                  "underline": false,
+                  "font": "Poppins Bold",
+                  "size": 24.0,
+                  "color": "#4b3932"
+                },
+                {
+                  "text": "e Demand",
+                  "bold": true,
+                  "italic": false,
+                  "underline": false,
+                  "font": "Poppins Bold",
+                  "size": 24.0,
+                  "color": "#4b3932"
+                }
+              ],
+              "alignment": 1
+            }
+          ],
+          "bbox": {
+            "left": 1345,
+            "top": 775,
+            "width": 433,
+            "height": 45
+          },
+          "placeholder_type": null
+        }
+      ]
+    },
+    {
+      "index": 259,
+      "layout": "Blank",
+      "background": {
+        "type": "color",
+        "value": "#fff5ec"
+      },
+      "elements": [
+        {
+          "type": "shape",
+          "name": "Group 2",
+          "bbox": {
+            "left": 1149,
+            "top": -13,
+            "width": 778,
+            "height": 1105
+          }
+        },
+        {
+          "type": "shape",
+          "name": "Group 5",
+          "bbox": {
+            "left": 1071,
+            "top": 168,
+            "width": 694,
+            "height": 341
+          }
+        },
+        {
+          "type": "shape",
+          "name": "Group 7",
+          "bbox": {
+            "left": 1071,
+            "top": 571,
+            "width": 694,
+            "height": 341
+          }
+        },
+        {
+          "type": "shape",
+          "name": "Group 9",
+          "bbox": {
+            "left": 110,
+            "top": 106,
+            "width": 114,
+            "height": 118
+          }
+        },
+        {
+          "type": "text",
+          "text": "",
+          "runs": [
+            {
+              "runs": [],
+              "alignment": null
+            }
+          ],
+          "bbox": {
+            "left": 680,
+            "top": 151,
+            "width": 266,
+            "height": 99
+          },
+          "placeholder_type": null
+        },
+        {
+          "type": "text",
+          "text": "",
+          "runs": [
+            {
+              "runs": [],
+              "alignment": null
+            }
+          ],
+          "bbox": {
+            "left": -133,
+            "top": 958,
+            "width": 266,
+            "height": 99
+          },
+          "placeholder_type": null
+        },
+        {
+          "type": "text",
+          "text": "Traditional real estate developments often fail to meet the dynamic needs of today’s urban dwellers. High prices, poor infrastructure, inefficient layouts, and lack of community integration result in high vacancy rates and low tenant retention. There is a clear gap in the market for thoughtfully designed, mixed-use developments that offer both quality living and economic value.",
+          "runs": [
+            {
+              "runs": [
+                {
+                  "text": "Traditi",
+                  "bold": false,
+                  "italic": false,
+                  "underline": false,
+                  "font": "Poppins",
+                  "size": 20.0,
+                  "color": "#4b3932"
+                },
+                {
+                  "text": "onal real estate developments often fail to meet the dynamic needs of today’s urban dwellers. High prices, poor infrastructure, inefficient layouts, and lack of community integration result in high vacancy rates and low tenant retention. There is a clear gap in the market for thoughtfully designed, mixed-use developments that offer both quality living and economic value.",
+                  "bold": false,
+                  "italic": false,
+                  "underline": false,
+                  "font": "Poppins",
+                  "size": 20.0,
+                  "color": "#4b3932"
+                }
+              ],
+              "alignment": 1
+            }
+          ],
+          "bbox": {
+            "left": 240,
+            "top": 544,
+            "width": 598,
+            "height": 372
+          },
+          "placeholder_type": null
+        },
+        {
+          "type": "text",
+          "text": "Problem Statement",
+          "runs": [
+            {
+              "runs": [
+                {
+                  "text": "Problem Statement",
+                  "bold": true,
+                  "italic": false,
+                  "underline": false,
+                  "font": "Agrandir Bold",
+                  "size": 68.0,
+                  "color": "#4b3932"
+                }
+              ],
+              "alignment": 1
+            }
+          ],
+          "bbox": {
+            "left": 240,
+            "top": 278,
+            "width": 706,
+            "height": 204
+          },
+          "placeholder_type": null
+        }
+      ]
+    },
+    {
+      "index": 260,
+      "layout": "Blank",
+      "background": {
+        "type": "color",
+        "value": "#fff5ec"
+      },
+      "elements": [
+        {
+          "type": "shape",
+          "name": "Group 2",
+          "bbox": {
+            "left": 1276,
+            "top": 352,
+            "width": 707,
+            "height": 368
+          }
+        },
+        {
+          "type": "shape",
+          "name": "Group 5",
+          "bbox": {
+            "left": 958,
+            "top": 253,
+            "width": 724,
+            "height": 394
+          }
+        },
+        {
+          "type": "shape",
+          "name": "Group 7",
+          "bbox": {
+            "left": 108,
+            "top": 37,
+            "width": 707,
+            "height": 294
+          }
+        },
+        {
+          "type": "shape",
+          "name": "Group 10",
+          "bbox": {
+            "left": 238,
+            "top": 159,
+            "width": 632,
+            "height": 309
+          }
+        },
+        {
+          "type": "shape",
+          "name": "Group 12",
+          "bbox": {
+            "left": 238,
+            "top": 734,
+            "width": 86,
+            "height": 86
+          }
+        },
+        {
+          "type": "shape",
+          "name": "Group 15",
+          "bbox": {
+            "left": 238,
+            "top": 544,
+            "width": 86,
+            "height": 86
+          }
+        },
+        {
+          "type": "text",
+          "text": "Timmerman Industries",
+          "runs": [
+            {
+              "runs": [
+                {
+                  "text": "Timmerman Industries",
+                  "bold": true,
+                  "italic": false,
+                  "underline": false,
+                  "font": "Poppins Bold",
+                  "size": 24.0,
+                  "color": "#4b3932"
+                }
+              ],
+              "alignment": 1
+            }
+          ],
+          "bbox": {
+            "left": 958,
+            "top": 152,
+            "width": 502,
+            "height": 45
+          },
+          "placeholder_type": null
+        },
+        {
+          "type": "text",
+          "text": "",
+          "runs": [
+            {
+              "runs": [],
+              "alignment": null
+            }
+          ],
+          "bbox": {
+            "left": 1362,
+            "top": 142,
+            "width": 63,
+            "height": 54
+          },
+          "placeholder_type": null
+        },
+        {
+          "type": "text",
+          "text": "",
+          "runs": [
+            {
+              "runs": [],
+              "alignment": null
+            }
+          ],
+          "bbox": {
+            "left": 251,
+            "top": 568,
+            "width": 60,
+            "height": 38
+          },
+          "placeholder_type": null
+        },
+        {
+          "type": "text",
+          "text": "",
+          "runs": [
+            {
+              "runs": [],
+              "alignment": null
+            }
+          ],
+          "bbox": {
+            "left": 260,
+            "top": 744,
+            "width": 43,
+            "height": 63
+          },
+          "placeholder_type": null
+        },
+        {
+          "type": "text",
+          "text": "Our Solution",
+          "runs": [
+            {
+              "runs": [
+                {
+                  "text": "Our Solution",
+                  "bold": true,
+                  "italic": false,
+                  "underline": false,
+                  "font": "Agrandir Bold",
+                  "size": 68.0,
+                  "color": "#4b3932"
+                }
+              ],
+              "alignment": 1
+            }
+          ],
+          "bbox": {
+            "left": 958,
+            "top": 678,
+            "width": 538,
+            "height": 219
+          },
+          "placeholder_type": null
+        },
+        {
+          "type": "shape",
+          "name": "Group 23",
+          "bbox": {
+            "left": 1750,
+            "top": 108,
+            "width": 62,
+            "height": 64
+          }
+        },
+        {
+          "type": "text",
+          "text": "",
+          "runs": [
+            {
+              "runs": [],
+              "alignment": null
+            }
+          ],
+          "bbox": {
+            "left": 1424,
+            "top": 867,
+            "width": 282,
+            "height": 105
+          },
+          "placeholder_type": null
+        },
+        {
+          "type": "text",
+          "text": "",
+          "runs": [
+            {
+              "runs": [],
+              "alignment": null
+            }
+          ],
+          "bbox": {
+            "left": 88,
+            "top": 606,
+            "width": 20,
+            "height": 184
+          },
+          "placeholder_type": null
+        },
+        {
+          "type": "text",
+          "text": "Every project uses eco-friendly materials, energy-efficient systems, and green design principles.",
+          "runs": [
+            {
+              "runs": [
+                {
+                  "text": "Every project uses eco-friendly ma",
+                  "bold": false,
+                  "italic": false,
+                  "underline": false,
+                  "font": "Poppins",
+                  "size": 20.0,
+                  "color": "#4b3932"
+                },
+                {
+                  "text": "terials, energy-efficient systems, and green design principles.",
+                  "bold": false,
+                  "italic": false,
+                  "underline": false,
+                  "font": "Poppins",
+                  "size": 20.0,
+                  "color": "#4b3932"
+                }
+              ],
+              "alignment": 1
+            }
+          ],
+          "bbox": {
+            "left": 354,
+            "top": 770,
+            "width": 516,
+            "height": 113
+          },
+          "placeholder_type": null
+        },
+        {
+          "type": "text",
+          "text": "We use proprietary data analysis to select high-demand, undervalued urban and peri-urban sites.",
+          "runs": [
+            {
+              "runs": [
+                {
+                  "text": "We use proprietary data analysis to ",
+                  "bold": false,
+                  "italic": false,
+                  "underline": false,
+                  "font": "Poppins",
+                  "size": 20.0,
+                  "color": "#4b3932"
+                },
+                {
+                  "text": "select high-demand, undervalued urban and peri-urban sites.",
+                  "bold": false,
+                  "italic": false,
+                  "underline": false,
+                  "font": "Poppins",
+                  "size": 20.0,
+                  "color": "#4b3932"
+                }
+              ],
+              "alignment": 1
+            }
+          ],
+          "bbox": {
+            "left": 354,
+            "top": 580,
+            "width": 516,
+            "height": 113
+          },
+          "placeholder_type": null
+        },
+        {
+          "type": "text",
+          "text": "Sustainable Construction",
+          "runs": [
+            {
+              "runs": [
+                {
+                  "text": "Sustainabl",
+                  "bold": true,
+                  "italic": false,
+                  "underline": false,
+                  "font": "Poppins Bold",
+                  "size": 24.0,
+                  "color": "#4b3932"
+                },
+                {
+                  "text": "e Construction",
+                  "bold": true,
+                  "italic": false,
+                  "underline": false,
+                  "font": "Poppins Bold",
+                  "size": 24.0,
+                  "color": "#4b3932"
+                }
+              ],
+              "alignment": 1
+            }
+          ],
+          "bbox": {
+            "left": 354,
+            "top": 718,
+            "width": 473,
+            "height": 45
+          },
+          "placeholder_type": null
+        },
+        {
+          "type": "text",
+          "text": "Location Intelligence",
+          "runs": [
+            {
+              "runs": [
+                {
+                  "text": "Location Int",
+                  "bold": true,
+                  "italic": false,
+                  "underline": false,
+                  "font": "Poppins Bold",
+                  "size": 24.0,
+                  "color": "#4b3932"
+                },
+                {
+                  "text": "elligence",
+                  "bold": true,
+                  "italic": false,
+                  "underline": false,
+                  "font": "Poppins Bold",
+                  "size": 24.0,
+                  "color": "#4b3932"
+                }
+              ],
+              "alignment": 1
+            }
+          ],
+          "bbox": {
+            "left": 354,
+            "top": 529,
+            "width": 372,
+            "height": 45
+          },
+          "placeholder_type": null
+        }
+      ]
+    },
+    {
+      "index": 261,
+      "layout": "Blank",
+      "background": {
+        "type": "color",
+        "value": "#fff5ec"
+      },
+      "elements": [
+        {
+          "type": "shape",
+          "name": "Group 2",
+          "bbox": {
+            "left": 41,
+            "top": 212,
+            "width": 708,
+            "height": 927
+          }
+        },
+        {
+          "type": "shape",
+          "name": "Group 5",
+          "bbox": {
+            "left": 203,
+            "top": 133,
+            "width": 739,
+            "height": 815
+          }
+        },
+        {
+          "type": "shape",
+          "name": "Group 7",
+          "bbox": {
+            "left": 1073,
+            "top": 566,
+            "width": 68,
+            "height": 68
+          }
+        },
+        {
+          "type": "text",
+          "text": "Traction & Achievements",
+          "runs": [
+            {
+              "runs": [
+                {
+                  "text": "Traction & Achievements",
+                  "bold": true,
+                  "italic": false,
+                  "underline": false,
+                  "font": "Agrandir Bold",
+                  "size": 68.0,
+                  "color": "#4b3932"
+                }
+              ],
+              "alignment": 1
+            }
+          ],
+          "bbox": {
+            "left": 1073,
+            "top": 171,
+            "width": 691,
+            "height": 204
+          },
+          "placeholder_type": null
+        },
+        {
+          "type": "text",
+          "text": "",
+          "runs": [
+            {
+              "runs": [],
+              "alignment": null
+            }
+          ],
+          "bbox": {
+            "left": 1086,
+            "top": 578,
+            "width": 43,
+            "height": 38
+          },
+          "placeholder_type": null
+        },
+        {
+          "type": "shape",
+          "name": "Group 12",
+          "bbox": {
+            "left": 1712,
+            "top": 108,
+            "width": 100,
+            "height": 104
+          }
+        },
+        {
+          "type": "text",
+          "text": "",
+          "runs": [
+            {
+              "runs": [],
+              "alignment": null
+            }
+          ],
+          "bbox": {
+            "left": 1206,
+            "top": 425,
+            "width": 183,
+            "height": 68
+          },
+          "placeholder_type": null
+        },
+        {
+          "type": "text",
+          "text": "",
+          "runs": [
+            {
+              "runs": [],
+              "alignment": null
+            }
+          ],
+          "bbox": {
+            "left": 223,
+            "top": 55,
+            "width": 280,
+            "height": 30
+          },
+          "placeholder_type": null
+        },
+        {
+          "type": "text",
+          "text": "In the last 24 months, we have completed two mid-rise residential projects with an average occupancy rate of 92% within the first quarter of launch. We've also secured approvals for three new developments totaling 180,000 square feet, and expanded our in-house construction team to reduce outsourcing costs by 25%. This growth trajectory proves both our execution capabilities and product-market fit.",
+          "runs": [
+            {
+              "runs": [
+                {
+                  "text": "In the last 24 m",
+                  "bold": false,
+                  "italic": false,
+                  "underline": false,
+                  "font": "Poppins",
+                  "size": 20.0,
+                  "color": "#4b3932"
+                },
+                {
+                  "text": "onths, we have completed two mid-rise residential projects with an average occupancy rate of 92% within the first quarter of launch. We've also secured approvals for three new developments totaling 180,000 square feet, and expanded our in-house construction team to reduce outsourcing costs by 25%. This growth trajectory proves both our execution capabilities and product-market fit.",
+                  "bold": false,
+                  "italic": false,
+                  "underline": false,
+                  "font": "Poppins",
+                  "size": 20.0,
+                  "color": "#4b3932"
+                }
+              ],
+              "alignment": 1
+            }
+          ],
+          "bbox": {
+            "left": 1073,
+            "top": 650,
+            "width": 718,
+            "height": 298
+          },
+          "placeholder_type": null
+        },
+        {
+          "type": "text",
+          "text": "Timmerman Industries",
+          "runs": [
+            {
+              "runs": [
+                {
+                  "text": "Timme",
+                  "bold": true,
+                  "italic": false,
+                  "underline": false,
+                  "font": "Poppins Bold",
+                  "size": 24.0,
+                  "color": "#4b3932"
+                },
+                {
+                  "text": "rman Industries",
+                  "bold": true,
+                  "italic": false,
+                  "underline": false,
+                  "font": "Poppins Bold",
+                  "size": 24.0,
+                  "color": "#4b3932"
+                }
+              ],
+              "alignment": 1
+            }
+          ],
+          "bbox": {
+            "left": 1159,
+            "top": 571,
+            "width": 458,
+            "height": 45
+          },
+          "placeholder_type": null
+        }
+      ]
+    },
+    {
+      "index": 262,
+      "layout": "Blank",
+      "background": {
+        "type": "color",
+        "value": "#fff5ec"
+      },
+      "elements": [
+        {
+          "type": "shape",
+          "name": "Group 2",
+          "bbox": {
+            "left": 771,
+            "top": 59,
+            "width": 600,
+            "height": 200
+          }
+        },
+        {
+          "type": "shape",
+          "name": "Group 5",
+          "bbox": {
+            "left": 902,
+            "top": 141,
+            "width": 859,
+            "height": 399
+          }
+        },
+        {
+          "type": "shape",
+          "name": "Group 7",
+          "bbox": {
+            "left": 902,
+            "top": 758,
+            "width": 1072,
+            "height": 243
+          }
+        },
+        {
+          "type": "shape",
+          "name": "Group 10",
+          "bbox": {
+            "left": 981,
+            "top": 596,
+            "width": 780,
+            "height": 325
+          }
+        },
+        {
+          "type": "text",
+          "text": "Timmerman Industries",
+          "runs": [
+            {
+              "runs": [
+                {
+                  "text": "Timmerman",
+                  "bold": true,
+                  "italic": false,
+                  "underline": false,
+                  "font": "Poppins Bold",
+                  "size": 24.0,
+                  "color": "#4b3932"
+                },
+                {
+                  "text": " Industr",
+                  "bold": true,
+                  "italic": false,
+                  "underline": false,
+                  "font": "Poppins Bold",
+                  "size": 24.0,
+                  "color": "#4b3932"
+                },
+                {
+                  "text": "i",
+                  "bold": true,
+                  "italic": false,
+                  "underline": false,
+                  "font": "Poppins Bold",
+                  "size": 24.0,
+                  "color": "#4b3932"
+                },
+                {
+                  "text": "e",
+                  "bold": true,
+                  "italic": false,
+                  "underline": false,
+                  "font": "Poppins Bold",
+                  "size": 24.0,
+                  "color": "#4b3932"
+                },
+                {
+                  "text": "s",
+                  "bold": true,
+                  "italic": false,
+                  "underline": false,
+                  "font": "Poppins Bold",
+                  "size": 24.0,
+                  "color": "#4b3932"
+                }
+              ],
+              "alignment": 1
+            }
+          ],
+          "bbox": {
+            "left": 159,
+            "top": 632,
+            "width": 450,
+            "height": 45
+          },
+          "placeholder_type": null
+        },
+        {
+          "type": "text",
+          "text": "",
+          "runs": [
+            {
+              "runs": [],
+              "alignment": null
+            }
+          ],
+          "bbox": {
+            "left": 547,
+            "top": 622,
+            "width": 63,
+            "height": 54
+          },
+          "placeholder_type": null
+        },
+        {
+          "type": "shape",
+          "name": "Group 14",
+          "bbox": {
+            "left": 140,
+            "top": 158,
+            "width": 39,
+            "height": 40
+          }
+        },
+        {
+          "type": "shape",
+          "name": "Group 18",
+          "bbox": {
+            "left": 140,
+            "top": 351,
+            "width": 39,
+            "height": 40
+          }
+        },
+        {
+          "type": "text",
+          "text": "",
+          "runs": [
+            {
+              "runs": [],
+              "alignment": null
+            }
+          ],
+          "bbox": {
+            "left": 316,
+            "top": 880,
+            "width": 262,
+            "height": 97
+          },
+          "placeholder_type": null
+        },
+        {
+          "type": "text",
+          "text": "Business Model",
+          "runs": [
+            {
+              "runs": [
+                {
+                  "text": "Business Model",
+                  "bold": true,
+                  "italic": false,
+                  "underline": false,
+                  "font": "Agrandir Bold",
+                  "size": 68.0,
+                  "color": "#4b3932"
+                }
+              ],
+              "alignment": 1
+            }
+          ],
+          "bbox": {
+            "left": 159,
+            "top": 681,
+            "width": 699,
+            "height": 120
+          },
+          "placeholder_type": null
+        },
+        {
+          "type": "text",
+          "text": "Ongoing income from co-living spaces, managed apartments, and retail tenants.",
+          "runs": [
+            {
+              "runs": [
+                {
+                  "text": "Ongoing income from co-l",
+                  "bold": false,
+                  "italic": false,
+                  "underline": false,
+                  "font": "Poppins",
+                  "size": 20.0,
+                  "color": "#4b3932"
+                },
+                {
+                  "text": "iving spaces, managed apartments, and retail tenants.",
+                  "bold": false,
+                  "italic": false,
+                  "underline": false,
+                  "font": "Poppins",
+                  "size": 20.0,
+                  "color": "#4b3932"
+                }
+              ],
+              "alignment": 1
+            }
+          ],
+          "bbox": {
+            "left": 219,
+            "top": 204,
+            "width": 475,
+            "height": 113
+          },
+          "placeholder_type": null
+        },
+        {
+          "type": "text",
+          "text": "Strategic land acquisition and property repositioning yield capital gains over time.",
+          "runs": [
+            {
+              "runs": [
+                {
+                  "text": "Strategic land acquisition and property repo",
+                  "bold": false,
+                  "italic": false,
+                  "underline": false,
+                  "font": "Poppins",
+                  "size": 20.0,
+                  "color": "#4b3932"
+                },
+                {
+                  "text": "sitioning yield capital gains over time.",
+                  "bold": false,
+                  "italic": false,
+                  "underline": false,
+                  "font": "Poppins",
+                  "size": 20.0,
+                  "color": "#4b3932"
+                }
+              ],
+              "alignment": 1
+            }
+          ],
+          "bbox": {
+            "left": 219,
+            "top": 397,
+            "width": 475,
+            "height": 113
+          },
+          "placeholder_type": null
+        },
+        {
+          "type": "text",
+          "text": "Rental Income",
+          "runs": [
+            {
+              "runs": [
+                {
+                  "text": "Rental",
+                  "bold": true,
+                  "italic": false,
+                  "underline": false,
+                  "font": "Poppins Bold",
+                  "size": 24.0,
+                  "color": "#4b3932"
+                },
+                {
+                  "text": " Income",
+                  "bold": true,
+                  "italic": false,
+                  "underline": false,
+                  "font": "Poppins Bold",
+                  "size": 24.0,
+                  "color": "#4b3932"
+                }
+              ],
+              "alignment": 1
+            }
+          ],
+          "bbox": {
+            "left": 219,
+            "top": 152,
+            "width": 372,
+            "height": 45
+          },
+          "placeholder_type": null
+        },
+        {
+          "type": "text",
+          "text": "Asset Appreciation",
+          "runs": [
+            {
+              "runs": [
+                {
+                  "text": "Ass",
+                  "bold": true,
+                  "italic": false,
+                  "underline": false,
+                  "font": "Poppins Bold",
+                  "size": 24.0,
+                  "color": "#4b3932"
+                },
+                {
+                  "text": "et Appreciation",
+                  "bold": true,
+                  "italic": false,
+                  "underline": false,
+                  "font": "Poppins Bold",
+                  "size": 24.0,
+                  "color": "#4b3932"
+                }
+              ],
+              "alignment": 1
+            }
+          ],
+          "bbox": {
+            "left": 219,
+            "top": 345,
+            "width": 372,
+            "height": 45
+          },
+          "placeholder_type": null
+        }
+      ]
+    },
+    {
+      "index": 263,
+      "layout": "Blank",
+      "background": {
+        "type": "color",
+        "value": "#fff5ec"
+      },
+      "elements": [
+        {
+          "type": "shape",
+          "name": "Group 2",
+          "bbox": {
+            "left": 77,
+            "top": 453,
+            "width": 940,
+            "height": 519
+          }
+        },
+        {
+          "type": "shape",
+          "name": "Group 5",
+          "bbox": {
+            "left": 1592,
+            "top": 747,
+            "width": 940,
+            "height": 197
+          }
+        },
+        {
+          "type": "shape",
+          "name": "Group 8",
+          "bbox": {
+            "left": 176,
+            "top": 523,
+            "width": 1568,
+            "height": 645
+          }
+        },
+        {
+          "type": "shape",
+          "name": "Group 10",
+          "bbox": {
+            "left": 1116,
+            "top": 144,
+            "width": 68,
+            "height": 68
+          }
+        },
+        {
+          "type": "text",
+          "text": "",
+          "runs": [
+            {
+              "runs": [],
+              "alignment": null
+            }
+          ],
+          "bbox": {
+            "left": 1128,
+            "top": 156,
+            "width": 43,
+            "height": 38
+          },
+          "placeholder_type": null
+        },
+        {
+          "type": "shape",
+          "name": "Group 14",
+          "bbox": {
+            "left": 1729,
+            "top": 108,
+            "width": 83,
+            "height": 86
+          }
+        },
+        {
+          "type": "text",
+          "text": "",
+          "runs": [
+            {
+              "runs": [],
+              "alignment": null
+            }
+          ],
+          "bbox": {
+            "left": 108,
+            "top": 49,
+            "width": 183,
+            "height": 68
+          },
+          "placeholder_type": null
+        },
+        {
+          "type": "text",
+          "text": "Competitive Advantage",
+          "runs": [
+            {
+              "runs": [
+                {
+                  "text": "Competitive Advantage",
+                  "bold": true,
+                  "italic": false,
+                  "underline": false,
+                  "font": "Agrandir Bold",
+                  "size": 68.0,
+                  "color": "#4b3932"
+                }
+              ],
+              "alignment": 1
+            }
+          ],
+          "bbox": {
+            "left": 254,
+            "top": 150,
+            "width": 706,
+            "height": 204
+          },
+          "placeholder_type": null
+        },
+        {
+          "type": "text",
+          "text": "Eleanor Fitzgerald",
+          "runs": [
+            {
+              "runs": [
+                {
+                  "text": "Elean",
+                  "bold": false,
+                  "italic": false,
+                  "underline": false,
+                  "font": "Poppins",
+                  "size": 24.0,
+                  "color": "#4b3932"
+                },
+                {
+                  "text": "or Fitzgerald",
+                  "bold": false,
+                  "italic": false,
+                  "underline": false,
+                  "font": "Poppins",
+                  "size": 24.0,
+                  "color": "#4b3932"
+                }
+              ],
+              "alignment": 1
+            }
+          ],
+          "bbox": {
+            "left": 254,
+            "top": 387,
+            "width": 458,
+            "height": 45
+          },
+          "placeholder_type": null
+        },
+        {
+          "type": "text",
+          "text": "We stand out by combining speed, sustainability, and scalability. Using modular construction, eco-friendly practices, and a repeatable development model, we deliver projects faster, at lower costs, and achieve higher occupancy and returns than traditional real estate approaches.",
+          "runs": [
+            {
+              "runs": [
+                {
+                  "text": "W",
+                  "bold": false,
+                  "italic": false,
+                  "underline": false,
+                  "font": "Poppins",
+                  "size": 20.0,
+                  "color": "#4b3932"
+                },
+                {
+                  "text": "e stand out by combining speed, sustainability, and scalability. Using modular construction, eco-friendly practices, and a repeatable development model, we deliver projects faster, at lower costs, and achieve higher occupancy and returns than traditional real estate approaches.",
+                  "bold": false,
+                  "italic": false,
+                  "underline": false,
+                  "font": "Poppins",
+                  "size": 20.0,
+                  "color": "#4b3932"
+                }
+              ],
+              "alignment": 1
+            }
+          ],
+          "bbox": {
+            "left": 1116,
+            "top": 231,
+            "width": 628,
+            "height": 261
+          },
+          "placeholder_type": null
+        },
+        {
+          "type": "text",
+          "text": "Timmerman Industries",
+          "runs": [
+            {
+              "runs": [
+                {
+                  "text": "Timme",
+                  "bold": true,
+                  "italic": false,
+                  "underline": false,
+                  "font": "Poppins Bold",
+                  "size": 24.0,
+                  "color": "#4b3932"
+                },
+                {
+                  "text": "rman Industries",
+                  "bold": true,
+                  "italic": false,
+                  "underline": false,
+                  "font": "Poppins Bold",
+                  "size": 24.0,
+                  "color": "#4b3932"
+                }
+              ],
+              "alignment": 1
+            }
+          ],
+          "bbox": {
+            "left": 1210,
+            "top": 149,
+            "width": 458,
+            "height": 45
+          },
+          "placeholder_type": null
+        }
+      ]
+    },
+    {
+      "index": 264,
+      "layout": "Blank",
+      "background": {
+        "type": "color",
+        "value": "#fff5ec"
+      },
+      "elements": [
+        {
+          "type": "shape",
+          "name": "Group 2",
+          "bbox": {
+            "left": 183,
+            "top": 871,
+            "width": 50,
+            "height": 50
+          }
+        },
+        {
+          "type": "text",
+          "text": "",
+          "runs": [
+            {
+              "runs": [],
+              "alignment": null
+            }
+          ],
+          "bbox": {
+            "left": 196,
+            "top": 884,
+            "width": 24,
+            "height": 24
+          },
+          "placeholder_type": null
+        },
+        {
+          "type": "text",
+          "text": "Investment Highlights",
+          "runs": [
+            {
+              "runs": [
+                {
+                  "text": "Investment Highlights",
+                  "bold": true,
+                  "italic": false,
+                  "underline": false,
+                  "font": "Agrandir Bold",
+                  "size": 68.0,
+                  "color": "#4b3932"
+                }
+              ],
+              "alignment": 1
+            }
+          ],
+          "bbox": {
+            "left": 1092,
+            "top": 507,
+            "width": 668,
+            "height": 219
+          },
+          "placeholder_type": null
+        },
+        {
+          "type": "text",
+          "text": "Timmerman Industries",
+          "runs": [
+            {
+              "runs": [
+                {
+                  "text": "Timmerman",
+                  "bold": true,
+                  "italic": false,
+                  "underline": false,
+                  "font": "Poppins Bold",
+                  "size": 24.0,
+                  "color": "#4b3932"
+                },
+                {
+                  "text": " Industr",
+                  "bold": true,
+                  "italic": false,
+                  "underline": false,
+                  "font": "Poppins Bold",
+                  "size": 24.0,
+                  "color": "#4b3932"
+                },
+                {
+                  "text": "i",
+                  "bold": true,
+                  "italic": false,
+                  "underline": false,
+                  "font": "Poppins Bold",
+                  "size": 24.0,
+                  "color": "#4b3932"
+                },
+                {
+                  "text": "e",
+                  "bold": true,
+                  "italic": false,
+                  "underline": false,
+                  "font": "Poppins Bold",
+                  "size": 24.0,
+                  "color": "#4b3932"
+                },
+                {
+                  "text": "s",
+                  "bold": true,
+                  "italic": false,
+                  "underline": false,
+                  "font": "Poppins Bold",
+                  "size": 24.0,
+                  "color": "#4b3932"
+                }
+              ],
+              "alignment": 1
+            }
+          ],
+          "bbox": {
+            "left": 1092,
+            "top": 465,
+            "width": 431,
+            "height": 45
+          },
+          "placeholder_type": null
+        },
+        {
+          "type": "shape",
+          "name": "Group 8",
+          "bbox": {
+            "left": -60,
+            "top": 472,
+            "width": 1088,
+            "height": 371
+          }
+        },
+        {
+          "type": "shape",
+          "name": "Group 11",
+          "bbox": {
+            "left": 159,
+            "top": 386,
+            "width": 857,
+            "height": 440
+          }
+        },
+        {
+          "type": "text",
+          "text": "",
+          "runs": [
+            {
+              "runs": [],
+              "alignment": null
+            }
+          ],
+          "bbox": {
+            "left": 1470,
+            "top": 445,
+            "width": 63,
+            "height": 54
+          },
+          "placeholder_type": null
+        },
+        {
+          "type": "shape",
+          "name": "Group 14",
+          "bbox": {
+            "left": 1590,
+            "top": 626,
+            "width": 101,
+            "height": 105
+          }
+        },
+        {
+          "type": "text",
+          "text": "",
+          "runs": [
+            {
+              "runs": [],
+              "alignment": null
+            }
+          ],
+          "bbox": {
+            "left": 719,
+            "top": 162,
+            "width": 40,
+            "height": 40
+          },
+          "placeholder_type": null
+        },
+        {
+          "type": "text",
+          "text": "",
+          "runs": [
+            {
+              "runs": [],
+              "alignment": null
+            }
+          ],
+          "bbox": {
+            "left": 189,
+            "top": 159,
+            "width": 40,
+            "height": 40
+          },
+          "placeholder_type": null
+        },
+        {
+          "type": "text",
+          "text": "",
+          "runs": [
+            {
+              "runs": [],
+              "alignment": null
+            }
+          ],
+          "bbox": {
+            "left": 1248,
+            "top": 164,
+            "width": 40,
+            "height": 40
+          },
+          "placeholder_type": null
+        },
+        {
+          "type": "text",
+          "text": "",
+          "runs": [
+            {
+              "runs": [],
+              "alignment": null
+            }
+          ],
+          "bbox": {
+            "left": 1079,
+            "top": 858,
+            "width": 273,
+            "height": 101
+          },
+          "placeholder_type": null
+        },
+        {
+          "type": "text",
+          "text": "www.reallygreatsite.com",
+          "runs": [
+            {
+              "runs": [
+                {
+                  "text": "www.reallygreatsite.com",
+                  "bold": false,
+                  "italic": false,
+                  "underline": false,
+                  "font": "Poppins",
+                  "size": 24.0,
+                  "color": "#4b3932"
+                }
+              ],
+              "alignment": 1
+            }
+          ],
+          "bbox": {
+            "left": 246,
+            "top": 871,
+            "width": 419,
+            "height": 45
+          },
+          "placeholder_type": null
+        },
+        {
+          "type": "text",
+          "text": "@reallygreatsite",
+          "runs": [
+            {
+              "runs": [
+                {
+                  "text": "@reallygreatsite",
+                  "bold": false,
+                  "italic": false,
+                  "underline": false,
+                  "font": "Poppins",
+                  "size": 24.0,
+                  "color": "#4b3932"
+                }
+              ],
+              "alignment": 3
+            }
+          ],
+          "bbox": {
+            "left": 1442,
+            "top": 871,
+            "width": 319,
+            "height": 45
+          },
+          "placeholder_type": null
+        },
+        {
+          "type": "text",
+          "text": "We are seeking $5 million in equity investment to support land acquisition, development, and team expansion.",
+          "runs": [
+            {
+              "runs": [
+                {
+                  "text": "We are seeking $5 million in equity inve",
+                  "bold": false,
+                  "italic": false,
+                  "underline": false,
+                  "font": "Poppins",
+                  "size": 20.0,
+                  "color": "#4b3932"
+                },
+                {
+                  "text": "stment to support land acquisition, development, and team expansion.",
+                  "bold": false,
+                  "italic": false,
+                  "underline": false,
+                  "font": "Poppins",
+                  "size": 20.0,
+                  "color": "#4b3932"
+                }
+              ],
+              "alignment": 1
+            }
+          ],
+          "bbox": {
+            "left": 243,
+            "top": 204,
+            "width": 471,
+            "height": 150
+          },
+          "placeholder_type": null
+        },
+        {
+          "type": "text",
+          "text": "Funding Required",
+          "runs": [
+            {
+              "runs": [
+                {
+                  "text": "Funding",
+                  "bold": true,
+                  "italic": false,
+                  "underline": false,
+                  "font": "Poppins Bold",
+                  "size": 24.0,
+                  "color": "#4b3932"
+                },
+                {
+                  "text": " Required",
+                  "bold": true,
+                  "italic": false,
+                  "underline": false,
+                  "font": "Poppins Bold",
+                  "size": 24.0,
+                  "color": "#4b3932"
+                }
+              ],
+              "alignment": 1
+            }
+          ],
+          "bbox": {
+            "left": 243,
+            "top": 152,
+            "width": 372,
+            "height": 45
+          },
+          "placeholder_type": null
+        },
+        {
+          "type": "text",
+          "text": "$2M: Land purchases\n\n$1.5M: Construction and materials",
+          "runs": [
+            {
+              "runs": [
+                {
+                  "text": "$2M: Land purchases",
+                  "bold": false,
+                  "italic": false,
+                  "underline": false,
+                  "font": "Poppins",
+                  "size": 20.0,
+                  "color": "#4b3932"
+                }
+              ],
+              "alignment": 1
+            },
+            {
+              "runs": [],
+              "alignment": 1
+            },
+            {
+              "runs": [
+                {
+                  "text": "$1.5M: Con",
+                  "bold": false,
+                  "italic": false,
+                  "underline": false,
+                  "font": "Poppins",
+                  "size": 20.0,
+                  "color": "#4b3932"
+                },
+                {
+                  "text": "struction and materials",
+                  "bold": false,
+                  "italic": false,
+                  "underline": false,
+                  "font": "Poppins",
+                  "size": 20.0,
+                  "color": "#4b3932"
+                }
+              ],
+              "alignment": 1
+            }
+          ],
+          "bbox": {
+            "left": 752,
+            "top": 207,
+            "width": 393,
+            "height": 150
+          },
+          "placeholder_type": null
+        },
+        {
+          "type": "text",
+          "text": "Use of Funds",
+          "runs": [
+            {
+              "runs": [
+                {
+                  "text": "Use of Funds",
+                  "bold": true,
+                  "italic": false,
+                  "underline": false,
+                  "font": "Poppins Bold",
+                  "size": 24.0,
+                  "color": "#4b3932"
+                }
+              ],
+              "alignment": 1
+            }
+          ],
+          "bbox": {
+            "left": 773,
+            "top": 154,
+            "width": 372,
+            "height": 45
+          },
+          "placeholder_type": null
+        },
+        {
+          "type": "text",
+          "text": "Targeted 3.8x ROI over 5 years\n\nQuarterly reporting and full project transparency",
+          "runs": [
+            {
+              "runs": [
+                {
+                  "text": "Targeted 3.8x ROI over 5 year",
+                  "bold": false,
+                  "italic": false,
+                  "underline": false,
+                  "font": "Poppins",
+                  "size": 20.0,
+                  "color": "#4b3932"
+                },
+                {
+                  "text": "s",
+                  "bold": false,
+                  "italic": false,
+                  "underline": false,
+                  "font": "Poppins",
+                  "size": 20.0,
+                  "color": "#4b3932"
+                }
+              ],
+              "alignment": 1
+            },
+            {
+              "runs": [],
+              "alignment": 1
+            },
+            {
+              "runs": [
+                {
+                  "text": "Quarterly reporting and full project transparency",
+                  "bold": false,
+                  "italic": false,
+                  "underline": false,
+                  "font": "Poppins",
+                  "size": 20.0,
+                  "color": "#4b3932"
+                }
+              ],
+              "alignment": 1
+            }
+          ],
+          "bbox": {
+            "left": 1303,
+            "top": 207,
+            "width": 463,
+            "height": 150
+          },
+          "placeholder_type": null
+        },
+        {
+          "type": "text",
+          "text": "Investor Benefits",
+          "runs": [
+            {
+              "runs": [
+                {
+                  "text": "Investor Benefits",
+                  "bold": true,
+                  "italic": false,
+                  "underline": false,
+                  "font": "Poppins Bold",
+                  "size": 24.0,
+                  "color": "#4b3932"
+                }
+              ],
+              "alignment": 1
+            }
+          ],
+          "bbox": {
+            "left": 1303,
+            "top": 155,
+            "width": 372,
+            "height": 45
+          },
+          "placeholder_type": null
+        }
+      ]
+    },
+    {
+      "index": 265,
+      "layout": "Blank",
+      "background": {
+        "type": "color",
+        "value": "#fff5ec"
+      },
+      "elements": [
+        {
+          "type": "shape",
+          "name": "Group 2",
+          "bbox": {
+            "left": 1315,
+            "top": 464,
+            "width": 497,
+            "height": 690
+          }
+        },
+        {
+          "type": "shape",
+          "name": "Group 5",
+          "bbox": {
+            "left": 940,
+            "top": 508,
+            "width": 749,
+            "height": 412
+          }
+        },
+        {
+          "type": "shape",
+          "name": "Group 7",
+          "bbox": {
+            "left": 983,
+            "top": 232,
+            "width": 234,
+            "height": 68
+          }
+        },
+        {
+          "type": "text",
+          "text": "Timmerman Industries",
+          "runs": [
+            {
+              "runs": [
+                {
+                  "text": "Timmerman Industries",
+                  "bold": true,
+                  "italic": false,
+                  "underline": false,
+                  "font": "Poppins Bold",
+                  "size": 23.98,
+                  "color": "#4b3932"
+                }
+              ],
+              "alignment": 1
+            }
+          ],
+          "bbox": {
+            "left": 159,
+            "top": 206,
+            "width": 438,
+            "height": 45
+          },
+          "placeholder_type": null
+        },
+        {
+          "type": "text",
+          "text": "",
+          "runs": [
+            {
+              "runs": [],
+              "alignment": null
+            }
+          ],
+          "bbox": {
+            "left": 534,
+            "top": 197,
+            "width": 63,
+            "height": 54
+          },
+          "placeholder_type": null
+        },
+        {
+          "type": "shape",
+          "name": "Group 12",
+          "bbox": {
+            "left": 1726,
+            "top": 108,
+            "width": 86,
+            "height": 89
+          }
+        },
+        {
+          "type": "text",
+          "text": "",
+          "runs": [
+            {
+              "runs": [],
+              "alignment": null
+            }
+          ],
+          "bbox": {
+            "left": 489,
+            "top": 954,
+            "width": 287,
+            "height": 107
+          },
+          "placeholder_type": null
+        },
+        {
+          "type": "text",
+          "text": "",
+          "runs": [
+            {
+              "runs": [],
+              "alignment": null
+            }
+          ],
+          "bbox": {
+            "left": 1004,
+            "top": 332,
+            "width": 37,
+            "height": 37
+          },
+          "placeholder_type": null
+        },
+        {
+          "type": "text",
+          "text": "",
+          "runs": [
+            {
+              "runs": [],
+              "alignment": null
+            }
+          ],
+          "bbox": {
+            "left": 1000,
+            "top": 402,
+            "width": 37,
+            "height": 37
+          },
+          "placeholder_type": null
+        },
+        {
+          "type": "text",
+          "text": "",
+          "runs": [
+            {
+              "runs": [],
+              "alignment": null
+            }
+          ],
+          "bbox": {
+            "left": 1347,
+            "top": 344,
+            "width": 37,
+            "height": 26
+          },
+          "placeholder_type": null
+        },
+        {
+          "type": "text",
+          "text": "@reallygreatsite",
+          "runs": [
+            {
+              "runs": [
+                {
+                  "text": "@reallygreatsite",
+                  "bold": true,
+                  "italic": false,
+                  "underline": false,
+                  "font": "Poppins Medium",
+                  "size": 23.96,
+                  "color": "#4b3932"
+                }
+              ],
+              "alignment": 1
+            }
+          ],
+          "bbox": {
+            "left": 1052,
+            "top": 393,
+            "width": 278,
+            "height": 45
+          },
+          "placeholder_type": null
+        },
+        {
+          "type": "text",
+          "text": "+123-456-7890",
+          "runs": [
+            {
+              "runs": [
+                {
+                  "text": "+123-456-7890",
+                  "bold": true,
+                  "italic": false,
+                  "underline": false,
+                  "font": "Poppins Medium",
+                  "size": 23.96,
+                  "color": "#4b3932"
+                }
+              ],
+              "alignment": 1
+            }
+          ],
+          "bbox": {
+            "left": 1052,
+            "top": 328,
+            "width": 262,
+            "height": 45
+          },
+          "placeholder_type": null
+        },
+        {
+          "type": "text",
+          "text": "hello@really\ngreatsite.com",
+          "runs": [
+            {
+              "runs": [
+                {
+                  "text": "he",
+                  "bold": true,
+                  "italic": false,
+                  "underline": false,
+                  "font": "Poppins Medium",
+                  "size": 23.96,
+                  "color": "#4b3932"
+                },
+                {
+                  "text": "llo@",
+                  "bold": true,
+                  "italic": false,
+                  "underline": false,
+                  "font": "Poppins Medium",
+                  "size": 23.96,
+                  "color": "#4b3932"
+                },
+                {
+                  "text": "re",
+                  "bold": true,
+                  "italic": false,
+                  "underline": false,
+                  "font": "Poppins Medium",
+                  "size": 23.96,
+                  "color": "#4b3932"
+                },
+                {
+                  "text": "all",
+                  "bold": true,
+                  "italic": false,
+                  "underline": false,
+                  "font": "Poppins Medium",
+                  "size": 23.96,
+                  "color": "#4b3932"
+                },
+                {
+                  "text": "y",
+                  "bold": true,
+                  "italic": false,
+                  "underline": false,
+                  "font": "Poppins Medium",
+                  "size": 23.96,
+                  "color": "#4b3932"
+                }
+              ],
+              "alignment": 1
+            },
+            {
+              "runs": [
+                {
+                  "text": "greats",
+                  "bold": true,
+                  "italic": false,
+                  "underline": false,
+                  "font": "Poppins Medium",
+                  "size": 23.96,
+                  "color": "#4b3932"
+                },
+                {
+                  "text": "it",
+                  "bold": true,
+                  "italic": false,
+                  "underline": false,
+                  "font": "Poppins Medium",
+                  "size": 23.96,
+                  "color": "#4b3932"
+                },
+                {
+                  "text": "e.com",
+                  "bold": true,
+                  "italic": false,
+                  "underline": false,
+                  "font": "Poppins Medium",
+                  "size": 23.96,
+                  "color": "#4b3932"
+                }
+              ],
+              "alignment": 1
+            }
+          ],
+          "bbox": {
+            "left": 1399,
+            "top": 328,
+            "width": 237,
+            "height": 89
+          },
+          "placeholder_type": null
+        },
+        {
+          "type": "text",
+          "text": "Contact Us",
+          "runs": [
+            {
+              "runs": [
+                {
+                  "text": "Contact Us",
+                  "bold": true,
+                  "italic": false,
+                  "underline": false,
+                  "font": "Poppins Semi-Bold",
+                  "size": 25.99,
+                  "color": "#ffffff"
+                }
+              ],
+              "alignment": 2
+            }
+          ],
+          "bbox": {
+            "left": 999,
+            "top": 246,
+            "width": 201,
+            "height": 41
+          },
+          "placeholder_type": null
+        },
+        {
+          "type": "text",
+          "text": "Thank You\nVery Much!",
+          "runs": [
+            {
+              "runs": [
+                {
+                  "text": "Thank You",
+                  "bold": true,
+                  "italic": false,
+                  "underline": false,
+                  "font": "Agrandir Bold",
+                  "size": 68.0,
+                  "color": "#4b3932"
+                }
+              ],
+              "alignment": 4
+            },
+            {
+              "runs": [
+                {
+                  "text": "Very Much!",
+                  "bold": true,
+                  "italic": false,
+                  "underline": false,
+                  "font": "Agrandir Bold",
+                  "size": 68.0,
+                  "color": "#4b3932"
+                }
+              ],
+              "alignment": 4
+            }
+          ],
+          "bbox": {
+            "left": 159,
+            "top": 349,
+            "width": 574,
+            "height": 235
+          },
+          "placeholder_type": null
+        },
+        {
+          "type": "text",
+          "text": "Thank you so much for Your Attention.\n\nWe believe the future of real estate lies in smart, sustainable, and community-focused development. Let’s create lasting value together.",
+          "runs": [
+            {
+              "runs": [
+                {
+                  "text": "Thank you so much for Your Attention.",
+                  "bold": false,
+                  "italic": false,
+                  "underline": false,
+                  "font": "Poppins",
+                  "size": 23.98,
+                  "color": "#4b3932"
+                }
+              ],
+              "alignment": 1
+            },
+            {
+              "runs": [],
+              "alignment": 1
+            },
+            {
+              "runs": [
+                {
+                  "text": "We believe the future of real estate lies in smart, sustainable, and community-focused development. Let’s create lasting value together.",
+                  "bold": false,
+                  "italic": false,
+                  "underline": false,
+                  "font": "Poppins",
+                  "size": 23.98,
+                  "color": "#4b3932"
+                }
+              ],
+              "alignment": 1
+            }
+          ],
+          "bbox": {
+            "left": 159,
+            "top": 656,
+            "width": 660,
+            "height": 265
+          },
+          "placeholder_type": null
+        }
+      ]
+    }
+  ],
+  "assets": {
+    "images": []
+  }
+}

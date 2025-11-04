@@ -1,0 +1,1 @@
+ALTER TABLE "brand_guidelines" ADD COLUMN "powerpointContent" text;

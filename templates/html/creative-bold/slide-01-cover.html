@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cover</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Poppins', sans-serif; background: #FF6B6B; width: 1280px; height: 720px; overflow: hidden; }
+        .slide { width: 100%; height: 100%; position: relative; background: linear-gradient(135deg, #FF6B6B 0%, #FFE66D 50%, #4ECDC4 100%); }
+        .shape1 { position: absolute; top: -100px; right: -100px; width: 400px; height: 400px; background: rgba(255,255,255,0.15); border-radius: 50%; }
+        .shape2 { position: absolute; bottom: -150px; left: -150px; width: 500px; height: 500px; background: rgba(255,255,255,0.1); border-radius: 50%; }
+        .content { position: relative; z-index: 10; padding: 80px 100px; height: 100%; display: flex; flex-direction: column; justify-content: center; }
+        .brand-name { font-size: 96px; font-weight: 900; color: white; text-transform: uppercase; line-height: 0.9; margin-bottom: 30px; text-shadow: 4px 4px 0px rgba(0,0,0,0.2); letter-spacing: -2px; }
+        .subtitle { font-size: 32px; color: white; font-weight: 600; margin-bottom: 40px; text-shadow: 2px 2px 0px rgba(0,0,0,0.15); }
+        .date { font-size: 18px; color: white; font-weight: 700; text-transform: uppercase; letter-spacing: 3px; }
+    </style>
+</head>
+<body>
+    <div class="slide">
+        <div class="shape1"></div>
+        <div class="shape2"></div>
+        <div class="content">
+            <div class="brand-name">{{BRAND_NAME}}</div>
+            <div class="subtitle">{{TAGLINE}}</div>
+            <div class="date">{{DATE}}</div>
+        </div>
+    </div>
+</body>
+</html>
+

@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Iconography</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Poppins', sans-serif; background: #1A1A1A; width: 1280px; height: 720px; overflow: hidden; }
+        .slide { width: 100%; height: 100%; padding: 60px 80px; }
+        .title { font-size: 72px; font-weight: 900; color: #FF6B6B; text-transform: uppercase; margin-bottom: 50px; letter-spacing: -2px; }
+        .icons { display: grid; grid-template-columns: repeat(5, 1fr); gap: 20px; }
+        .icon { background: #FFE66D; padding: 40px 25px; text-align: center; box-shadow: 4px 4px 0px rgba(0,0,0,0.2); transform: rotate(-1deg); }
+        .icon:hover { transform: rotate(0deg) scale(1.05); }
+        .icon-symbol { font-size: 64px; margin-bottom: 20px; }
+        .icon-label { font-size: 12px; font-weight: 800; text-transform: uppercase; color: #1A1A1A; }
+    </style>
+</head>
+<body>
+    <div class="slide">
+        <div class="title">ICONS</div>
+        <div class="icons">
+            {{ICON_EXAMPLES}}
+        </div>
+    </div>
+</body>
+</html>
+

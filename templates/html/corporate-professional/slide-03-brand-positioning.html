@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Positioning</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Arial', sans-serif; background: #F8FAFC; width: 1280px; height: 720px; overflow: hidden; }
+        .slide { width: 100%; height: 100%; padding: 50px 80px; }
+        .header { border-bottom: 4px solid #1E3A5F; padding-bottom: 20px; margin-bottom: 40px; }
+        .title { font-size: 48px; color: #1E3A5F; font-weight: bold; text-transform: uppercase; }
+        .cards { display: grid; grid-template-columns: repeat(2, 1fr); gap: 30px; margin-bottom: 30px; }
+        .card { background: white; border-left: 6px solid; padding: 35px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+        .card.blue { border-color: #2563EB; }
+        .card.purple { border-color: #7C3AED; }
+        .card.green { border-color: #10B981; background: #F0FDF4; }
+        .card.full { grid-column: 1 / -1; border-color: #1E3A5F; }
+        .card-title { font-size: 14px; font-weight: bold; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 15px; color: #64748B; }
+        .card-content { font-size: 16px; line-height: 1.7; color: #1E293B; }
+    </style>
+</head>
+<body>
+    <div class="slide">
+        <div class="header">
+            <div class="title">Positioning</div>
+        </div>
+        <div class="cards">
+            <div class="card blue">
+                <div class="card-title">Our Mission</div>
+                <div class="card-content">{{MISSION}}</div>
+            </div>
+            <div class="card purple">
+                <div class="card-title">Our Vision</div>
+                <div class="card-content">{{VISION}}</div>
+            </div>
+            <div class="card full">
+                <div class="card-title">Core Values</div>
+                <div class="card-content">{{VALUES}}</div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
+

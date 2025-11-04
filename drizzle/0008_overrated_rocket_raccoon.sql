@@ -1,0 +1,1 @@
+ALTER TABLE "generated_slides" ALTER COLUMN "brandGuidelinesId" DROP NOT NULL;

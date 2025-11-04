@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Thank You</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Poppins', sans-serif; background: linear-gradient(135deg, #FF6B6B 0%, #4ECDC4 50%, #FFE66D 100%); width: 1280px; height: 720px; overflow: hidden; }
+        .slide { width: 100%; height: 100%; display: flex; flex-direction: column; justify-content: center; align-items: center; padding: 80px; position: relative; }
+        .shape1 { position: absolute; top: 100px; right: 100px; width: 200px; height: 200px; background: rgba(255,255,255,0.2); border-radius: 50%; }
+        .shape2 { position: absolute; bottom: 100px; left: 100px; width: 250px; height: 250px; background: rgba(255,255,255,0.15); border-radius: 50%; }
+        .thank-you { font-size: 120px; font-weight: 900; color: white; text-transform: uppercase; margin-bottom: 30px; letter-spacing: -4px; text-shadow: 6px 6px 0px rgba(0,0,0,0.2); z-index: 10; }
+        .brand-name { font-size: 48px; color: white; font-weight: 800; margin-bottom: 50px; z-index: 10; }
+        .contact { background: rgba(255,255,255,0.25); backdrop-filter: blur(20px); padding: 40px 80px; border: 4px solid white; z-index: 10; box-shadow: 8px 8px 0px rgba(0,0,0,0.2); }
+        .contact-item { font-size: 18px; color: white; margin-bottom: 10px; font-weight: 700; text-align: center; }
+    </style>
+</head>
+<body>
+    <div class="slide">
+        <div class="shape1"></div>
+        <div class="shape2"></div>
+        <div class="thank-you">THANKS!</div>
+        <div class="brand-name">{{BRAND_NAME}}</div>
+        <div class="contact">
+            <div class="contact-item">{{CONTACT_EMAIL}}</div>
+            <div class="contact-item">{{CONTACT_PHONE}}</div>
+            <div class="contact-item">{{CONTACT_WEBSITE}}</div>
+        </div>
+    </div>
+</body>
+</html>
+

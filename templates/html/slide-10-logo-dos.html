@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Logo Do's</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(to bottom right, #F0FDF4 0%, #FFFFFF 60%, #ECFEFF 100%);
+            width: 1280px;
+            height: 720px;
+            overflow: hidden;
+        }
+        
+        .slide {
+            width: 100%;
+            height: 100%;
+            padding: 40px 60px;
+        }
+        
+        .header {
+            border-bottom: 4px solid {{PRIMARY_COLOR}};
+            padding-bottom: 15px;
+            margin-bottom: 30px;
+        }
+        
+        .title {
+            font-size: 42px;
+            font-weight: bold;
+            color: {{PRIMARY_COLOR}};
+        }
+        
+        .content {
+            display: grid;
+            grid-template-columns: 1.6fr 1fr;
+            gap: 32px;
+            height: calc(100% - 100px);
+        }
+        
+        .examples {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+        
+        .example-card {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+        }
+        
+        .card-header {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 12px;
+        }
+        
+        .badge-do {
+            background: #D1FAE5;
+            color: #065F46;
+            border: 2px solid #10B981;
+            font-weight: bold;
+            font-size: 12px;
+            padding: 4px 8px;
+            border-radius: 6px;
+        }
+        
+        .card-title {
+            font-size: 16px;
+            font-weight: bold;
+            color: #333;
+        }
+        
+        .logo-demo {
+            height: 140px;
+            border-radius: 10px;
+            background: #f8f9fa;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 10px;
+            position: relative;
+            border: 1px solid #e5e7eb;
+        }
+        
+        .logo-demo img {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+        }
+        
+        
+        .hint {
+            font-size: 12px;
+            color: #666;
+            line-height: 1.5;
+        }
+        
+        .guidelines {
+            background: white;
+            border-radius: 12px;
+            padding: 24px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+        }
+        
+        .guidelines-title {
+            font-size: 18px;
+            font-weight: bold;
+            color: {{PRIMARY_COLOR}};
+            margin-bottom: 12px;
+        }
+        
+        .guideline-item {
+            font-size: 14px;
+            color: #555;
+            line-height: 1.7;
+            padding-left: 26px;
+            position: relative;
+            margin-bottom: 10px;
+        }
+        
+        .guideline-item::before {
+            content: '✓';
+            position: absolute;
+            left: 0;
+            color: #10B981;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div class="slide">
+        <div class="header">
+            <div class="title">Logo Do's</div>
+        </div>
+        
+        <div class="content">
+            <div class="examples">
+                <div class="example-card">
+                    <div class="card-header">
+                        <div class="badge-do">DO</div>
+                        <div class="card-title">Use Approved Colors</div>
+                    </div>
+                    <div class="logo-demo">
+                        <img src="{{PRIMARY_LOGO_URL}}" alt="{{BRAND_NAME}} Logo">
+                    </div>
+                    <div class="hint">Apply only {{PRIMARY_COLOR}} and {{SECONDARY_COLOR}} per brand palette.</div>
+                </div>
+                
+                <div class="example-card">
+                    <div class="card-header">
+                        <div class="badge-do">DO</div>
+                        <div class="card-title">Maintain Clear Space</div>
+                    </div>
+                    <div class="logo-demo" style="position: relative;">
+                        <div style="position:absolute; inset: 8px; border: 3px dashed rgba(0,0,0,0.3); border-radius: 8px;"></div>
+                        <img src="{{PRIMARY_LOGO_URL}}" alt="{{BRAND_NAME}} Logo">
+                    </div>
+                    <div class="hint">Keep minimum clear space around logo (≥ 10% of logo width).</div>
+                </div>
+                
+                <div class="example-card">
+                    <div class="card-header">
+                        <div class="badge-do">DO</div>
+                        <div class="card-title">Respect Minimum Size</div>
+                    </div>
+                    <div class="logo-demo" style="height: 100px;">
+                        <img src="{{PRIMARY_LOGO_URL}}" alt="{{BRAND_NAME}} Logo">
+                    </div>
+                    <div class="hint">Never display the logo smaller than the specified minimum height.</div>
+                </div>
+                
+                <div class="example-card">
+                    <div class="card-header">
+                        <div class="badge-do">DO</div>
+                        <div class="card-title">Ensure Contrast</div>
+                    </div>
+                    <div class="logo-demo" style="background: linear-gradient(135deg, #111 0%, {{PRIMARY_COLOR}} 100%);">
+                        <img src="{{PRIMARY_LOGO_URL}}" alt="{{BRAND_NAME}} Logo">
+                    </div>
+                    <div class="hint">Use sufficient contrast with backgrounds to maintain readability.</div>
+                </div>
+            </div>
+            
+            <div class="guidelines">
+                <div class="guidelines-title">Usage Guidelines</div>
+                <div class="guideline-item">Use only approved color combinations and backgrounds.</div>
+                <div class="guideline-item">Maintain clear space around the logo on all sides.</div>
+                <div class="guideline-item">Scale proportionally; adhere to minimum size constraints.</div>
+                <div class="guideline-item">Place on clean, uncluttered backgrounds with strong contrast.</div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
+
+

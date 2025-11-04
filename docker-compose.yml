@@ -1,0 +1,28 @@
+services:
+  db:
+    image: ankane/pgvector:latest
+    restart: always
+    ports:
+      - 5433:5432
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: local
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+  color-service:
+    build: ./color-service
+    restart: always
+    ports:
+      - 8001:8001
+    environment:
+      - GOOGLE_GEMINI_API=${GOOGLE_GEMINI_API}
+    volumes:
+      - ./static/uploads:/app/uploads
+    depends_on:
+      - db
+
+volumes:
+  pgdata:
+  

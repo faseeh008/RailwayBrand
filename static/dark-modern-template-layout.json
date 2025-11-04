@@ -1,0 +1,707 @@
+{
+  "template_id": "dark-modern-layout-template",
+  "name": "Dark Modern & Bold Template",
+  "version": "2.0",
+  "description": "High-contrast modern design with dark backgrounds and bold typography. Perfect for tech companies and modern brands.",
+  "metadata": {
+    "slide_dimensions": {
+      "width": 1920,
+      "height": 1080,
+      "ratio": "16:9",
+      "unit": "pixels"
+    },
+    "conversion": {
+      "pixels_per_inch": 192,
+      "note": "Divide pixel values by 192 to get inches for PPTX"
+    }
+  },
+  "color_palette": {
+    "primary": "#0f172a",
+    "secondary": "#3b82f6",
+    "accent": "#60a5fa",
+    "text_primary": "#ffffff",
+    "text_secondary": "#94a3b8"
+  },
+  "fonts": {
+    "heading": {
+      "family": "Poppins Bold",
+      "weight": "bold",
+      "sizes": {
+        "main_title": 180,
+        "section_title": 64,
+        "subsection": 48
+      }
+    },
+    "body": {
+      "family": "Inter",
+      "weight": "normal",
+      "sizes": {
+        "normal": 22,
+        "small": 18,
+        "large": 24
+      }
+    }
+  },
+  "content_boundaries": {
+    "description": "Content overflow rules for each text region",
+    "title_max_chars": 100,
+    "subtitle_max_chars": 150,
+    "body_max_chars": 800,
+    "bullet_point_max_chars": 120,
+    "overflow_behavior": {
+      "title": "truncate_with_ellipsis",
+      "body": "create_new_slide",
+      "description": "If body content exceeds max_chars, create a continuation slide with same layout"
+    },
+    "word_wrap": true,
+    "auto_shrink_text": true
+  },
+  "slide_templates": [
+    {
+      "template_name": "cover_slide",
+      "description": "Opening slide with bold dark design and blue accents",
+      "slide_type": "cover",
+      "background": {
+        "type": "color",
+        "value": "#0f172a"
+      },
+      "content_regions": [
+        {
+          "region_id": "accent_bar",
+          "type": "shape",
+          "name": "Blue Accent Bar",
+          "purpose": "decoration",
+          "editable": false,
+          "bbox": {
+            "left": 0,
+            "top": 0,
+            "width": 1920,
+            "height": 80
+          },
+          "shape_properties": {
+            "fill": "solid",
+            "color": "#3b82f6",
+            "visible": true
+          }
+        },
+        {
+          "region_id": "main_title",
+          "type": "text",
+          "purpose": "primary_heading",
+          "content_binding": "{{BRAND_NAME}}",
+          "placeholder": "Brand Guidelines",
+          "max_chars": 50,
+          "overflow": "shrink_font",
+          "bbox": {
+            "left": 200,
+            "top": 400,
+            "width": 1520,
+            "height": 220
+          },
+          "text_style": {
+            "font": "Poppins Bold",
+            "size": 180,
+            "bold": true,
+            "italic": false,
+            "underline": false,
+            "color": "#ffffff",
+            "alignment": "left"
+          }
+        },
+        {
+          "region_id": "subtitle",
+          "type": "text",
+          "purpose": "tagline_or_description",
+          "content_binding": "{{AI_GENERATED_TAGLINE}}",
+          "placeholder": "Leading Innovation Forward",
+          "max_chars": 150,
+          "overflow": "truncate",
+          "bbox": {
+            "left": 200,
+            "top": 650,
+            "width": 1520,
+            "height": 120
+          },
+          "text_style": {
+            "font": "Inter",
+            "size": 64,
+            "bold": false,
+            "italic": false,
+            "underline": false,
+            "color": "#94a3b8",
+            "alignment": "left"
+          }
+        },
+        {
+          "region_id": "presenter_info",
+          "type": "text",
+          "purpose": "brand_name",
+          "content_binding": "Presented By: {{BRAND_NAME}}",
+          "max_chars": 80,
+          "bbox": {
+            "left": 200,
+            "top": 850,
+            "width": 800,
+            "height": 50
+          },
+          "text_style": {
+            "font": "Inter Bold",
+            "size": 22,
+            "bold": true,
+            "color": "#ffffff",
+            "alignment": "left"
+          }
+        },
+        {
+          "region_id": "website",
+          "type": "text",
+          "purpose": "contact_info",
+          "content_binding": "{{WEBSITE}}",
+          "placeholder": "www.yourbrand.com",
+          "max_chars": 60,
+          "bbox": {
+            "left": 1120,
+            "top": 850,
+            "width": 600,
+            "height": 50
+          },
+          "text_style": {
+            "font": "Inter Bold",
+            "size": 22,
+            "bold": true,
+            "color": "#60a5fa",
+            "alignment": "left"
+          }
+        }
+      ]
+    },
+    {
+      "template_name": "content_slide_standard",
+      "description": "Standard content slide with dark background and blue header",
+      "slide_type": "content",
+      "background": {
+        "type": "color",
+        "value": "#0f172a"
+      },
+      "content_regions": [
+        {
+          "region_id": "header_bar",
+          "type": "shape",
+          "purpose": "decoration",
+          "editable": false,
+          "bbox": {
+            "left": 0,
+            "top": 0,
+            "width": 1920,
+            "height": 60
+          },
+          "shape_properties": {
+            "fill": "solid",
+            "color": "#1e40af",
+            "visible": true
+          }
+        },
+        {
+          "region_id": "header_brand",
+          "type": "text",
+          "purpose": "header_brand_name",
+          "content_binding": "{{BRAND_NAME}}",
+          "max_chars": 40,
+          "bbox": {
+            "left": 180,
+            "top": 15,
+            "width": 400,
+            "height": 30
+          },
+          "text_style": {
+            "font": "Inter Bold",
+            "size": 20,
+            "bold": true,
+            "color": "#ffffff",
+            "alignment": "left"
+          }
+        },
+        {
+          "region_id": "header_website",
+          "type": "text",
+          "purpose": "header_website",
+          "content_binding": "{{WEBSITE}}",
+          "max_chars": 50,
+          "bbox": {
+            "left": 1440,
+            "top": 15,
+            "width": 300,
+            "height": 30
+          },
+          "text_style": {
+            "font": "Inter",
+            "size": 20,
+            "bold": false,
+            "color": "#ffffff",
+            "alignment": "right"
+          }
+        },
+        {
+          "region_id": "page_title",
+          "type": "text",
+          "purpose": "section_heading",
+          "content_binding": "{{AI_GENERATED_STEP_TITLE}}",
+          "placeholder": "Section Title",
+          "max_chars": 100,
+          "overflow": "shrink_font",
+          "bbox": {
+            "left": 180,
+            "top": 130,
+            "width": 1560,
+            "height": 100
+          },
+          "text_style": {
+            "font": "Poppins Bold",
+            "size": 64,
+            "bold": true,
+            "color": "#ffffff",
+            "alignment": "left"
+          }
+        },
+        {
+          "region_id": "accent_line",
+          "type": "shape",
+          "purpose": "decoration",
+          "editable": false,
+          "bbox": {
+            "left": 180,
+            "top": 240,
+            "width": 200,
+            "height": 8
+          },
+          "shape_properties": {
+            "fill": "solid",
+            "color": "#3b82f6",
+            "visible": true
+          }
+        },
+        {
+          "region_id": "main_content",
+          "type": "text",
+          "purpose": "body_content",
+          "content_binding": "{{AI_GENERATED_STEP_CONTENT}}",
+          "placeholder": "Main content area for AI-generated text",
+          "max_chars": 800,
+          "overflow": "create_new_slide",
+          "bbox": {
+            "left": 180,
+            "top": 280,
+            "width": 1560,
+            "height": 680
+          },
+          "text_style": {
+            "font": "Inter",
+            "size": 22,
+            "bold": false,
+            "color": "#ffffff",
+            "alignment": "left",
+            "line_spacing": 1.6
+          },
+          "boundary_rules": {
+            "word_wrap": true,
+            "auto_shrink": true,
+            "min_font_size": 18,
+            "overflow_to_new_slide_threshold": 850,
+            "keep_paragraphs_together": true
+          }
+        },
+        {
+          "region_id": "footer_page_number",
+          "type": "text",
+          "purpose": "page_number",
+          "content_binding": "{{PAGE_NUMBER}}",
+          "bbox": {
+            "left": 1760,
+            "top": 1010,
+            "width": 120,
+            "height": 50
+          },
+          "text_style": {
+            "font": "Inter Bold",
+            "size": 18,
+            "bold": true,
+            "color": "#60a5fa",
+            "alignment": "right"
+          }
+        }
+      ]
+    },
+    {
+      "template_name": "content_slide_mission_vision",
+      "description": "Mission/Vision slide with dark background and blue accents",
+      "slide_type": "content",
+      "background": {
+        "type": "color",
+        "value": "#0f172a"
+      },
+      "content_regions": [
+        {
+          "region_id": "header_bar",
+          "type": "shape",
+          "purpose": "decoration",
+          "editable": false,
+          "bbox": {
+            "left": 0,
+            "top": 0,
+            "width": 1920,
+            "height": 60
+          },
+          "shape_properties": {
+            "fill": "solid",
+            "color": "#1e40af",
+            "visible": true
+          }
+        },
+        {
+          "region_id": "header_brand",
+          "type": "text",
+          "purpose": "header_brand_name",
+          "content_binding": "{{BRAND_NAME}}",
+          "max_chars": 40,
+          "bbox": {
+            "left": 180,
+            "top": 15,
+            "width": 400,
+            "height": 30
+          },
+          "text_style": {
+            "font": "Inter Bold",
+            "size": 20,
+            "color": "#ffffff",
+            "alignment": "left"
+          }
+        },
+        {
+          "region_id": "page_title",
+          "type": "text",
+          "purpose": "section_heading",
+          "content_binding": "{{AI_GENERATED_STEP_TITLE}}",
+          "placeholder": "Who We Are",
+          "max_chars": 100,
+          "bbox": {
+            "left": 180,
+            "top": 130,
+            "width": 1560,
+            "height": 100
+          },
+          "text_style": {
+            "font": "Poppins Bold",
+            "size": 64,
+            "bold": true,
+            "color": "#ffffff",
+            "alignment": "left"
+          }
+        },
+        {
+          "region_id": "mission_label",
+          "type": "text",
+          "purpose": "subsection_label",
+          "content_binding": "Mission",
+          "editable": false,
+          "bbox": {
+            "left": 180,
+            "top": 280,
+            "width": 300,
+            "height": 50
+          },
+          "text_style": {
+            "font": "Poppins Bold",
+            "size": 36,
+            "bold": true,
+            "color": "#3b82f6",
+            "alignment": "left"
+          }
+        },
+        {
+          "region_id": "mission_content",
+          "type": "text",
+          "purpose": "body_content",
+          "content_binding": "{{MISSION_EXTRACTED_FROM_AI}}",
+          "placeholder": "Mission statement goes here",
+          "max_chars": 350,
+          "overflow": "truncate",
+          "bbox": {
+            "left": 180,
+            "top": 350,
+            "width": 1560,
+            "height": 250
+          },
+          "text_style": {
+            "font": "Inter",
+            "size": 22,
+            "color": "#ffffff",
+            "alignment": "left",
+            "line_spacing": 1.6
+          }
+        },
+        {
+          "region_id": "vision_label",
+          "type": "text",
+          "purpose": "subsection_label",
+          "content_binding": "Vision",
+          "editable": false,
+          "bbox": {
+            "left": 180,
+            "top": 640,
+            "width": 300,
+            "height": 50
+          },
+          "text_style": {
+            "font": "Poppins Bold",
+            "size": 36,
+            "bold": true,
+            "color": "#3b82f6",
+            "alignment": "left"
+          }
+        },
+        {
+          "region_id": "vision_content",
+          "type": "text",
+          "purpose": "body_content",
+          "content_binding": "{{VISION_EXTRACTED_FROM_AI}}",
+          "placeholder": "Vision statement goes here",
+          "max_chars": 350,
+          "overflow": "truncate",
+          "bbox": {
+            "left": 180,
+            "top": 710,
+            "width": 1560,
+            "height": 250
+          },
+          "text_style": {
+            "font": "Inter",
+            "size": 22,
+            "color": "#ffffff",
+            "alignment": "left",
+            "line_spacing": 1.6
+          }
+        },
+        {
+          "region_id": "footer_page_number",
+          "type": "text",
+          "purpose": "page_number",
+          "content_binding": "{{PAGE_NUMBER}}",
+          "bbox": {
+            "left": 1760,
+            "top": 1010,
+            "width": 120,
+            "height": 50
+          },
+          "text_style": {
+            "font": "Inter Bold",
+            "size": 18,
+            "bold": true,
+            "color": "#60a5fa",
+            "alignment": "right"
+          }
+        }
+      ]
+    },
+    {
+      "template_name": "closing_slide",
+      "description": "Thank you slide with dark background and blue accents",
+      "slide_type": "closing",
+      "background": {
+        "type": "color",
+        "value": "#0f172a"
+      },
+      "content_regions": [
+        {
+          "region_id": "accent_bar",
+          "type": "shape",
+          "purpose": "decoration",
+          "editable": false,
+          "bbox": {
+            "left": 0,
+            "top": 0,
+            "width": 1920,
+            "height": 80
+          },
+          "shape_properties": {
+            "fill": "solid",
+            "color": "#3b82f6",
+            "visible": true
+          }
+        },
+        {
+          "region_id": "thank_you_message",
+          "type": "text",
+          "purpose": "closing_heading",
+          "content_binding": "Thank You",
+          "editable": false,
+          "bbox": {
+            "left": 560,
+            "top": 380,
+            "width": 800,
+            "height": 140
+          },
+          "text_style": {
+            "font": "Poppins Black",
+            "size": 100,
+            "bold": true,
+            "color": "#ffffff",
+            "alignment": "center"
+          }
+        },
+        {
+          "region_id": "accent_line",
+          "type": "shape",
+          "purpose": "decoration",
+          "editable": false,
+          "bbox": {
+            "left": 560,
+            "top": 530,
+            "width": 800,
+            "height": 8
+          },
+          "shape_properties": {
+            "fill": "solid",
+            "color": "#3b82f6",
+            "visible": true
+          }
+        },
+        {
+          "region_id": "brand_name",
+          "type": "text",
+          "purpose": "brand_name",
+          "content_binding": "{{BRAND_NAME}}",
+          "bbox": {
+            "left": 560,
+            "top": 560,
+            "width": 800,
+            "height": 70
+          },
+          "text_style": {
+            "font": "Inter Bold",
+            "size": 40,
+            "bold": true,
+            "color": "#60a5fa",
+            "alignment": "center"
+          }
+        },
+        {
+          "region_id": "contact_email",
+          "type": "text",
+          "purpose": "contact_info",
+          "content_binding": "{{CONTACT_EMAIL}}",
+          "placeholder": "hello@yourbrand.com",
+          "bbox": {
+            "left": 560,
+            "top": 660,
+            "width": 800,
+            "height": 50
+          },
+          "text_style": {
+            "font": "Inter",
+            "size": 24,
+            "color": "#94a3b8",
+            "alignment": "center"
+          }
+        },
+        {
+          "region_id": "contact_phone",
+          "type": "text",
+          "purpose": "contact_info",
+          "content_binding": "{{CONTACT_PHONE}}",
+          "placeholder": "+1-234-567-8900",
+          "bbox": {
+            "left": 560,
+            "top": 720,
+            "width": 800,
+            "height": 50
+          },
+          "text_style": {
+            "font": "Inter",
+            "size": 24,
+            "color": "#94a3b8",
+            "alignment": "center"
+          }
+        },
+        {
+          "region_id": "website",
+          "type": "text",
+          "purpose": "contact_info",
+          "content_binding": "{{WEBSITE}}",
+          "placeholder": "www.yourbrand.com",
+          "bbox": {
+            "left": 560,
+            "top": 780,
+            "width": 800,
+            "height": 50
+          },
+          "text_style": {
+            "font": "Inter Bold",
+            "size": 24,
+            "bold": true,
+            "color": "#60a5fa",
+            "alignment": "center"
+          }
+        }
+      ]
+    }
+  ],
+  "overflow_handling": {
+    "description": "Rules for handling content that exceeds region boundaries",
+    "enabled": true,
+    "strategies": {
+      "truncate": {
+        "description": "Cut off text at boundary and add ellipsis",
+        "add_ellipsis": true
+      },
+      "shrink_font": {
+        "description": "Reduce font size to fit content",
+        "min_font_size": 12.0,
+        "shrink_increment": 2.0
+      },
+      "create_new_slide": {
+        "description": "Split content across multiple slides using same template",
+        "continuation_indicator": true,
+        "continuation_text": "(continued)",
+        "max_slides_per_content": 3
+      }
+    }
+  },
+  "content_bindings": {
+    "description": "Placeholders that will be replaced with dynamic content",
+    "bindings": {
+      "{{BRAND_NAME}}": "Brand name from user input",
+      "{{WEBSITE}}": "Website URL from user input",
+      "{{CONTACT_EMAIL}}": "Contact email from user input",
+      "{{CONTACT_PHONE}}": "Contact phone from user input",
+      "{{AI_GENERATED_TAGLINE}}": "AI-generated tagline from brand-positioning step",
+      "{{AI_GENERATED_STEP_TITLE}}": "AI-generated title for the current step",
+      "{{AI_GENERATED_STEP_CONTENT}}": "AI-generated content for the current step",
+      "{{MISSION_EXTRACTED_FROM_AI}}": "Mission statement extracted from brand-positioning content",
+      "{{VISION_EXTRACTED_FROM_AI}}": "Vision statement extracted from brand-positioning content",
+      "{{PAGE_NUMBER}}": "Current slide number"
+    }
+  },
+  "usage_instructions": {
+    "slide_generation_flow": [
+      "1. Always start with cover_slide template",
+      "2. For each approved step in stepHistory:",
+      "   - If step is 'brand-positioning', use content_slide_mission_vision",
+      "   - Otherwise, use content_slide_standard",
+      "3. End with closing_slide template",
+      "4. Replace all {{PLACEHOLDER}} values with actual data",
+      "5. Apply overflow rules if content exceeds max_chars"
+    ],
+    "content_extraction": {
+      "from_markdown": "Extract plain text from markdown, remove ** and * formatting",
+      "max_length_enforcement": "Use max_chars property for each region",
+      "paragraph_splitting": "Split on \\n\\n for natural breaks"
+    },
+    "coordinate_system": {
+      "origin": "Top-left corner (0, 0)",
+      "x_axis": "Left to right",
+      "y_axis": "Top to bottom",
+      "conversion_formula": "inches = pixels / 192"
+    }
+  }
+}
+

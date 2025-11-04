@@ -1,0 +1,317 @@
+I'll scan the template preview page and related services/components to understand how the JSON is loaded and how the slides are kept responsive across screens. Then I'll summarize the flow in a way you can turn into a prompt.
+
+[6 tools called]
+
+I'll open the template API endpoints to confirm how the page loads the JSON and exports PPTX, then summarize the flow and provide a concise "Cursor prompt" you can reuse.
+
+[3 tools called]
+
+Let me open the PPTX export helper to see how the JSON is converted to a PowerPoint, so I can describe that part too.
+
+[1 tool called]
+
+I reviewed the template preview page, its API routes, and the scaling component. Here’s a skimmable breakdown you can reuse as a Cursor prompt.
+
+### What the page does
+- Loads a local JSON template (by slug/id) from `individual_templates`.
+- Renders one slide at a time on a 1920×1080 “stage,” scaled responsively to fit any screen.
+- Lets you edit text inline and swap images.
+- Supports next/prev slide navigation, toggle editing, and PPTX export.
+
+### How JSON is loaded
+- The route param `id` comes from the URL (`/templates/preview/[id]`) and is used to fetch the template.
+```45:49:src/routes/templates/preview/[id]/+page.svelte
+const templateId = $derived(($page?.params?.id) ?? '');
+
+onMount(async () => {
+  await loadTemplate();
+});
+```
+- Client fetches the template JSON via `/api/templates/[id]`:
+```51:63:src/routes/templates/preview/[id]/+page.svelte
+async function loadTemplate() {
+  try {
+    loading = true;
+    const res = await fetch(`/api/templates/${encodeURIComponent(templateId)}`);
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Failed to load template');
+    template = data.template as Template;
+  } catch (e) {
+    error = e instanceof Error ? e.message : 'Failed to load template';
+  } finally {
+    loading = false;
+  }
+}
+```
+- The API handler reads a local `.json` file from `individual_templates` using `loadTemplate`:
+```8:20:src/routes/api/templates/[id]/+server.js
+export async function GET({ params }) {
+  try {
+    const { id } = params || {};
+    if (!id) return json({ error: 'Template id is required' }, { status: 400 });
+
+    const template = loadTemplate(id);
+    if (!template) return json({ error: 'Template not found' }, { status: 404 });
+
+    return json({ template });
+  } catch (error) {
+    return json({ error: 'Internal server error' }, { status: 500 });
+  }
+}
+```
+
+### How slides render and stay responsive on every screen
+- The slide content uses the template’s exact coordinates (1920×1080) with absolutely positioned elements. The entire “stage” is scaled to fit its container, preserving layout fidelity.
+```233:299:src/routes/templates/preview/[id]/+page.svelte
+<div class="relative mx-auto w-full ...">
+  <ScaledStage width={1920} height={1080} background={s.background?.type === 'color' ? s.background.value : '#ffffff'}>
+  {#each (s.elements || []) as el, ei}
+    {#if el.type === 'text' && el.bbox}
+      ...
+      <div class="absolute" style="left: {px(el.bbox.left)}px; top: {px(el.bbox.top)}px; width: {px(el.bbox.width)}px; height: {px(el.bbox.height)}px; ...">
+        <div class="w-full outline-none" contenteditable={editMode} oninput={(e) => onEditText(e, current, ei)} ...>{el.text || ''}</div>
+      </div>
+    {:else if el.type === 'shape' && el.bbox}
+      <div class="absolute" style="left: {px(el.bbox.left)}px; top: {px(el.bbox.top)}px; width: {px(el.bbox.width)}px; height: {px(el.bbox.height)}px; ...">
+        {#if el.imageData}<img src={el.imageData} ... />{/if}
+        {#if editMode}
+          <label ...>
+            <input type="file" accept="image/*" class="hidden" onchange={(e) => onSelectImage(e, current, ei)} />
+          </label>
+        {/if}
+      </div>
+    {/if}
+  {/each}
+  </ScaledStage>
+</div>
+```
+- `ScaledStage` uses a `ResizeObserver` to compute a uniform scale based on container size, maintaining the 16:9 aspect ratio. It translates from “design pixels” to screen pixels with one CSS transform.
+```22:35:src/lib/components/ScaledStage.svelte
+function updateScale() {
+  if (!containerEl) return;
+  const containerW = Math.max(200, Math.floor(el.clientWidth));
+  const containerH = Math.max(120, Math.floor(el.clientHeight));
+  const sw = containerW / width;
+  const sh = containerH / height;
+  scale = Math.max(0.05, Math.min(sw, sh));
+  const stageW = width * scale;
+  const stageH = height * scale;
+  offsetX = Math.max(0, Math.floor((containerW - stageW) / 2));
+  offsetY = Math.max(0, Math.floor((containerH - stageH) / 2));
+}
+```
+```50:53:src/lib/components/ScaledStage.svelte
+<div class="relative w-full" bind:this={containerEl} style="max-width: 100%; aspect-ratio: {width} / {height}; overflow: hidden;">
+  <div class="absolute" style="top: {offsetY}px; left: {offsetX}px; width: {width}px; height: {height}px; transform-origin: top left; transform: scale({scale}); background: {background};">
+    <slot />
+  </div>
+</div>
+```
+- The page also supports a global zoom via `pageScale` on the outer container, but `ScaledStage` is the primary responsive fit:
+```175:177:src/routes/templates/preview/[id]/+page.svelte
+<div class="min-h-screen">
+  <div class="mx-auto" style="transform: scale({pageScale}); transform-origin: top center; width: {(100 / pageScale)}%;">
+```
+
+### Editing text and images
+- Text is inline-editable when `editMode` is true; updates are applied immutably to the `template` state.
+```136:151:src/routes/templates/preview/[id]/+page.svelte
+async function onEditText(e: Event, slideIndex: number, elementIndex: number) {
+  if (!template?.slides) return;
+  const target = e.currentTarget as HTMLDivElement;
+  const newText = (target?.innerText ?? '').trimEnd();
+
+  const slides = [...template.slides];
+  const slide = { ...(slides[slideIndex] || {}), elements: [...(slides[slideIndex]?.elements || [])] } as Slide;
+  const el = { ...(slide.elements?.[elementIndex] || {}) } as Element;
+  el.text = newText;
+  slide.elements![elementIndex] = el;
+  slides[slideIndex] = slide;
+  template = { ...(template as Template), slides };
+  await tick();
+  setCaretToEnd(target);
+}
+```
+- Image replacement uses a hidden file input and `FileReader` to embed a `data:` URL:
+```153:172:src/routes/templates/preview/[id]/+page.svelte
+async function onSelectImage(e: Event, slideIndex: number, elementIndex: number) {
+  const input = e.currentTarget as HTMLInputElement;
+  const file = input?.files && input.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = () => {
+    const dataUrl = typeof reader.result === 'string' ? reader.result : '';
+    if (!dataUrl) return;
+    if (!template?.slides) return;
+    const slides = [...template.slides];
+    const slide = { ...(slides[slideIndex] || {}), elements: [...(slides[slideIndex]?.elements || [])] } as Slide;
+    const el = { ...(slide.elements?.[elementIndex] || {}) } as Element;
+    el.imageData = dataUrl;
+    slide.elements![elementIndex] = el;
+    slides[slideIndex] = slide;
+    template = { ...(template as Template), slides };
+    input.value = '';
+  };
+  reader.readAsDataURL(file);
+}
+```
+
+### Navigation and controls
+- Controls for previous/next slide, editing toggle, and download are in the header of the right panel.
+```217:229:src/routes/templates/preview/[id]/+page.svelte
+<Button onclick={prev} ...>Previous</Button>
+<Button onclick={next} ...>Next</Button>
+<div class="text-sm text-gray-400">{(current + 1)} / {(template.slides?.length || 0)}</div>
+<Button variant="secondary" size="sm" onclick={downloadPPTX}>Download PPTX</Button>
+<Button variant={editMode ? 'primary' : 'secondary'} size="sm" onclick={() => editMode = !editMode}>
+  {editMode ? 'Editing' : 'Edit'}
+</Button>
+```
+
+### Export to PPTX
+- Client posts the full in-memory `template` JSON to `/api/templates/export`; the server converts the 1920×1080 JSON into PPTX using pptxgenjs and returns a file response.
+```21:35:src/routes/templates/preview/[id]/+page.svelte
+async function downloadPPTX() {
+  if (!template) return;
+  const res = await fetch('/api/templates/export', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ template, name: template.name?.toLowerCase().replace(/\s+/g, '-') || 'template' })
+  });
+  ...
+}
+```
+```5:21:src/routes/api/templates/export/+server.ts
+export const POST: RequestHandler = async ({ request }) => {
+  const body = await request.json();
+  const template = body?.template;
+  const name = (body?.name || 'template-export').toString();
+  if (!template || !template.slides) return json({ error: 'Invalid template' }, { status: 400 });
+
+  const buffer = await exportTemplateToPPTX(template, name);
+  return new Response(buffer, {
+    headers: {
+      'Content-Type': 'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+      'Content-Disposition': `attachment; filename="${name}.pptx"`,
+    }
+  });
+};
+```
+- The exporter maps template px to PPTX inches (PX_PER_INCH = 192), sets text styles from `runs`, and embeds images if `imageData` exists:
+```584:606:src/lib/pitchDeck.js
+export async function exportTemplateToPPTX(templateJson, filenameBase = 'template-export') {
+  const pres = new PptxGenJS();
+  pres.layout = 'LAYOUT_16x9';
+
+  const PX_PER_INCH = 192; // 1920/10, 1080/5.625
+  const mapAlign = (alignCode) => { ... };
+  const getStyleFromElement = (el, fallbackColor) => { ... };
+```
+```637:666:src/lib/pitchDeck.js
+const slides = Array.isArray(templateJson.slides) ? templateJson.slides : [];
+slides.forEach((tSlide) => {
+  const slide = pres.addSlide();
+  if (tSlide?.background?.type === 'color') slide.background = { color: tSlide.background.value };
+  const elements = Array.isArray(tSlide?.elements) ? tSlide.elements : [];
+  elements.forEach((el) => {
+    const bbox = el?.bbox; if (!bbox) return;
+    const x = (bbox.left || 0) / PX_PER_INCH;
+    const y = (bbox.top || 0) / PX_PER_INCH;
+    const w = (bbox.width || 0) / PX_PER_INCH;
+    const h = (bbox.height || 0) / PX_PER_INCH;
+
+    if (el.type === 'text') {
+      const style = getStyleFromElement(el, '#374151');
+      const textContent = el.text?.trim()?.length ? el.text : (el?.runs?.[0]?.runs?.[0]?.text || '');
+      slide.addText(textContent || '', { x, y, w, h, fontSize: style.fontSize, ... });
+    } else if (el.type === 'shape') {
+      if (el.imageData) slide.addImage({ data: el.imageData, x, y, w, h, sizing: { type: 'contain' } });
+    }
+  });
+});
+```
+
+### A concise Cursor prompt you can paste
+Use this when you want Cursor to modify or extend this page without breaking the responsive slide rendering.
+
+```text
+You are updating the Svelte page at `src/routes/templates/preview/[id]/+page.svelte`.
+
+Context:
+- It loads a template JSON from `/api/templates/[id]`, which reads a local file in `individual_templates` through `loadTemplate` in `src/lib/templateService.js`.
+- Slides are designed at 1920×1080 and rendered inside `ScaledStage` (`src/lib/components/ScaledStage.svelte`), which uses a ResizeObserver to compute a uniform CSS transform scale so the stage fits any screen while preserving layout.
+- Text and shapes are absolutely positioned using the template’s `bbox`. Text is inline-editable when `editMode` is true. Shapes can embed images via a file input; selected files become `imageData` data URLs.
+- Export uses `/api/templates/export` which calls `exportTemplateToPPTX` in `src/lib/pitchDeck.js` to map px→inches and write pptx.
+
+Task:
+[Describe your exact change concisely, e.g. “Add per-slide zoom controls that scale only the stage, not the surrounding UI. Persist the zoom in component state and reset when changing slides.”]
+
+Constraints:
+- Do not change the 1920×1080 coordinate system. Keep absolute positioning intact.
+- Use `ScaledStage` scaling model; avoid per-element scaling.
+- Maintain `editMode` behavior for text and images.
+- Keep PPTX export functional with updated in-memory `template`.
+
+Acceptance criteria:
+- Slides remain fully visible and centered at all viewport sizes.
+- New feature works across slides; no layout shifts or overflow regressions.
+- Exported PPTX matches on-screen content for text and images.
+- No TypeScript errors; no changes to API contracts.
+```
+
+- If you need the raw template JSON, it’s in `individual_templates/<template_id>.json` (e.g., the beige/white/black deck).
+
+- For finding available templates via API:
+```12:35:src/routes/api/templates/+server.js
+export async function GET({ url }) {
+  const useLocal = url.searchParams.get('useLocal') === 'true';
+  if (useLocal) {
+    const local = loadLocalTemplates();
+    ...
+  }
+}
+```
+
+- Alignment, font sizing, and max-line clamps for on-screen readability are derived from `runs`:
+```87:118:src/routes/templates/preview/[id]/+page.svelte
+function styleForText(el: Element) {
+  ...
+  if (el.runs && el.runs.length > 0) {
+    const group = el.runs[0];
+    textAlign = mapAlign(group.alignment);
+    if (group.runs && group.runs.length > 0) {
+      const run = group.runs[0];
+      ...
+    }
+  }
+  ...
+}
+```
+
+- Slide navigation and state:
+```65:72:src/routes/templates/preview/[id]/+page.svelte
+function next() { ... }
+function prev() { ... }
+```
+
+- PPTX exporter preserves background and embeds images when present.
+
+- You can adjust `pageScale` in place if you want a global zoom of the entire page wrapper, but prefer `ScaledStage` for true responsive fitting.
+
+- To add new UI features, use the overlay slot in `ScaledStage` if you need controls positioned relative to the stage.
+
+- Keep the 16:9 aspect ratio and don’t mutate the JSON shape expected by export.
+
+- To test end-to-end: open `/templates/preview/<id>`, edit text, add an image, navigate across slides, and download PPTX; verify the PPTX matches the on-screen layout.
+
+- If you need to preload a different template, hit `/api/templates?useLocal=true` for local list or use `/api/templates/[id]` directly.
+
+- For future: adding PDF export is already possible via `generatePDF` in `src/lib/pitchDeck.js`.
+
+- To ensure cross-screen fit, rely on `ScaledStage`’s computed `scale` and offsets; avoid manual CSS scaling inside element boxes.
+
+- If you add per-slide features, keep immutable updates to `template.slides` to retain Svelte reactivity.
+
+- File paths: `+page.svelte`, `ScaledStage.svelte`, `templateService.js`, `pitchDeck.js`, API under `src/routes/api/templates`.
+
+- Done.

@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Logo Guidelines</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(to bottom right, #FFF7ED 0%, #FFFFFF 100%);
+            width: 1280px;
+            height: 720px;
+            overflow: hidden;
+        }
+        
+        .slide {
+            width: 100%;
+            height: 100%;
+            padding: 40px 60px;
+        }
+        
+        .header {
+            border-bottom: 4px solid {{PRIMARY_COLOR}};
+            padding-bottom: 15px;
+            margin-bottom: 30px;
+        }
+        
+        .title {
+            font-size: 42px;
+            font-weight: bold;
+            color: {{PRIMARY_COLOR}};
+        }
+        
+        .content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 40px;
+            height: calc(100% - 100px);
+        }
+        
+        .logo-section {
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .logo-placeholder {
+            width: 200px;
+            height: 200px;
+            background: #f8f9fa;
+            border: 2px dashed #ddd;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 20px;
+            position: relative;
+        }
+        
+        .logo-image {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+        }
+        
+        .logo-text {
+            font-size: 36px;
+            font-weight: bold;
+            color: #666;
+        }
+        
+        .section-title {
+            font-size: 20px;
+            font-weight: bold;
+            color: {{PRIMARY_COLOR}};
+            margin-bottom: 15px;
+        }
+        
+        .guidelines-box {
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+        }
+        
+        .guideline-item {
+            margin-bottom: 20px;
+            padding-left: 25px;
+            position: relative;
+        }
+        
+        .guideline-item::before {
+            content: '✓';
+            position: absolute;
+            left: 0;
+            color: {{PRIMARY_COLOR}};
+            font-weight: bold;
+            font-size: 18px;
+        }
+        
+        .guideline-title {
+            font-size: 16px;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 5px;
+        }
+        
+        .guideline-desc {
+            font-size: 14px;
+            color: #666;
+            line-height: 1.5;
+        }
+        
+        .spacing-guide {
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            margin-top: 20px;
+        }
+        
+        .spacing-box {
+            text-align: center;
+        }
+        
+        .spacing-demo {
+            width: 80px;
+            height: 80px;
+            border: 3px dashed {{PRIMARY_COLOR}};
+            border-radius: 8px;
+            margin: 0 auto 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .spacing-label {
+            font-size: 12px;
+            color: #666;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div class="slide">
+        <div class="header">
+            <div class="title">Logo Guidelines</div>
+        </div>
+        
+        <div class="content">
+            <div class="logo-section">
+                <div class="section-title">Primary Logo</div>
+                <div class="logo-placeholder">
+                    <img src="{{PRIMARY_LOGO_URL}}" alt="{{BRAND_NAME}} Logo" class="logo-image" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
+                    <div class="logo-text" style="display: none;">{{BRAND_NAME}}</div>
+                </div>
+                <div class="spacing-guide">
+                    <div class="spacing-box">
+                        <div class="spacing-demo">
+                            <span style="font-size: 10px;">MIN</span>
+                        </div>
+                        <div class="spacing-label">Minimum Size<br>32px</div>
+                    </div>
+                    <div class="spacing-box">
+                        <div class="spacing-demo">
+                            <span style="font-size: 14px;">CLEAR</span>
+                        </div>
+                        <div class="spacing-label">Clear Space<br>10% padding</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="guidelines-box">
+                <div class="section-title">Usage Guidelines</div>
+                
+                <div class="guideline-item">
+                    <div class="guideline-title">Minimum Size</div>
+                    <div class="guideline-desc">Never scale the logo below 32px in height to maintain legibility.</div>
+                </div>
+                
+                <div class="guideline-item">
+                    <div class="guideline-title">Clear Space</div>
+                    <div class="guideline-desc">Maintain clear space equal to 10% of the logo's width on all sides.</div>
+                </div>
+                
+                <div class="guideline-item">
+                    <div class="guideline-title">Background Usage</div>
+                    <div class="guideline-desc">Use on white or light backgrounds for optimal visibility and impact.</div>
+                </div>
+                
+                <div class="guideline-item">
+                    <div class="guideline-title">Do Not Modify</div>
+                    <div class="guideline-desc">Never rotate, distort, or change the logo colors or proportions.</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
+

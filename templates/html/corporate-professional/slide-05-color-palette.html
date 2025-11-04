@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Color Palette</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Arial', sans-serif; background: #FFFFFF; width: 1280px; height: 720px; overflow: hidden; }
+        .slide { width: 100%; height: 100%; padding: 50px 80px; background: linear-gradient(to right, #F8FAFC 0%, #FFFFFF 30%, #FFFFFF 70%, #F8FAFC 100%); }
+        .header { border-bottom: 4px solid #1E3A5F; padding-bottom: 20px; margin-bottom: 50px; }
+        .title { font-size: 48px; color: #1E3A5F; font-weight: bold; text-transform: uppercase; }
+        .colors { display: flex; gap: 30px; justify-content: space-between; }
+        .color-box { flex: 1; background: white; box-shadow: 0 8px 20px rgba(0,0,0,0.12); }
+        .swatch { width: 100%; height: 180px; }
+        .info { padding: 30px; }
+        .color-name { font-size: 18px; font-weight: bold; color: #1E293B; margin-bottom: 8px; }
+        .color-hex { font-size: 24px; font-family: 'Courier New', monospace; color: #64748B; margin-bottom: 10px; }
+        .color-desc { font-size: 13px; color: #94A3B8; }
+    </style>
+</head>
+<body>
+    <div class="slide">
+        <div class="header">
+            <div class="title">Colors</div>
+        </div>
+        <div class="colors">
+            <div class="color-box">
+                <div class="swatch" style="background: {{PRIMARY_COLOR}};"></div>
+                <div class="info">
+                    <div class="color-name">{{PRIMARY_NAME}}</div>
+                    <div class="color-hex">{{PRIMARY_HEX}}</div>
+                    <div class="color-desc">Primary Brand</div>
+                </div>
+            </div>
+            <div class="color-box">
+                <div class="swatch" style="background: {{SECONDARY_COLOR}};"></div>
+                <div class="info">
+                    <div class="color-name">{{SECONDARY_NAME}}</div>
+                    <div class="color-hex">{{SECONDARY_HEX}}</div>
+                    <div class="color-desc">Secondary</div>
+                </div>
+            </div>
+            <div class="color-box">
+                <div class="swatch" style="background: {{ACCENT_COLOR}};"></div>
+                <div class="info">
+                    <div class="color-name">{{ACCENT_NAME}}</div>
+                    <div class="color-hex">{{ACCENT_HEX}}</div>
+                    <div class="color-desc">Accent</div>
+                </div>
+            </div>
+            <div class="color-box">
+                <div class="swatch" style="background: {{NEUTRAL_COLOR}};"></div>
+                <div class="info">
+                    <div class="color-name">{{NEUTRAL_NAME}}</div>
+                    <div class="color-hex">{{NEUTRAL_HEX}}</div>
+                    <div class="color-desc">Neutral</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
+

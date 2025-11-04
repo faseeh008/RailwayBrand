@@ -1,0 +1,119 @@
+ï»¿Assignment 2: Full Auth.js
+Implementation + AI Chat Interface
+
+Due Date: Sunday 17th August (group task)
+Presentation: Required at completion
+
+1 Project Overview
+
+This assignment is a full redo of Assignment 1âs authentication application. You must imple-
+ment all features end-to-end (none are optional) and integrate an AI-powered chat inter-
+face using the Vercel AI SDK with a Gemini API Key. If you get stuck, reach out on Slack
+promptly.
+
+2 Team Groupings
+
+â¢ Sheraz Ahmed & Muhammad Hanzla
+â¢ Hammadullah Abid & Mahad Khalid Ghafoor
+â¢ Muhammad Faseeh & Abdul Aziz
+â¢ Choudhary Muhammad Junaid & Muhammad Muzamil
+â¢ Muhammad Ahmad & Behram Khan
+â¢ Shirmeen Aamir & Haris Ahmed & Abdullah Tahir
+â¢ Inzish Khan & Hammad Ali
+
+3 Required Features
+
+3.1  Authentication & Authorization
+â¢ Auth.js with email + password
+â¢ Database sessions (PostgreSQL) â no JWT
+â¢ Protected routes (dashboard and any user-only pages)
+â¢ Profile management (view & update)
+â¢ Admin role & dashboard:
+
+â View all registered users
+â Basic user analytics/statistics
+â Admin controls (e.g., role change/disable)
+
+13.2 Ãµ Database & ORM
+â¢ PostgreSQL with Drizzle ORM
+â¢ Proper use of drizzle.config.ts
+â¢ Use Drizzle Studio (no PGAdmin)
+
+3.3 Â± OAuth & Email Flows
+â¢ OAuth: Google & GitHub sign-in
+â¢ Email verification during signup
+â¢ Password reset via secure email link
+
+3.4 Ã AI Chat Interface
+â¢ Vercel AI SDK with Gemini API Key
+â¢ SvelteKit + TailwindCSS chat UI
+â¢ Must handle: user input, response display, loading states, errors
+â¢ Encapsulate logic into reusable modules/components
+
+4 Source Control & Workflow (Required)
+
+â¢ Branching: Work on feature/{short-name} branches. No direct commits to main.
+â¢ Pull Requests: Open PRs to main. At least one peer review within the group.
+â¢ Commit Quality: Working commits only. No broken builds. Use Conventional Com-
+mits (feat:, fix:, chore:, refactor:).
+
+â¢ Commit Frequency: Small, incremental commits (Ë 5â15 changes per commit) with clear
+messages.
+
+â¢ README & .env.example: Keep up-to-date with every PR if setup changes.
+
+5 Fresh-Clone Validation (Required)
+
+Your repo must pass a clean setup by a new developer without manual fixes. Reviewers will:
+
+1. Clone fresh on a new machine/environment.
+
+2. Run cp .env.example .env and fill only required secrets.
+
+3. Run pnpm db:start (Postgres).
+
+4. Run pnpm install, pnpm db:push, then pnpm dev.
+
+6 Extensions
+
+If you finish early, pick one extension to implement:
+â¢ Streaming: Stream AI responses instead of returning them all at once.
+â¢ Database Chat Storage: Save chat history per user in PostgreSQL.
+
+2â Super Extension
+â¢ Tree-Structured Chat History: Store chat messages in a tree format so users can fork a
+conversation from any message.
+
+7 Deliverables
+
+7.1  Working Application
+â¢ Auth.js sessions, protected routes, profile
+â¢ Admin dashboard with role management & analytics
+â¢ OAuth (Google & GitHub), email verification, password reset
+â¢ AI chat interface (Vercel AI SDK + Gemini)
+â¢ Responsive UI (TailwindCSS)
+
+7.2 Â§ Repository
+â¢ Public GitHub repo with CI passing badge
+â¢ Clean commit history (no broken commits on main)
+â¢ README.md with full setup & troubleshooting
+â¢ .env.example with all required variables
+
+7.3 Â Presentation & Demo
+â¢ 10 minutes total
+â¢ Cover: Auth & RBAC (Role Based Access Control), Drizzle, OAuth/email flows, AI chat,
+and key challenges
+
+8 Success Criteria
+
+â All required features implemented (none omitted)
+â Passing CI on every PR and on main
+â Fresh-clone validation succeeds without manual intervention
+â Extensions implemented if possible
+â Clear source control hygiene and working commits
+â README enables any dev to run the project quickly
+
+Aim for production-readiness: correctness, reliability, and ease of setup. Ask questions on
+Slack early.
+
+3

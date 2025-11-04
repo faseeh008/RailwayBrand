@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Photography</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Poppins', sans-serif; background: #4ECDC4; width: 1280px; height: 720px; overflow: hidden; }
+        .slide { width: 100%; height: 100%; padding: 60px 80px; display: grid; grid-template-columns: 1fr 1fr; gap: 40px; }
+        .title { font-size: 96px; font-weight: 900; color: white; text-transform: uppercase; grid-column: 1 / -1; margin-bottom: 30px; letter-spacing: -3px; text-shadow: 4px 4px 0px rgba(0,0,0,0.2); }
+        .photo-box { background: white; padding: 50px; position: relative; box-shadow: 8px 8px 0px #FF6B6B; }
+        .photo-box::before { content: ''; position: absolute; top: -15px; left: -15px; width: 100%; height: 100%; background: #FFE66D; z-index: -1; }
+        .photo-label { font-size: 24px; font-weight: 800; margin-bottom: 15px; text-transform: uppercase; color: #1A1A1A; }
+        .photo-text { font-size: 16px; line-height: 1.8; color: #333; font-weight: 600; }
+    </style>
+</head>
+<body>
+    <div class="slide">
+        <div class="title">PHOTO</div>
+        <div class="photo-box">
+            <div class="photo-label">Style</div>
+            <div class="photo-text">{{PHOTO_STYLE}}</div>
+        </div>
+        <div class="photo-box">
+            <div class="photo-label">Guidelines</div>
+            <div class="photo-text">{{PHOTO_GUIDELINES}}</div>
+        </div>
+    </div>
+</body>
+</html>
+

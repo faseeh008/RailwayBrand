@@ -1,0 +1,15 @@
+fastapi
+uvicorn[standard]
+python-multipart
+colorthief
+webcolors
+google-generativeai
+Pillow
+# Font detection dependencies (optional - will work without them)
+pyyaml
+onnxruntime
+numpy
+pytesseract
+torch
+torchvision
+pydantic

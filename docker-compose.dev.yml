@@ -1,0 +1,57 @@
+version: '3.8'
+
+services:
+  # PostgreSQL Database (using pgvector from docker-compose.yml)
+  db:
+    image: ankane/pgvector:latest
+    restart: always
+    environment:
+      POSTGRES_DB: local
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    ports:
+      - "5433:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Color Service (from docker-compose.yml)
+  color-service:
+    build: ./color-service
+    restart: always
+    ports:
+      - "8001:8001"
+    environment:
+      - GOOGLE_GEMINI_API=${GOOGLE_GEMINI_API}
+    volumes:
+      - ./static/uploads:/app/uploads
+    depends_on:
+      db:
+        condition: service_healthy
+
+  # AI Brand Audit Application (Development)
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    ports:
+      - "5173:5173"
+    environment:
+      - NODE_ENV=development
+      - DATABASE_URL=postgresql://postgres:postgres@db:5432/local
+    env_file:
+      - .env
+    depends_on:
+      db:
+        condition: service_healthy
+    volumes:
+      - .:/app
+      - /app/node_modules
+    restart: unless-stopped
+
+volumes:
+  pgdata:

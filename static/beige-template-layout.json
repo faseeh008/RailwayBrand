@@ -1,0 +1,702 @@
+{
+  "template_id": "beige-white-black-layout-template",
+  "name": "Beige White and Black Layout Template",
+  "version": "2.0",
+  "description": "Layout-only template for dynamic content placement. No hardcoded content.",
+  "metadata": {
+    "slide_dimensions": {
+      "width": 1920,
+      "height": 1080,
+      "ratio": "16:9",
+      "unit": "pixels"
+    },
+    "conversion": {
+      "pixels_per_inch": 192,
+      "note": "Divide pixel values by 192 to get inches for PPTX"
+    }
+  },
+  "color_palette": {
+    "primary": "#fff7e8",
+    "secondary": "#1b1b1b",
+    "accent": "#000000",
+    "text_primary": "#1b1b1b",
+    "text_secondary": "#666666"
+  },
+  "fonts": {
+    "heading": {
+      "family": "Inter Bold",
+      "weight": "bold",
+      "sizes": {
+        "main_title": 213.09,
+        "section_title": 76.94,
+        "subsection": 48.0
+      }
+    },
+    "body": {
+      "family": "DM Sans",
+      "weight": "normal",
+      "sizes": {
+        "normal": 20.0,
+        "small": 17.99,
+        "large": 24.0
+      }
+    }
+  },
+  "content_boundaries": {
+    "description": "Content overflow rules for each text region",
+    "title_max_chars": 100,
+    "subtitle_max_chars": 150,
+    "body_max_chars": 800,
+    "bullet_point_max_chars": 120,
+    "overflow_behavior": {
+      "title": "truncate_with_ellipsis",
+      "body": "create_new_slide",
+      "description": "If body content exceeds max_chars, create a continuation slide with same layout"
+    },
+    "word_wrap": true,
+    "auto_shrink_text": true
+  },
+  "slide_templates": [
+    {
+      "template_name": "cover_slide",
+      "description": "Opening slide for brand name and tagline",
+      "slide_type": "cover",
+      "background": {
+        "type": "color",
+        "value": "#fff7e8"
+      },
+      "content_regions": [
+        {
+          "region_id": "decorative_left",
+          "type": "shape",
+          "name": "Group 2",
+          "purpose": "decoration",
+          "editable": false,
+          "bbox": {
+            "left": -18,
+            "top": -34,
+            "width": 510,
+            "height": 1148
+          },
+          "shape_properties": {
+            "fill": "gradient",
+            "visible": true
+          }
+        },
+        {
+          "region_id": "decorative_center",
+          "type": "shape",
+          "name": "Group 4",
+          "purpose": "decoration",
+          "editable": false,
+          "bbox": {
+            "left": 320,
+            "top": 340,
+            "width": 1516,
+            "height": 632
+          },
+          "shape_properties": {
+            "fill": "pattern",
+            "visible": true
+          }
+        },
+        {
+          "region_id": "main_title",
+          "type": "text",
+          "purpose": "primary_heading",
+          "content_binding": "{{BRAND_NAME}}",
+          "placeholder": "Brand Guidelines",
+          "max_chars": 50,
+          "overflow": "shrink_font",
+          "bbox": {
+            "left": 420,
+            "top": 437,
+            "width": 1644,
+            "height": 286
+          },
+          "text_style": {
+            "font": "Inter Bold",
+            "size": 213.09,
+            "bold": true,
+            "italic": false,
+            "underline": false,
+            "color": "#1b1b1b",
+            "alignment": "left"
+          }
+        },
+        {
+          "region_id": "subtitle",
+          "type": "text",
+          "purpose": "tagline_or_description",
+          "content_binding": "{{AI_GENERATED_TAGLINE}}",
+          "placeholder": "Professional Brand Identity System",
+          "max_chars": 150,
+          "overflow": "truncate",
+          "bbox": {
+            "left": 428,
+            "top": 712,
+            "width": 1369,
+            "height": 103
+          },
+          "text_style": {
+            "font": "Inter",
+            "size": 76.94,
+            "bold": false,
+            "italic": false,
+            "underline": false,
+            "color": "#1b1b1b",
+            "alignment": "left"
+          }
+        },
+        {
+          "region_id": "presenter_label",
+          "type": "text",
+          "purpose": "static_label",
+          "content_binding": "Presented By :",
+          "editable": false,
+          "bbox": {
+            "left": 428,
+            "top": 887,
+            "width": 324,
+            "height": 34
+          },
+          "text_style": {
+            "font": "DM Sans",
+            "size": 20.0,
+            "bold": false,
+            "color": "#1b1b1b",
+            "alignment": "left"
+          }
+        },
+        {
+          "region_id": "presenter_name",
+          "type": "text",
+          "purpose": "brand_name",
+          "content_binding": "{{BRAND_NAME}}",
+          "max_chars": 50,
+          "bbox": {
+            "left": 612,
+            "top": 887,
+            "width": 360,
+            "height": 34
+          },
+          "text_style": {
+            "font": "DM Sans Bold",
+            "size": 20.0,
+            "bold": true,
+            "color": "#1b1b1b",
+            "alignment": "left"
+          }
+        },
+        {
+          "region_id": "website",
+          "type": "text",
+          "purpose": "contact_info",
+          "content_binding": "{{WEBSITE}}",
+          "placeholder": "www.yourbrand.com",
+          "max_chars": 60,
+          "bbox": {
+            "left": 1368,
+            "top": 887,
+            "width": 591,
+            "height": 34
+          },
+          "text_style": {
+            "font": "DM Sans Bold",
+            "size": 20.0,
+            "bold": true,
+            "color": "#1b1b1b",
+            "alignment": "left"
+          }
+        },
+        {
+          "region_id": "header_brand",
+          "type": "text",
+          "purpose": "header_brand_name",
+          "content_binding": "{{BRAND_NAME}}",
+          "max_chars": 40,
+          "bbox": {
+            "left": 597,
+            "top": 113,
+            "width": 351,
+            "height": 23
+          },
+          "text_style": {
+            "font": "DM Sans",
+            "size": 17.99,
+            "color": "#1b1b1b",
+            "alignment": "justify"
+          }
+        }
+      ]
+    },
+    {
+      "template_name": "content_slide_standard",
+      "description": "Standard content slide for step-by-step content with title and body",
+      "slide_type": "content",
+      "background": {
+        "type": "color",
+        "value": "#fff7e8"
+      },
+      "content_regions": [
+        {
+          "region_id": "decorative_background",
+          "type": "shape",
+          "purpose": "decoration",
+          "editable": false,
+          "bbox": {
+            "left": 0,
+            "top": 0,
+            "width": 1920,
+            "height": 1080
+          }
+        },
+        {
+          "region_id": "header_brand",
+          "type": "text",
+          "purpose": "header_brand_name",
+          "content_binding": "{{BRAND_NAME}}",
+          "max_chars": 40,
+          "bbox": {
+            "left": 188,
+            "top": 65,
+            "width": 400,
+            "height": 30
+          },
+          "text_style": {
+            "font": "DM Sans",
+            "size": 18.0,
+            "bold": false,
+            "color": "#1b1b1b",
+            "alignment": "left"
+          }
+        },
+        {
+          "region_id": "header_website",
+          "type": "text",
+          "purpose": "header_website",
+          "content_binding": "{{WEBSITE}}",
+          "max_chars": 50,
+          "bbox": {
+            "left": 1400,
+            "top": 65,
+            "width": 450,
+            "height": 30
+          },
+          "text_style": {
+            "font": "DM Sans",
+            "size": 18.0,
+            "bold": false,
+            "color": "#1b1b1b",
+            "alignment": "right"
+          }
+        },
+        {
+          "region_id": "page_title",
+          "type": "text",
+          "purpose": "section_heading",
+          "content_binding": "{{AI_GENERATED_STEP_TITLE}}",
+          "placeholder": "Section Title",
+          "max_chars": 100,
+          "overflow": "shrink_font",
+          "bbox": {
+            "left": 188,
+            "top": 170,
+            "width": 1544,
+            "height": 120
+          },
+          "text_style": {
+            "font": "Inter Bold",
+            "size": 72.0,
+            "bold": true,
+            "color": "#1b1b1b",
+            "alignment": "left"
+          }
+        },
+        {
+          "region_id": "main_content",
+          "type": "text",
+          "purpose": "body_content",
+          "content_binding": "{{AI_GENERATED_STEP_CONTENT}}",
+          "placeholder": "Main content area for AI-generated text. This will be filled with the step content from the brand guidelines generation process.",
+          "max_chars": 800,
+          "overflow": "create_new_slide",
+          "bbox": {
+            "left": 188,
+            "top": 320,
+            "width": 1544,
+            "height": 650
+          },
+          "text_style": {
+            "font": "DM Sans",
+            "size": 24.0,
+            "bold": false,
+            "color": "#1b1b1b",
+            "alignment": "left",
+            "line_spacing": 1.5
+          },
+          "boundary_rules": {
+            "word_wrap": true,
+            "auto_shrink": true,
+            "min_font_size": 18.0,
+            "overflow_to_new_slide_threshold": 850,
+            "keep_paragraphs_together": true
+          }
+        },
+        {
+          "region_id": "footer_page_number",
+          "type": "text",
+          "purpose": "page_number",
+          "content_binding": "{{PAGE_NUMBER}}",
+          "bbox": {
+            "left": 1750,
+            "top": 1000,
+            "width": 100,
+            "height": 40
+          },
+          "text_style": {
+            "font": "DM Sans",
+            "size": 16.0,
+            "color": "#666666",
+            "alignment": "right"
+          }
+        }
+      ]
+    },
+    {
+      "template_name": "content_slide_mission_vision",
+      "description": "Special content slide with Mission and Vision sections (for brand-positioning step)",
+      "slide_type": "content",
+      "background": {
+        "type": "color",
+        "value": "#fff7e8"
+      },
+      "content_regions": [
+        {
+          "region_id": "header_brand",
+          "type": "text",
+          "purpose": "header_brand_name",
+          "content_binding": "{{BRAND_NAME}}",
+          "max_chars": 40,
+          "bbox": {
+            "left": 188,
+            "top": 65,
+            "width": 400,
+            "height": 30
+          },
+          "text_style": {
+            "font": "DM Sans",
+            "size": 18.0,
+            "color": "#1b1b1b",
+            "alignment": "left"
+          }
+        },
+        {
+          "region_id": "page_title",
+          "type": "text",
+          "purpose": "section_heading",
+          "content_binding": "{{AI_GENERATED_STEP_TITLE}}",
+          "placeholder": "Who We Are",
+          "max_chars": 100,
+          "bbox": {
+            "left": 188,
+            "top": 170,
+            "width": 1544,
+            "height": 100
+          },
+          "text_style": {
+            "font": "Inter Bold",
+            "size": 64.0,
+            "bold": true,
+            "color": "#1b1b1b",
+            "alignment": "left"
+          }
+        },
+        {
+          "region_id": "mission_label",
+          "type": "text",
+          "purpose": "subsection_label",
+          "content_binding": "Mission",
+          "editable": false,
+          "bbox": {
+            "left": 188,
+            "top": 320,
+            "width": 200,
+            "height": 40
+          },
+          "text_style": {
+            "font": "Inter Bold",
+            "size": 32.0,
+            "bold": true,
+            "color": "#1b1b1b",
+            "alignment": "left"
+          }
+        },
+        {
+          "region_id": "mission_content",
+          "type": "text",
+          "purpose": "body_content",
+          "content_binding": "{{MISSION_EXTRACTED_FROM_AI}}",
+          "placeholder": "Mission statement goes here.",
+          "max_chars": 350,
+          "overflow": "truncate",
+          "bbox": {
+            "left": 188,
+            "top": 380,
+            "width": 1544,
+            "height": 250
+          },
+          "text_style": {
+            "font": "DM Sans",
+            "size": 22.0,
+            "color": "#1b1b1b",
+            "alignment": "left",
+            "line_spacing": 1.4
+          }
+        },
+        {
+          "region_id": "vision_label",
+          "type": "text",
+          "purpose": "subsection_label",
+          "content_binding": "Vision",
+          "editable": false,
+          "bbox": {
+            "left": 188,
+            "top": 670,
+            "width": 200,
+            "height": 40
+          },
+          "text_style": {
+            "font": "Inter Bold",
+            "size": 32.0,
+            "bold": true,
+            "color": "#1b1b1b",
+            "alignment": "left"
+          }
+        },
+        {
+          "region_id": "vision_content",
+          "type": "text",
+          "purpose": "body_content",
+          "content_binding": "{{VISION_EXTRACTED_FROM_AI}}",
+          "placeholder": "Vision statement goes here.",
+          "max_chars": 350,
+          "overflow": "truncate",
+          "bbox": {
+            "left": 188,
+            "top": 730,
+            "width": 1544,
+            "height": 250
+          },
+          "text_style": {
+            "font": "DM Sans",
+            "size": 22.0,
+            "color": "#1b1b1b",
+            "alignment": "left",
+            "line_spacing": 1.4
+          }
+        },
+        {
+          "region_id": "footer_page_number",
+          "type": "text",
+          "purpose": "page_number",
+          "content_binding": "{{PAGE_NUMBER}}",
+          "bbox": {
+            "left": 1750,
+            "top": 1000,
+            "width": 100,
+            "height": 40
+          },
+          "text_style": {
+            "font": "DM Sans",
+            "size": 16.0,
+            "color": "#666666",
+            "alignment": "right"
+          }
+        }
+      ]
+    },
+    {
+      "template_name": "closing_slide",
+      "description": "Final slide with thank you message and contact info",
+      "slide_type": "closing",
+      "background": {
+        "type": "color",
+        "value": "#fff7e8"
+      },
+      "content_regions": [
+        {
+          "region_id": "decorative_background",
+          "type": "shape",
+          "purpose": "decoration",
+          "editable": false,
+          "bbox": {
+            "left": 0,
+            "top": 0,
+            "width": 1920,
+            "height": 1080
+          }
+        },
+        {
+          "region_id": "thank_you_message",
+          "type": "text",
+          "purpose": "closing_heading",
+          "content_binding": "Thank You",
+          "editable": false,
+          "bbox": {
+            "left": 560,
+            "top": 380,
+            "width": 800,
+            "height": 120
+          },
+          "text_style": {
+            "font": "Inter Bold",
+            "size": 96.0,
+            "bold": true,
+            "color": "#1b1b1b",
+            "alignment": "center"
+          }
+        },
+        {
+          "region_id": "brand_name",
+          "type": "text",
+          "purpose": "brand_name",
+          "content_binding": "{{BRAND_NAME}}",
+          "bbox": {
+            "left": 560,
+            "top": 520,
+            "width": 800,
+            "height": 60
+          },
+          "text_style": {
+            "font": "DM Sans",
+            "size": 36.0,
+            "bold": false,
+            "color": "#1b1b1b",
+            "alignment": "center"
+          }
+        },
+        {
+          "region_id": "contact_email",
+          "type": "text",
+          "purpose": "contact_info",
+          "content_binding": "{{CONTACT_EMAIL}}",
+          "placeholder": "hello@yourbrand.com",
+          "bbox": {
+            "left": 560,
+            "top": 620,
+            "width": 800,
+            "height": 40
+          },
+          "text_style": {
+            "font": "DM Sans",
+            "size": 22.0,
+            "color": "#1b1b1b",
+            "alignment": "center"
+          }
+        },
+        {
+          "region_id": "contact_phone",
+          "type": "text",
+          "purpose": "contact_info",
+          "content_binding": "{{CONTACT_PHONE}}",
+          "placeholder": "+1-234-567-8900",
+          "bbox": {
+            "left": 560,
+            "top": 680,
+            "width": 800,
+            "height": 40
+          },
+          "text_style": {
+            "font": "DM Sans",
+            "size": 22.0,
+            "color": "#1b1b1b",
+            "alignment": "center"
+          }
+        },
+        {
+          "region_id": "website",
+          "type": "text",
+          "purpose": "contact_info",
+          "content_binding": "{{WEBSITE}}",
+          "placeholder": "www.yourbrand.com",
+          "bbox": {
+            "left": 560,
+            "top": 740,
+            "width": 800,
+            "height": 40
+          },
+          "text_style": {
+            "font": "DM Sans Bold",
+            "size": 22.0,
+            "bold": true,
+            "color": "#1b1b1b",
+            "alignment": "center"
+          }
+        }
+      ]
+    }
+  ],
+  "overflow_handling": {
+    "description": "Rules for handling content that exceeds region boundaries",
+    "enabled": true,
+    "strategies": {
+      "truncate": {
+        "description": "Cut off text at boundary and add ellipsis",
+        "add_ellipsis": true
+      },
+      "shrink_font": {
+        "description": "Reduce font size to fit content",
+        "min_font_size": 12.0,
+        "shrink_increment": 2.0
+      },
+      "create_new_slide": {
+        "description": "Split content across multiple slides using same template",
+        "continuation_indicator": true,
+        "continuation_text": "(continued)",
+        "max_slides_per_content": 3
+      }
+    }
+  },
+  "content_bindings": {
+    "description": "Placeholders that will be replaced with dynamic content",
+    "bindings": {
+      "{{BRAND_NAME}}": "Brand name from user input",
+      "{{WEBSITE}}": "Website URL from user input",
+      "{{CONTACT_EMAIL}}": "Contact email from user input",
+      "{{CONTACT_PHONE}}": "Contact phone from user input",
+      "{{AI_GENERATED_TAGLINE}}": "AI-generated tagline from brand-positioning step",
+      "{{AI_GENERATED_STEP_TITLE}}": "AI-generated title for the current step",
+      "{{AI_GENERATED_STEP_CONTENT}}": "AI-generated content for the current step",
+      "{{MISSION_EXTRACTED_FROM_AI}}": "Mission statement extracted from brand-positioning content",
+      "{{VISION_EXTRACTED_FROM_AI}}": "Vision statement extracted from brand-positioning content",
+      "{{PAGE_NUMBER}}": "Current slide number"
+    }
+  },
+  "usage_instructions": {
+    "slide_generation_flow": [
+      "1. Always start with cover_slide template",
+      "2. For each approved step in stepHistory:",
+      "   - If step is 'brand-positioning', use content_slide_mission_vision",
+      "   - Otherwise, use content_slide_standard",
+      "3. End with closing_slide template",
+      "4. Replace all {{PLACEHOLDER}} values with actual data",
+      "5. Apply overflow rules if content exceeds max_chars"
+    ],
+    "content_extraction": {
+      "from_markdown": "Extract plain text from markdown, remove ** and * formatting",
+      "max_length_enforcement": "Use max_chars property for each region",
+      "paragraph_splitting": "Split on \\n\\n for natural breaks"
+    },
+    "coordinate_system": {
+      "origin": "Top-left corner (0, 0)",
+      "x_axis": "Left to right",
+      "y_axis": "Top to bottom",
+      "conversion_formula": "inches = pixels / 192"
+    }
+  }
+}
+
+
+
+

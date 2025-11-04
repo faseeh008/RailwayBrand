@@ -1,0 +1,76 @@
+{
+  "version": "7",
+  "dialect": "postgresql",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "7",
+      "when": 1758094948884,
+      "tag": "0000_bright_shriek",
+      "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1758099093462,
+      "tag": "0001_cheerful_strong_guy",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1758099994146,
+      "tag": "0002_stormy_madame_web",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1758524200628,
+      "tag": "0003_known_doctor_faustus",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1758541539085,
+      "tag": "0004_equal_weapon_omega",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1758703001813,
+      "tag": "0005_lean_infant_terrible",
+      "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1758705318981,
+      "tag": "0006_grey_captain_britain",
+      "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1761116325982,
+      "tag": "0007_furry_metal_master",
+      "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1761116395725,
+      "tag": "0008_overrated_rocket_raccoon",
+      "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1761118995265,
+      "tag": "0009_cheerful_liz_osborn",
+      "breakpoints": true
+    }
+  ]
+}

@@ -1,0 +1,81 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main]
+
+jobs:
+  # Linting and Code Quality
+  lint:
+    name: 🔍 Lint & Format Check
+    runs-on: ubuntu-latest
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+
+      - name: 📦 Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: latest
+
+      - name: 📦 Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'pnpm'
+
+      - name: 📋 Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: 🔍 Run linting
+        run: pnpm run lint
+
+      - name: 🔧 Type checking
+        run: pnpm run check
+
+  # Build Test
+  build:
+    name: 🏗️ Build Test
+    runs-on: ubuntu-latest
+    needs: lint
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+
+      - name: 📦 Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: latest
+
+      - name: 📦 Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'pnpm'
+
+      - name: 📋 Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: 🏗️ Build application
+        run: pnpm run build
+
+  # Notify on completion
+  notify:
+    name: 📢 Pipeline Status
+    runs-on: ubuntu-latest
+    needs: [lint, build]
+    if: always()
+    steps:
+      - name: 📢 Success notification
+        if: ${{ needs.lint.result == 'success' && needs.build.result == 'success' }}
+        run: |
+          echo "✅ All checks passed successfully!"
+          echo "🚀 EternaBrand is ready for deployment"
+
+      - name: 📢 Failure notification
+        if: ${{ contains(needs.*.result, 'failure') }}
+        run: |
+          echo "❌ Pipeline failed. Check the logs above."
+          exit 1

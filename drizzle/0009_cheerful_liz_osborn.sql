@@ -1,0 +1,1 @@
+ALTER TABLE "generated_slides" ADD COLUMN "brandName" text NOT NULL;

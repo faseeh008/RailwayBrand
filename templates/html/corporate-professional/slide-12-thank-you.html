@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Thank You</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Arial', sans-serif; background: linear-gradient(135deg, #1E3A5F 0%, #2C5282 100%); width: 1280px; height: 720px; overflow: hidden; }
+        .slide { width: 100%; height: 100%; display: flex; flex-direction: column; justify-content: center; align-items: center; padding: 80px; }
+        .thank-you { font-size: 72px; font-weight: bold; color: #FFFFFF; text-transform: uppercase; margin-bottom: 30px; letter-spacing: 4px; }
+        .brand-name { font-size: 42px; color: #E2E8F0; font-weight: 300; margin-bottom: 60px; }
+        .contact { background: rgba(255,255,255,0.15); padding: 40px 60px; border: 2px solid rgba(255,255,255,0.3); backdrop-filter: blur(10px); }
+        .contact-item { font-size: 16px; color: #FFFFFF; margin-bottom: 12px; text-align: center; }
+    </style>
+</head>
+<body>
+    <div class="slide">
+        <div class="thank-you">Thank You</div>
+        <div class="brand-name">{{BRAND_NAME}}</div>
+        <div class="contact">
+            <div class="contact-item">{{CONTACT_EMAIL}}</div>
+            <div class="contact-item">{{CONTACT_PHONE}}</div>
+            <div class="contact-item">{{CONTACT_WEBSITE}}</div>
+        </div>
+    </div>
+</body>
+</html>
+
