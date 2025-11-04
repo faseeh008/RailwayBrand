@@ -1,64 +1,27 @@
 <script lang="ts">
   import { createEventDispatcher } from 'svelte';
   import { Button } from '$lib/components/ui/button';
-  import { X, Maximize2, Minimize2 } from 'lucide-svelte';
+  import { X } from 'lucide-svelte';
 
   export let isOpen = false;
   export let screenshot: string | null = null;
   export let annotatedScreenshot: string | null = null;
-  export let showHighlights = true;
   export let issues: any[] = [];
   export let elementPositions: any[] = [];
 
   const dispatch = createEventDispatcher();
 
-  // Local copy for toggling without mutating prop
-  let localShowHighlights = showHighlights;
-  
-  $: localShowHighlights = showHighlights;
-
   function closeModal() {
     dispatch('close');
   }
 
-  function toggleHighlights() {
-    localShowHighlights = !localShowHighlights;
-  }
-
-  function getHighlightStyle(issue: any) {
-    const colors = {
-      colors: '#FF6B6B',
-      typography: '#4ECDC4',
-      logo: '#45B7D1',
-      layout: '#96CEB4',
-      spacing: '#FFA726'
-    };
-    
-    return {
-      borderColor: colors[issue.category as keyof typeof colors] || '#666666',
-      borderWidth: issue.severity === 'high' ? '3px' : issue.severity === 'medium' ? '2px' : '1px'
-    };
-  }
-
-  function getCategoryIcon(category: string) {
-    const icons = {
-      colors: '🎨',
-      typography: '📝',
-      logo: '🏷️',
-      layout: '📐',
-      spacing: '📏'
-    };
-    return icons[category as keyof typeof icons] || '⚠️';
-  }
-
-  function getSeverityColor(severity: string) {
-    const colors = {
-      high: '#FF6B6B',
-      medium: '#FFA726',
-      low: '#42A5F5'
-    };
-    return colors[severity as keyof typeof colors] || '#666666';
-  }
+  // Issue types and colors matching the annotator
+  const issueTypes = {
+    colors: { color: '#FF6B6B', label: 'Color Issue' },
+    typography: { color: '#3B82F6', label: 'Typography Issue' },
+    logo: { color: '#FACC15', label: 'Logo Issue' },
+    spacing: { color: '#FFA726', label: 'Spacing Issue' }
+  };
 
   // Prevent body scroll when modal is open
   $: if (isOpen) {
@@ -97,23 +60,6 @@
         </div>
         
         <div class="flex items-center gap-3">
-          {#if annotatedScreenshot}
-            <Button
-              variant="outline"
-              size="sm"
-              onclick={toggleHighlights}
-              class="flex items-center gap-2"
-            >
-              {#if localShowHighlights}
-                <Minimize2 class="w-4 h-4" />
-                Hide Highlights
-              {:else}
-                <Maximize2 class="w-4 h-4" />
-                Show Highlights
-              {/if}
-            </Button>
-          {/if}
-          
           <Button
             variant="outline"
             size="sm"
@@ -127,11 +73,28 @@
       </div>
 
       <!-- Modal Body -->
-      <div class="flex-1 overflow-hidden">
+      <div class="modal-body-container">
+        <!-- Fixed Legend Sidebar (only shown for annotated screenshots) -->
+        {#if annotatedScreenshot}
+          <div class="fixed-legend-sidebar">
+            <div class="legend-card">
+              <div class="legend-title">Audit Issues Legend</div>
+              <div class="legend-items">
+                {#each Object.entries(issueTypes) as [type, config]}
+                  <div class="legend-item">
+                    <div class="legend-color-indicator" style="background-color: {config.color};"></div>
+                    <span class="legend-label">{config.label}</span>
+                  </div>
+                {/each}
+              </div>
+            </div>
+          </div>
+        {/if}
+        
         <!-- Fullscreen Screenshot Container with Scroll -->
-        <div class="w-full h-full overflow-auto">
+        <div class="screenshot-container" class:has-sidebar={annotatedScreenshot}>
           <div class="relative min-h-full flex items-center justify-center p-4">
-            {#if localShowHighlights && annotatedScreenshot}
+            {#if annotatedScreenshot}
               <img 
                 src={annotatedScreenshot} 
                 alt="Fullscreen Annotated Screenshot" 
@@ -150,39 +113,6 @@
                 <p class="text-gray-500 text-lg">No screenshot available</p>
               </div>
             {/if}
-            
-            <!-- Interactive highlights overlay -->
-            {#if localShowHighlights && annotatedScreenshot && elementPositions && elementPositions.length > 0}
-              <div class="highlights-overlay absolute inset-0 pointer-events-none">
-                {#each elementPositions as elementPos, index}
-                  {@const issue = issues?.[index]}
-                  {#if issue}
-                    <div
-                      class="issue-highlight absolute border-2 border-dashed cursor-pointer transition-all duration-200 hover:opacity-80"
-                      style="
-                        border-color: {getHighlightStyle(issue).borderColor}; 
-                        border-width: {getHighlightStyle(issue).borderWidth};
-                        left: {elementPos?.position?.x || 0}px;
-                        top: {elementPos?.position?.y || 0}px;
-                        width: {elementPos?.position?.width || 100}px;
-                        height: {elementPos?.position?.height || 50}px;
-                      "
-                      role="button"
-                      tabindex="0"
-                      onclick={(e) => {
-                        e.stopPropagation();
-                        console.log('Issue clicked:', issue);
-                      }}
-                    >
-                      <div class="issue-marker absolute -top-3 -left-3 w-8 h-8 rounded-full flex items-center justify-center text-white font-bold text-sm shadow-lg"
-                           style="background-color: {getHighlightStyle(issue).borderColor};">
-                        {index + 1}
-                      </div>
-                    </div>
-                  {/if}
-                {/each}
-              </div>
-            {/if}
           </div>
         </div>
       </div>
@@ -192,7 +122,7 @@
         <div class="flex items-center justify-center">
           <div class="text-sm text-gray-500">
             {#if annotatedScreenshot}
-              Click on highlighted areas to see detailed issue information • Scroll to view full image • Press ESC to close
+              View annotated screenshot with visual highlights • Scroll to view full image • Press ESC to close
             {:else}
               Use this screenshot to visually identify elements • Scroll to view full image • Press ESC to close
             {/if}
@@ -204,20 +134,90 @@
 {/if}
 
 <style>
-  .highlights-overlay {
-    pointer-events: none;
-  }
-  
-  .issue-highlight {
-    pointer-events: auto;
-  }
-  
-  .issue-marker {
-    pointer-events: none;
-  }
-  
   /* Ensure modal is above everything */
   :global(.fullscreen-modal) {
     z-index: 9999;
+  }
+
+  /* Modal Body Container */
+  .modal-body-container {
+    flex: 1;
+    overflow: hidden;
+    position: relative;
+    display: flex;
+  }
+
+  /* Fixed Legend Sidebar - positioned to the left of the screenshot */
+  .fixed-legend-sidebar {
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 260px;
+    background: #F9FAFB;
+    border-right: 2px solid #E5E7EB;
+    padding: 20px;
+    overflow-y: auto;
+    z-index: 10;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .legend-card {
+    background: white;
+    border: 2px solid #DDDDDD;
+    border-radius: 12px;
+    padding: 16px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    width: 100%;
+    max-width: 220px;
+  }
+
+  .legend-title {
+    font-size: 16px;
+    font-weight: bold;
+    color: #333333;
+    margin-bottom: 12px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid #EEEEEE;
+  }
+
+  .legend-items {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .legend-color-indicator {
+    width: 16px;
+    height: 16px;
+    border-radius: 2px;
+    border: 1px solid #333333;
+    flex-shrink: 0;
+  }
+
+  .legend-label {
+    font-size: 13px;
+    color: #333333;
+    font-weight: 500;
+  }
+
+  /* Screenshot container - accounts for sidebar width */
+  .screenshot-container {
+    flex: 1;
+    width: 100%;
+    height: 100%;
+    overflow: auto;
+  }
+
+  .screenshot-container.has-sidebar {
+    margin-left: 260px;
   }
 </style>

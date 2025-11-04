@@ -23,10 +23,23 @@ export class RobustFontDetector {
       'helvetica neue', 'times new roman', 'verdana', 'georgia',
       'tahoma', 'courier new', 'impact', 'trebuchet ms', 'comic sans ms',
       
-      // Brand Fonts
-      'omnes', 'neighbor', 'greatest richmond', 'chirp', 'circular',
+      // Brand Fonts (including Switcher fonts)
+      'omnes', 'neighbor', 'neighbour', 'montserrat', 'greatest richmond', 'chirp', 'circular',
       'sf pro', 'sf pro display', 'segoe ui', 'myriad pro', 'futura',
       'gill sans', 'din', 'avenir', 'proxima nova'
+    ]);
+  }
+
+  // Common phrases/text that should NOT be detected as fonts
+  getExcludedPhrases() {
+    return new Set([
+      'switcher brand guidelines', 'switcher brand', 'brand guidelines',
+      'is', 'are', 'with', 'there', 'brand', 'guidelines', 'document',
+      'with flexibility built in', 'flexibility built', 'built in',
+      'there are', 'general usage', 'usage', 'primary', 'secondary',
+      'quick guide', 'version', 'typography', 'typeface', 'font family',
+      'headings', 'body', 'copy', 'text', 'title', 'subtitle',
+      'where your', 'video lives', 'where voices', 'connect'
     ]);
   }
 
@@ -117,11 +130,18 @@ export class RobustFontDetector {
       }
     }
     
-    // Step 2.5: Fallback - look for known font names in the text
+    // Step 2.5: ALWAYS look for known font names first (prioritize known fonts)
+    console.log('🔤 Checking for known fonts in text...');
+    const knownFonts = this.extractKnownFonts(text);
+    if (knownFonts.length > 0) {
+      console.log(`✅ Found ${knownFonts.length} known fonts: ${knownFonts.map(f => f.font).join(', ')}`);
+      this.mergeFontCandidates(knownFonts, fontCandidates);
+    }
+    
+    // Step 2.6: Fallback - if still no fonts found, try less strict patterns
     if (fontCandidates.size === 0) {
-      console.log('🔤 No fonts found in sections, trying fallback detection...');
-      const fallbackFonts = this.extractKnownFonts(text);
-      this.mergeFontCandidates(fallbackFonts, fontCandidates);
+      console.log('🔤 No known fonts found, trying fallback detection...');
+      // The patterns from Step 2 will have already been tried
     }
     
     // Step 3: Categorize fonts by usage
@@ -284,23 +304,56 @@ export class RobustFontDetector {
     
     const lowerFont = cleanFont.toLowerCase();
     
-    // Check against whitelist
+    // Check against excluded phrases (strict check)
+    const excludedPhrases = this.getExcludedPhrases();
+    if (excludedPhrases.has(lowerFont)) {
+      return false;
+    }
+    
+    // Check if it's a phrase containing excluded terms
+    for (const phrase of excludedPhrases) {
+      if (lowerFont.includes(phrase) || phrase.includes(lowerFont)) {
+        // Allow if it's a known font that happens to contain the phrase
+        if (!this.fontWhitelist.has(lowerFont)) {
+          return false;
+        }
+      }
+    }
+    
+    // Check against whitelist (highest priority)
     if (this.fontWhitelist.has(lowerFont)) {
       return true;
     }
     
+    // For non-whitelisted fonts, be much more strict
+    // Single-word capitalized names are more likely to be fonts
+    const words = cleanFont.split(/\s+/);
+    
+    // Reject if too many words (likely a phrase)
+    if (words.length > 2) {
+      return false;
+    }
+    
+    // Reject if contains common non-font words
+    const nonFontWords = ['switcher', 'brand', 'guidelines', 'where', 'your', 'video', 'lives', 'with', 'flexibility', 'built', 'in', 'there', 'are', 'is', 'are', 'the', 'a', 'an', 'and', 'or', 'but', 'to', 'for', 'of', 'from'];
+    const hasNonFontWord = words.some(word => nonFontWords.includes(word.toLowerCase()));
+    if (hasNonFontWord) {
+      return false;
+    }
+    
     // Check for common font patterns
     const validPatterns = [
-      /^[A-Z][a-z]+(?:\s+[A-Z][a-z]+)*$/, // Proper capitalization
+      /^[A-Z][a-z]+(?:\s+[A-Z][a-z]+)?$/, // Proper capitalization (max 2 words)
       /^[A-Za-z\s\-]+$/, // Only letters, spaces, hyphens
     ];
     
     const isValidPattern = validPatterns.some(pattern => pattern.test(cleanFont));
     const isNotGeneric = !this.isGenericTerm(lowerFont);
-    const isNotTooLong = cleanFont.length <= 50; // Reasonable font name length
+    const isNotTooLong = cleanFont.length <= 30; // Shorter max length for stricter validation
     const hasNoNewlines = !cleanFont.includes('\n'); // No multiline text
     
-    return isValidPattern && isNotGeneric && isNotTooLong && hasNoNewlines;
+    // Only accept if it matches pattern AND is not generic AND meets all criteria
+    return isValidPattern && isNotGeneric && isNotTooLong && hasNoNewlines && !hasNonFontWord;
   }
 
   isGenericTerm(fontName) {
@@ -317,7 +370,11 @@ export class RobustFontDetector {
       'logo', 'icon', 'pattern', 'spacing', 'margin', 'padding',
       'size', 'weight', 'style', 'family', 'bold', 'italic', 'regular',
       'light', 'medium', 'black', 'thin', 'hairline', 'extrabold',
-      'normal', 'oblique', 'condensed', 'expanded', 'small', 'large'
+      'normal', 'oblique', 'condensed', 'expanded', 'small', 'large',
+      // Switcher-specific false positives
+      'switcher', 'where', 'your', 'video', 'lives', 'with', 'flexibility',
+      'built', 'in', 'there', 'are', 'is', 'are', 'the', 'a', 'an',
+      'and', 'or', 'but', 'to', 'for', 'of', 'from', 'usage', 'general'
     ];
     return genericTerms.includes(fontName.toLowerCase());
   }
@@ -451,36 +508,58 @@ export class RobustFontDetector {
   extractFontsFromSection(sectionText) {
     const fonts = [];
     
-    // Look for font names in section with very specific patterns
-    const patterns = [
-      // Font names followed by weight specifications (most reliable)
-      /\b([A-Z][a-z]+(?:\s+[A-Z][a-z]+)*)\s+(?:bold|regular|light|medium|black|italic|weight)/gi,
-      // Font names in quotes (very reliable)
-      /["']([A-Z][a-z]+(?:\s+[A-Z][a-z]+)*)["']/gi,
-      // Font names after colons (reliable)
-      /:\s*([A-Z][a-z]+(?:\s+[A-Z][a-z]+)*)/gi,
-      // Font names in lists (comma-separated)
-      /\b([A-Z][a-z]+(?:\s+[A-Z][a-z]+)*)(?:\s*,\s*[A-Z][a-z]+(?:\s+[A-Z][a-z]+)*)*/gi
-    ];
+    // First, try to find known fonts from whitelist in the section text
+    const sectionLower = sectionText.toLowerCase();
+    for (const knownFont of this.fontWhitelist) {
+      // Look for the font name as a whole word
+      const fontPattern = new RegExp(`\\b${knownFont.replace(/\s+/g, '\\s+')}\\b`, 'gi');
+      if (fontPattern.test(sectionText)) {
+        // Extract with context to get weights
+        const contextMatch = sectionText.match(new RegExp(`.{0,100}${knownFont.replace(/\s+/g, '\\s+')}.{0,100}`, 'gi'));
+        const weights = this.extractWeights(contextMatch ? contextMatch[0] : sectionText);
+        
+        // Capitalize first letter of each word
+        const capitalizedFont = knownFont.split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+        
+        fonts.push({
+          font: capitalizedFont,
+          weights: weights.length > 0 ? weights : ['Regular', 'Bold'],
+          rawText: knownFont,
+          confidence: 0.95 // Very high confidence for whitelist matches
+        });
+      }
+    }
     
-    for (const pattern of patterns) {
-      const matches = sectionText.match(pattern);
-      if (matches) {
+    // Look for font names in section with very specific patterns (only if no whitelist match)
+    if (fonts.length === 0) {
+      const patterns = [
+        // Font names followed by weight specifications (most reliable)
+        /\b([A-Z][a-z]+(?:\s+[A-Z][a-z]+)?)\s+(?:bold|regular|light|medium|black|italic|weight)/gi,
+        // Font names in quotes (very reliable)
+        /["']([A-Z][a-z]+(?:\s+[A-Z][a-z]+)?)["']/gi,
+        // Font names after colons (reliable)
+        /(?:typeface|font|typography)[\s:]+([A-Z][a-z]+(?:\s+[A-Z][a-z]+)?)/gi,
+      ];
+      
+      for (const pattern of patterns) {
+        const matches = [...sectionText.matchAll(pattern)];
         for (const match of matches) {
-          const fontName = match.replace(/["']/g, '').trim();
+          const fontName = (match[1] || match[0]).replace(/["']/g, '').trim();
           
           // Additional validation for section fonts
           if (this.isValidFont(fontName) && 
               !this.isColorRelated(fontName) && 
               !this.isGenericTerm(fontName.toLowerCase()) &&
-              fontName.length <= 30 && // Reasonable font name length
-              !fontName.includes(' ') || fontName.split(' ').length <= 3) { // Max 3 words
+              fontName.length <= 25 && // Shorter max length
+              fontName.split(' ').length <= 2) { // Max 2 words
+            
+            const weights = this.extractWeights(match[0]);
             
             fonts.push({
               font: fontName,
-              weights: ['Regular', 'Bold'], // Default for section fonts
-              rawText: match,
-              confidence: 0.9 // Higher confidence for section fonts
+              weights: weights.length > 0 ? weights : ['Regular', 'Bold'],
+              rawText: match[0],
+              confidence: 0.85 // Lower confidence for pattern matches
             });
           }
         }
@@ -578,28 +657,73 @@ export class RobustFontDetector {
    */
   extractKnownFonts(text) {
     const fonts = [];
+    const foundFonts = new Set(); // Track found fonts to avoid duplicates
     
-    // Look for specific known font names in the text
+    // Look for specific known font names in the text (prioritize Switcher fonts)
     const knownFonts = [
-      'Omnes', 'Montserrat', 'Neighbor', 'Greatest Richmond',
-      'Helvetica Neue', 'Helvetica', 'Arial', 'Roboto', 'Poppins',
-      'Inter', 'Lato', 'Open Sans', 'Source Sans Pro', 'Nunito',
-      'Chirp', 'Circular', 'SF Pro', 'SF Pro Display', 'Segoe UI',
-      'Myriad Pro', 'Futura', 'Gill Sans', 'DIN', 'Avenir', 'Proxima Nova'
+      // Switcher brand fonts (highest priority)
+      { name: 'Omnes', variations: ['Omnes'] },
+      { name: 'Montserrat', variations: ['Montserrat'] },
+      { name: 'Neighbour', variations: ['Neighbour', 'Neighbor'] },
+      { name: 'Greatest Richmond', variations: ['Greatest Richmond'] },
+      
+      // Common brand fonts
+      { name: 'Chirp', variations: ['Chirp'] },
+      { name: 'Circular', variations: ['Circular'] },
+      { name: 'Helvetica Neue', variations: ['Helvetica Neue', 'HelveticaNeue'] },
+      { name: 'Helvetica', variations: ['Helvetica'] },
+      
+      // Google Fonts
+      { name: 'Arial', variations: ['Arial'] },
+      { name: 'Roboto', variations: ['Roboto'] },
+      { name: 'Poppins', variations: ['Poppins'] },
+      { name: 'Inter', variations: ['Inter'] },
+      { name: 'Lato', variations: ['Lato'] },
+      { name: 'Open Sans', variations: ['Open Sans', 'OpenSans'] },
+      { name: 'Source Sans Pro', variations: ['Source Sans Pro', 'SourceSansPro'] },
+      { name: 'Nunito', variations: ['Nunito'] },
+      
+      // System fonts
+      { name: 'SF Pro', variations: ['SF Pro', 'SFPro', 'SF Pro Display'] },
+      { name: 'SF Pro Display', variations: ['SF Pro Display', 'SFProDisplay'] },
+      { name: 'Segoe UI', variations: ['Segoe UI', 'SegoeUI'] },
+      { name: 'Myriad Pro', variations: ['Myriad Pro', 'MyriadPro'] },
+      { name: 'Futura', variations: ['Futura'] },
+      { name: 'Gill Sans', variations: ['Gill Sans', 'GillSans'] },
+      { name: 'DIN', variations: ['DIN'] },
+      { name: 'Avenir', variations: ['Avenir'] },
+      { name: 'Proxima Nova', variations: ['Proxima Nova', 'ProximaNova'] }
     ];
     
-    for (const fontName of knownFonts) {
-      const pattern = new RegExp(`\\b${fontName}\\b`, 'gi');
-      const matches = text.match(pattern);
+    for (const fontConfig of knownFonts) {
+      // Skip if already found
+      if (foundFonts.has(fontConfig.name.toLowerCase())) continue;
       
-      if (matches && matches.length > 0) {
-        fonts.push({
-          font: fontName,
-          weights: ['Regular', 'Bold'], // Default weights
-          rawText: fontName,
-          confidence: 0.8,
-          occurrences: matches.length
-        });
+      // Try each variation
+      for (const variation of fontConfig.variations) {
+        // Look for font name as whole word (case-insensitive)
+        const pattern = new RegExp(`\\b${variation.replace(/\s+/g, '\\s+')}\\b`, 'gi');
+        const matches = [...text.matchAll(pattern)];
+        
+        if (matches.length > 0) {
+          // Extract context around the match to find weights
+          const firstMatch = matches[0];
+          const startPos = Math.max(0, firstMatch.index - 50);
+          const endPos = Math.min(text.length, firstMatch.index + firstMatch[0].length + 50);
+          const context = text.substring(startPos, endPos);
+          const weights = this.extractWeights(context);
+          
+          fonts.push({
+            font: fontConfig.name,
+            weights: weights.length > 0 ? weights : ['Regular', 'Bold'],
+            rawText: variation,
+            confidence: 0.95, // Very high confidence for known fonts
+            occurrences: matches.length
+          });
+          
+          foundFonts.add(fontConfig.name.toLowerCase());
+          break; // Found this font, move to next
+        }
       }
     }
     

@@ -1,4 +1,5 @@
 import { drizzle } from 'drizzle-orm/postgres-js';
+import '../env'; // ensure .env is loaded before reading DATABASE_URL
 import postgres from 'postgres';
 import * as schema from './schema.js';
 

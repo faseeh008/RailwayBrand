@@ -9,6 +9,7 @@
   export let brandName: string;
   export let screenshot: string | null = null;
   export let visualData: any = null;
+  export let fixPrompt: string | null = null;
 
   // Copy functionality
   let copiedItems: Set<string> = new Set();
@@ -79,16 +80,48 @@
     }
   }
 
+  function getCategoryColor(category: string) {
+    switch (category?.toLowerCase()) {
+      case 'colors': return { bg: 'bg-red-50', border: 'border-red-200', text: 'text-red-700', icon: 'text-red-600', badge: 'bg-red-100 text-red-800' };
+      case 'typography': return { bg: 'bg-blue-50', border: 'border-blue-200', text: 'text-blue-700', icon: 'text-blue-600', badge: 'bg-blue-100 text-blue-800' };
+      case 'logo': return { bg: 'bg-yellow-50', border: 'border-yellow-200', text: 'text-yellow-700', icon: 'text-yellow-600', badge: 'bg-yellow-100 text-yellow-800' };
+      case 'layout': return { bg: 'bg-green-50', border: 'border-green-200', text: 'text-green-700', icon: 'text-green-600', badge: 'bg-green-100 text-green-800' };
+      case 'spacing': return { bg: 'bg-purple-50', border: 'border-purple-200', text: 'text-purple-700', icon: 'text-purple-600', badge: 'bg-purple-100 text-purple-800' };
+      default: return { bg: 'bg-gray-50', border: 'border-gray-200', text: 'text-gray-700', icon: 'text-gray-600', badge: 'bg-gray-100 text-gray-800' };
+    }
+  }
+
+  function getScoreColor(score: number) {
+    if (score >= 0.8) return { color: 'text-green-600', bg: 'bg-green-50', border: 'border-green-200', progress: 'bg-green-500' };
+    if (score >= 0.6) return { color: 'text-yellow-600', bg: 'bg-yellow-50', border: 'border-yellow-200', progress: 'bg-yellow-500' };
+    return { color: 'text-red-600', bg: 'bg-red-50', border: 'border-red-200', progress: 'bg-red-500' };
+  }
+
+  function getCategoryDisplayName(category: string) {
+    switch (category?.toLowerCase()) {
+      case 'colors': return 'Colors';
+      case 'typography': return 'Typography';
+      case 'logo': return 'Logo';
+      case 'layout': return 'Layout';
+      case 'spacing': return 'Spacing';
+      default: return 'General';
+    }
+  }
+
   // Group issues by category and selector
   function groupIssues(issues: any[]) {
     const grouped: Record<string, any> = {};
     
     issues.forEach(issue => {
-      const key = `${issue.category}_${issue.element || 'general'}`;
+      // Fix empty category issue
+      const category = issue.category || 'general';
+      const element = issue.element || 'general';
+      const key = `${category}_${element}`;
+      
       if (!grouped[key]) {
         grouped[key] = {
-          category: issue.category,
-          element: issue.element || 'general',
+          category: category,
+          element: element,
           severity: issue.severity || 'medium',
           issues: [],
           elements: new Set()
@@ -100,9 +133,17 @@
       }
     });
 
-    // Clean up elements
+    // Clean up elements and determine highest severity
     Object.values(grouped).forEach((group: any) => {
       group.elements = Array.from(group.elements);
+      // Determine highest severity in the group
+      const severities = ['low', 'medium', 'high'];
+      const maxSeverity = group.issues.reduce((max: string, issue: any) => {
+        const currentIdx = severities.indexOf(issue.severity || 'medium');
+        const maxIdx = severities.indexOf(max);
+        return currentIdx > maxIdx ? issue.severity : max;
+      }, group.severity);
+      group.severity = maxSeverity;
     });
 
     return grouped;
@@ -118,6 +159,15 @@
     }
   }
 
+  function getSeverityBadgeStyle(severity: string) {
+    switch (severity?.toLowerCase()) {
+      case 'high': return { bg: 'bg-red-100', text: 'text-red-800', border: 'border-red-300' };
+      case 'medium': return { bg: 'bg-orange-100', text: 'text-orange-800', border: 'border-orange-300' };
+      case 'low': return { bg: 'bg-yellow-100', text: 'text-yellow-800', border: 'border-yellow-300' };
+      default: return { bg: 'bg-gray-100', text: 'text-gray-800', border: 'border-gray-300' };
+    }
+  }
+
 
   // Check if issue is color-related
   function isColorIssue(issue: any): boolean {
@@ -129,6 +179,60 @@
   // Get color value for swatch
   function getColorValue(issue: any): string {
     return issue.expected || issue.correctValue || issue.found || '#000000';
+  }
+
+  // Parse potential comma/space-separated color strings into an array of CSS colors
+  function parseColors(value?: string): string[] {
+    if (!value) return [];
+    
+    // First, try to extract hex codes from parentheses (e.g., "White (#ECECEC)" -> "#ECECEC")
+    const hexInParens = value.match(/#[0-9A-Fa-f]{6}/g);
+    if (hexInParens) {
+      return hexInParens.map(h => h.toUpperCase()).slice(0, 8);
+    }
+    
+    // Then try to extract RGB values
+    const rgbValues = value.match(/rgba?\([^)]+\)/g);
+    if (rgbValues) {
+      return rgbValues.slice(0, 8);
+    }
+    
+    // Fallback: split and filter
+    return value
+      .split(/[\s,]+/)
+      .map((c) => c.trim())
+      .filter((c) => c && (c.startsWith('#') || c.startsWith('rgb')))
+      .slice(0, 8);
+  }
+
+  // Convert RGB to hex format
+  function rgbToHex(rgb: string): string {
+    if (!rgb || !rgb.startsWith('rgb')) return rgb;
+    
+    const matches = rgb.match(/\d+/g);
+    if (!matches || matches.length < 3) return rgb;
+    
+    const r = parseInt(matches[0]);
+    const g = parseInt(matches[1]);
+    const b = parseInt(matches[2]);
+    
+    return '#' + [r, g, b].map(x => {
+      const hex = x.toString(16);
+      return hex.length === 1 ? '0' + hex : hex;
+    }).join('').toUpperCase();
+  }
+
+  // Format color to hex (normalize RGB to hex)
+  function formatColorToHex(color: string): string {
+    if (!color) return '';
+    if (color.startsWith('#')) return color.toUpperCase();
+    if (color.startsWith('rgb')) return rgbToHex(color);
+    return color;
+  }
+
+  // Get display text for color (hex code)
+  function getColorDisplay(color: string): string {
+    return formatColorToHex(color);
   }
 
   // Generate summary statistics
@@ -210,14 +314,6 @@
           </div>
           {#if visualData?.annotatedScreenshot}
             <div class="flex items-center gap-2">
-              <label class="flex items-center gap-2 text-sm">
-                <input
-                  type="checkbox"
-                  bind:checked={showAllHighlights}
-                  class="rounded"
-                />
-                <span>Show Highlights</span>
-              </label>
               <Button
                 variant="outline"
                 size="sm"
@@ -241,110 +337,125 @@
             style="max-height: 600px;"
           />
           
-          <!-- Interactive highlights overlay for visual audit -->
-          {#if visualData?.annotatedScreenshot && showAllHighlights}
-            <div class="highlights-overlay">
-              {#each auditData?.issues || [] as issue, index}
-                {#if issue.elementPositions && issue.elementPositions.length > 0}
-                  {#each issue.elementPositions as elementPos, posIndex}
-                    <button
-                      class="issue-highlight {issue.category} {issue.severity}"
-                      style="
-                        border-color: {getHighlightStyle(issue).borderColor}; 
-                        border-width: {getHighlightStyle(issue).borderWidth};
-                        left: {elementPos?.position?.x || 0}px;
-                        top: {elementPos?.position?.y || 0}px;
-                        width: {elementPos?.position?.width || 100}px;
-                        height: {elementPos?.position?.height || 50}px;
-                      "
-                      onclick={() => selectIssue(issue)}
-                      type="button"
-                    >
-                      <div class="issue-marker">{index + 1}</div>
-                    </button>
-                  {/each}
-                {/if}
-              {/each}
-            </div>
-          {:else if visualData?.annotatedScreenshot}
-            <!-- Show message when no element positions are available -->
-            <div class="absolute top-4 right-4 bg-yellow-100 border border-yellow-300 rounded-lg p-3">
-              <p class="text-sm text-yellow-800">
-                Visual highlights not available - element positions could not be detected
-              </p>
-            </div>
-          {/if}
+          <!-- Removed interactive overlays and warning box -->
         </div>
         
-        <div class="mt-4 text-center">
-          <p class="text-sm text-gray-600">
-            {#if visualData?.annotatedScreenshot}
-              Click on highlighted areas to see detailed issue information
-            {:else}
-              Use this screenshot to visually identify the elements mentioned in the issues below
-            {/if}
-          </p>
-        </div>
+        <!-- Removed instructional text about clicking highlighted areas -->
       </CardContent>
     </Card>
   {/if}
 
-  <!-- Summary Cards -->
-  <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-    <Card class="bg-red-50 border-red-200">
-      <CardContent class="p-4">
-        <div class="flex items-center justify-between">
-          <div>
-            <div class="text-2xl font-bold text-red-600">{summaryStats.bySeverity.high}</div>
-            <div class="text-sm text-red-700">High Priority</div>
+  <!-- Priority Summary Cards -->
+  <Card class="mb-6">
+    <CardHeader>
+      <CardTitle class="text-lg font-semibold text-gray-900 flex items-center">
+        <AlertTriangle class="h-5 w-5 text-gray-600 mr-2" />
+        Priority Summary
+      </CardTitle>
+    </CardHeader>
+    <CardContent>
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <!-- High Priority -->
+        <div class="relative overflow-hidden bg-gradient-to-br from-red-50 to-red-100 border-2 border-red-300 rounded-xl p-5 shadow-sm hover:shadow-md transition-shadow">
+          <div class="flex items-center justify-between">
+            <div>
+              <div class="text-4xl font-bold text-red-700 mb-1">{summaryStats.bySeverity.high}</div>
+              <div class="text-sm font-semibold text-red-800 uppercase tracking-wide">High Priority</div>
+              <div class="text-xs text-red-600 mt-1">Requires immediate attention</div>
+            </div>
+            <div class="bg-red-200 rounded-full p-3">
+              <AlertTriangle class="h-8 w-8 text-red-700" />
+            </div>
           </div>
-          <AlertTriangle class="h-8 w-8 text-red-500" />
         </div>
-      </CardContent>
-    </Card>
 
-    <Card class="bg-orange-50 border-orange-200">
-      <CardContent class="p-4">
-        <div class="flex items-center justify-between">
-          <div>
-            <div class="text-2xl font-bold text-orange-600">{summaryStats.bySeverity.medium}</div>
-            <div class="text-sm text-orange-700">Medium Priority</div>
+        <!-- Medium Priority -->
+        <div class="relative overflow-hidden bg-gradient-to-br from-orange-50 to-orange-100 border-2 border-orange-300 rounded-xl p-5 shadow-sm hover:shadow-md transition-shadow">
+          <div class="flex items-center justify-between">
+            <div>
+              <div class="text-4xl font-bold text-orange-700 mb-1">{summaryStats.bySeverity.medium}</div>
+              <div class="text-sm font-semibold text-orange-800 uppercase tracking-wide">Medium Priority</div>
+              <div class="text-xs text-orange-600 mt-1">Should be addressed soon</div>
+            </div>
+            <div class="bg-orange-200 rounded-full p-3">
+              <Info class="h-8 w-8 text-orange-700" />
+            </div>
           </div>
-          <Info class="h-8 w-8 text-orange-500" />
         </div>
-      </CardContent>
-    </Card>
 
-    <Card class="bg-yellow-50 border-yellow-200">
-      <CardContent class="p-4">
-        <div class="flex items-center justify-between">
-          <div>
-            <div class="text-2xl font-bold text-yellow-600">{summaryStats.bySeverity.low}</div>
-            <div class="text-sm text-yellow-700">Low Priority</div>
+        <!-- Low Priority -->
+        <div class="relative overflow-hidden bg-gradient-to-br from-yellow-50 to-yellow-100 border-2 border-yellow-300 rounded-xl p-5 shadow-sm hover:shadow-md transition-shadow">
+          <div class="flex items-center justify-between">
+            <div>
+              <div class="text-4xl font-bold text-yellow-700 mb-1">{summaryStats.bySeverity.low}</div>
+              <div class="text-sm font-semibold text-yellow-800 uppercase tracking-wide">Low Priority</div>
+              <div class="text-xs text-yellow-600 mt-1">Nice to have improvements</div>
+            </div>
+            <div class="bg-yellow-200 rounded-full p-3">
+              <Info class="h-8 w-8 text-yellow-700" />
+            </div>
           </div>
-          <Info class="h-8 w-8 text-yellow-500" />
         </div>
-      </CardContent>
-    </Card>
-  </div>
+      </div>
+    </CardContent>
+  </Card>
 
   <!-- Category Scores -->
-  <Card>
+  <Card class="mb-6">
     <CardHeader>
-      <CardTitle class="text-lg">Category Scores</CardTitle>
+      <CardTitle class="text-lg font-semibold text-gray-900 flex items-center">
+        <CheckCircle class="h-5 w-5 text-gray-600 mr-2" />
+        Category Scores
+      </CardTitle>
+      <CardDescription>
+        Compliance scores for each brand guideline category
+      </CardDescription>
     </CardHeader>
     <CardContent>
       <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
         {#each Object.entries(auditData?.categoryScores || {}) as [category, score]}
-          <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-            <div class="flex items-center space-x-2">
-              <span class="text-lg">{getCategoryIcon(category)}</span>
-              <span class="font-medium capitalize">{category}</span>
-            </div>
-            <div class="text-right">
-              <div class="text-lg font-bold text-blue-600">
-                {Math.round((score as number) * 100)}%
+          {@const scoreNum = score as number}
+          {@const scorePercent = Math.round(scoreNum * 100)}
+          {@const scoreStyle = getScoreColor(scoreNum)}
+          {@const categoryColors = getCategoryColor(category)}
+          
+          <div class="relative overflow-hidden {categoryColors.bg} {categoryColors.border} border-2 rounded-xl p-4 shadow-sm hover:shadow-md transition-all">
+            <div class="flex items-start justify-between mb-3">
+              <div class="flex items-center space-x-3">
+                <div class="text-2xl">{getCategoryIcon(category)}</div>
+                <div>
+                  <div class="font-semibold {categoryColors.text} capitalize text-base">
+                    {getCategoryDisplayName(category)}
+                  </div>
+                  <div class="text-xs {categoryColors.text} opacity-75 mt-0.5">
+                    Brand compliance
+                  </div>
+                </div>
               </div>
+              <div class="text-right">
+                <div class="text-2xl font-bold {scoreStyle.color}">
+                  {scorePercent}%
+                </div>
+              </div>
+            </div>
+            
+            <!-- Progress Bar -->
+            <div class="w-full bg-gray-200 rounded-full h-2.5 overflow-hidden">
+              <div 
+                class="h-full {scoreStyle.progress} rounded-full transition-all duration-500"
+                style="width: {scorePercent}%"
+              ></div>
+            </div>
+            
+            <!-- Score Indicator -->
+            <div class="mt-2 text-xs {scoreStyle.color} font-medium">
+              {#if scorePercent >= 80}
+                ✓ Excellent
+              {:else if scorePercent >= 60}
+                ⚠ Needs Improvement
+              {:else}
+                ✗ Critical
+              {/if}
             </div>
           </div>
         {/each}
@@ -368,58 +479,114 @@
         {#each Object.entries(groupedIssues) as [key, group]}
           {@const sectionId = key}
           {@const isExpanded = expandedSections.has(sectionId)}
+          {@const categoryColors = getCategoryColor(group.category)}
+          {@const severityStyle = getSeverityBadgeStyle(group.severity)}
+          {@const displayCategory = getCategoryDisplayName(group.category)}
+          {@const displayElement = group.element === 'general' ? '' : group.element}
           
-          <div class="border border-gray-200 rounded-lg overflow-hidden">
+          <div class="border-2 {categoryColors.border} rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-all">
             <button
-              class="w-full p-4 bg-gray-50 hover:bg-gray-100 transition-colors flex items-center justify-between"
+              class="w-full p-5 {categoryColors.bg} hover:opacity-90 transition-all flex items-center justify-between"
               onclick={() => toggleSection(sectionId)}
             >
-              <div class="flex items-center space-x-3">
-                <span class="text-lg">{getCategoryIcon(group.category)}</span>
-                <div class="text-left">
-                  <div class="font-semibold text-gray-900 capitalize">
-                    {group.category} — {group.element}
+              <div class="flex items-center space-x-4 flex-1">
+                <div class="bg-white rounded-lg p-2 shadow-sm">
+                  <span class="text-2xl">{getCategoryIcon(group.category)}</span>
+                </div>
+                <div class="text-left flex-1">
+                  <div class="font-bold {categoryColors.text} text-lg mb-1">
+                    {displayCategory}{displayElement ? ` — ${displayElement}` : ''}
                   </div>
-                  <div class="text-sm text-gray-600">
-                    {group.issues.length} issue{group.issues.length !== 1 ? 's' : ''}
+                  <div class="flex items-center space-x-3">
+                    <span class="text-sm {categoryColors.text} opacity-75">
+                      {group.issues.length} issue{group.issues.length !== 1 ? 's' : ''}
+                    </span>
+                    <span class="px-2.5 py-1 text-xs font-semibold rounded-full border {severityStyle.bg} {severityStyle.text} {severityStyle.border}">
+                      {group.severity.toUpperCase()}
+                    </span>
                   </div>
                 </div>
               </div>
-              <div class="flex items-center space-x-2">
-                <span class="px-2 py-1 text-xs rounded {getSeverityColor(group.severity)}">
-                  {group.severity}
-                </span>
+              <div class="ml-4">
                 {#if isExpanded}
-                  <ChevronDown class="h-4 w-4 text-gray-500" />
+                  <ChevronDown class="h-5 w-5 {categoryColors.text}" />
                 {:else}
-                  <ChevronRight class="h-4 w-4 text-gray-500" />
+                  <ChevronRight class="h-5 w-5 {categoryColors.text}" />
                 {/if}
               </div>
             </button>
 
             {#if isExpanded}
-              <div class="p-4 bg-white border-t border-gray-200">
+              <div class="p-5 bg-white border-t-2 {categoryColors.border}">
                 <!-- Issues List -->
-                <div class="space-y-3 mb-4">
+                <div class="space-y-4 mb-4">
                   {#each group.issues as issue}
-                    <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                      <div class="flex-1">
-                        <div class="font-medium text-gray-900">
-                          {issue.message || issue.description || `${issue.cssProperty}: ${issue.found} → ${issue.expected}`}
-                        </div>
-                        {#if isColorIssue(issue)}
-                          <div class="flex items-center space-x-4 mt-2">
-                            <div class="flex items-center space-x-2">
-                              <div class="w-4 h-4 rounded border border-gray-300" style="background-color: {issue.expected || issue.correctValue}"></div>
-                              <span class="text-xs text-gray-600">Expected</span>
-                            </div>
-                            <div class="flex items-center space-x-2">
-                              <div class="w-4 h-4 rounded border border-gray-300" style="background-color: {issue.found || issue.actualValue}"></div>
-                              <span class="text-xs text-gray-600">Found</span>
-                            </div>
+                    {@const issueSeverity = getSeverityBadgeStyle(issue.severity || 'medium')}
+                    <div class="border-l-4 {categoryColors.border} bg-gray-50 rounded-r-lg p-4 hover:bg-gray-100 transition-colors">
+                      <div class="flex items-start justify-between mb-2">
+                        <div class="flex-1">
+                          <div class="flex items-center space-x-2 mb-2">
+                            <span class="px-2 py-0.5 text-xs font-semibold rounded {issueSeverity.bg} {issueSeverity.text}">
+                              {issue.severity?.toUpperCase() || 'MEDIUM'}
+                            </span>
                           </div>
-                        {/if}
+                          <div class="font-semibold text-gray-900 text-base leading-relaxed">
+                            {issue.message || issue.description || issue.title || `${issue.cssProperty}: ${issue.found} → ${issue.expected}`}
+                          </div>
+                          {#if issue.recommendation || issue.suggestion}
+                            <div class="mt-2 text-sm text-gray-600 italic">
+                              💡 {issue.recommendation || issue.suggestion}
+                            </div>
+                          {/if}
+                        </div>
                       </div>
+                      {#if isColorIssue(issue)}
+                          {@const expectedColors: string[] = parseColors(issue.expected || issue.correctValue)}
+                          {@const foundColors: string[] = parseColors(issue.found || issue.actualValue)}
+                          {@const isSuggestion = issue.type === 'secondary_color_missing'}
+                          <div class="mt-3 space-y-3">
+                            <!-- Expected Colors -->
+                            <div class="flex flex-col space-y-2">
+                              <span class="text-xs font-medium text-gray-700 uppercase tracking-wide">Expected</span>
+                              <div class="flex flex-wrap items-center gap-3">
+                                {#if expectedColors.length > 0}
+                                  {#each expectedColors as c}
+                                    <div class="flex items-center space-x-2 bg-white px-2 py-1.5 rounded border border-gray-200 shadow-sm">
+                                      <div class="w-6 h-6 rounded border border-gray-300 flex-shrink-0" style="background-color: {c}"></div>
+                                      <span class="text-xs font-mono font-semibold text-gray-700">{getColorDisplay(c)}</span>
+                                    </div>
+                                  {/each}
+                                {:else}
+                                  <div class="flex items-center space-x-2 bg-gray-50 px-2 py-1.5 rounded border border-gray-200">
+                                    <div class="w-6 h-6 rounded border border-gray-300 bg-gray-100"></div>
+                                    <span class="text-xs text-gray-400 italic">No colors specified</span>
+                                  </div>
+                                {/if}
+                              </div>
+                            </div>
+                            <!-- Found Colors - Only show if not a suggestion issue -->
+                            {#if !isSuggestion}
+                              <div class="flex flex-col space-y-2">
+                                <span class="text-xs font-medium text-gray-700 uppercase tracking-wide">Found</span>
+                                <div class="flex flex-wrap items-center gap-3">
+                                  {#if foundColors.length > 0}
+                                    {#each foundColors as c}
+                                      <div class="flex items-center space-x-2 bg-white px-2 py-1.5 rounded border border-gray-200 shadow-sm">
+                                        <div class="w-6 h-6 rounded border border-gray-300 flex-shrink-0" style="background-color: {c}"></div>
+                                        <span class="text-xs font-mono font-semibold text-gray-700">{getColorDisplay(c)}</span>
+                                      </div>
+                                    {/each}
+                                  {:else}
+                                    <div class="flex items-center space-x-2 bg-gray-50 px-2 py-1.5 rounded border border-gray-200">
+                                      <div class="w-6 h-6 rounded border border-gray-300 bg-gray-100"></div>
+                                      <span class="text-xs text-gray-400 italic">No colors detected</span>
+                                    </div>
+                                  {/if}
+                                </div>
+                              </div>
+                            {/if}
+                          </div>
+                      {/if}
                     </div>
                   {/each}
                 </div>
@@ -459,6 +626,26 @@
             </li>
           {/each}
         </ul>
+      </CardContent>
+    </Card>
+  {/if}
+
+  <!-- Auto-Fix Prompt (moved below recommendations) -->
+  {#if fixPrompt}
+    <Card class="mt-8">
+      <CardHeader>
+        <CardTitle class="text-lg font-semibold">🪄 Auto-Fix Prompt</CardTitle>
+        <CardDescription>
+          Copy and paste this prompt into your preferred AI agent (e.g., Gemini) to auto-correct your code to the brand guidelines.
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
+        <div class="space-y-3">
+          <textarea readonly class="w-full h-72 p-3 bg-gray-50 rounded border font-mono text-sm">{fixPrompt}</textarea>
+          <div class="flex justify-end">
+            <Button variant="outline" size="sm" onclick={() => copyToClipboard(fixPrompt || '', 'aiPrompt')}>Copy Prompt</Button>
+          </div>
+        </div>
       </CardContent>
     </Card>
   {/if}
@@ -517,7 +704,6 @@
     isOpen={showFullscreenModal}
     screenshot={screenshot}
     annotatedScreenshot={visualData?.annotatedScreenshot}
-    showHighlights={showAllHighlights}
     issues={auditData?.issues || []}
     elementPositions={visualData?.elementPositions || []}
     on:close={closeFullscreenModal}

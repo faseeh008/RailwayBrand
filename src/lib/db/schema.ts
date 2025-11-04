@@ -374,6 +374,20 @@ export const analysisResults = pgTable('analysis_results', {
 		low: number;
 	}>(),
 	
+	// Additional analysis data
+	issues: jsonb('issues').$type<Array<any>>(), // Full issues array from audit
+	recommendations: jsonb('recommendations').$type<Array<any>>(), // Recommendations array
+	categoryScores: jsonb('category_scores').$type<{
+		colors?: number;
+		typography?: number;
+		logo?: number;
+		layout?: number;
+		spacing?: number;
+	}>(),
+	screenshot: text('screenshot'), // Screenshot path or base64
+	annotatedScreenshot: text('annotated_screenshot'), // Annotated screenshot path or base64
+	fixPrompt: text('fix_prompt'), // AI fix prompt text
+	
 	// Analysis metadata
 	analysisType: varchar('analysis_type', { length: 50 }),
 	processingTime: integer('processing_time'), // in milliseconds

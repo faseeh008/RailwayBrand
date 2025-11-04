@@ -71,6 +71,13 @@
       "when": 1761118995265,
       "tag": "0009_cheerful_liz_osborn",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1761890700471,
+      "tag": "0010_wooden_sentry",
+      "breakpoints": true
     }
   ]
 }

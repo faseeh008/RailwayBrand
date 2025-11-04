@@ -4,13 +4,26 @@
   import { AlertTriangle, CheckCircle, XCircle, Info, ExternalLink, Copy, Check, ChevronDown, ChevronRight, Eye, EyeOff, Maximize2 } from 'lucide-svelte';
   import FullscreenScreenshotModal from './FullscreenScreenshotModal.svelte';
 
-  export let auditData;
-  export let websiteUrl;
-  export let brandName;
-  export let visualData = null;
+  type Issue = {
+    category?: string;
+    severity?: 'high' | 'medium' | 'low' | string;
+    message?: string;
+    suggestion?: string;
+  };
+
+  type VisualData = {
+    annotatedScreenshot?: string;
+    originalScreenshot?: string;
+    elementPositions?: any[];
+  } | null;
+
+  export let auditData: { issues?: Issue[]; overallScore?: number };
+  export let websiteUrl: string;
+  export let brandName: string;
+  export let visualData: VisualData = null;
 
   // State management
-  let selectedIssue = null;
+  let selectedIssue: Issue | null = null;
   let showAllHighlights = true;
   let copiedItems: Set<string> = new Set();
   let expandedSections: Set<string> = new Set();
@@ -54,8 +67,8 @@
     return "0,0,100,100";
   }
 
-  function getHighlightStyle(issue: any) {
-    const colors = {
+  function getHighlightStyle(issue: Issue) {
+    const colors: Record<string, string> = {
       colors: '#FF6B6B',
       typography: '#4ECDC4',
       logo: '#45B7D1',
@@ -64,13 +77,13 @@
     };
     
     return {
-      borderColor: colors[issue.category] || '#666666',
+      borderColor: colors[(issue.category || '')] || '#666666',
       borderWidth: issue.severity === 'high' ? '3px' : issue.severity === 'medium' ? '2px' : '1px'
     };
   }
 
   function getSeverityColor(severity: string) {
-    const colors = {
+    const colors: Record<string, string> = {
       high: '#FF6B6B',
       medium: '#FFA726',
       low: '#42A5F5'
@@ -90,8 +103,8 @@
   }
 
   // Group issues by category
-  function groupIssues(issues: any[]) {
-    const grouped: Record<string, any> = {};
+  function groupIssues(issues: Issue[]) {
+    const grouped: Record<string, { category: string; issues: Issue[]; severity: Issue['severity'] } > = {};
     
     issues.forEach(issue => {
       const category = issue.category || 'general';
@@ -126,12 +139,12 @@
         </div>
         <div class="text-right">
           <div class="text-4xl font-bold text-blue-600">
-            {Math.round((auditData?.overallScore || 0) * 100)}%
+            {Math.round(((auditData?.overallScore ?? 0) * 100))}%
           </div>
           <div class="text-sm text-gray-500">
-            {auditData?.overallScore > 0.8 ? 'Excellent' : 
-             auditData?.overallScore > 0.6 ? 'Good' : 
-             auditData?.overallScore > 0.4 ? 'Needs Improvement' : 'Poor'}
+            {(auditData?.overallScore ?? 0) > 0.8 ? 'Excellent' : 
+             (auditData?.overallScore ?? 0) > 0.6 ? 'Good' : 
+             (auditData?.overallScore ?? 0) > 0.4 ? 'Needs Improvement' : 'Poor'}
           </div>
         </div>
       </div>
@@ -140,7 +153,7 @@
 
   <!-- Visual Audit Content -->
   <div class="audit-content">
-    <!-- Screenshot with Interactive Highlights -->
+    <!-- Screenshot with Static Visual Highlights -->
     <div class="screenshot-container">
       {#if visualData?.annotatedScreenshot}
         <Card class="mb-6">
@@ -161,44 +174,11 @@
                 style="max-height: 600px;"
               />
               
-              <!-- Interactive highlights overlay -->
-              {#if showAllHighlights && visualData.elementPositions && visualData.elementPositions.length > 0}
-                <div class="highlights-overlay">
-                  {#each visualData.elementPositions as elementPos, index}
-                    {@const issue = auditData?.issues?.[index]}
-                    {#if issue}
-                      <div
-                        class="issue-highlight {issue.category} {issue.severity}"
-                        style="
-                          {getHighlightStyle(issue).borderColor ? `border-color: ${getHighlightStyle(issue).borderColor};` : ''}
-                          {getHighlightStyle(issue).borderWidth ? `border-width: ${getHighlightStyle(issue).borderWidth};` : ''}
-                          left: {elementPos?.position?.x || 0}px;
-                          top: {elementPos?.position?.y || 0}px;
-                          width: {elementPos?.position?.width || 100}px;
-                          height: {elementPos?.position?.height || 50}px;
-                        "
-                        onclick={() => selectIssue(issue)}
-                        role="button"
-                        tabindex="0"
-                      >
-                        <div class="issue-marker">{index + 1}</div>
-                      </div>
-                    {/if}
-                  {/each}
-                </div>
-              {/if}
+              <!-- Removed interactive highlights overlay; relying on static annotated image -->
             </div>
             
-            <!-- Controls -->
+            <!-- Controls (checkbox removed) -->
             <div class="mt-4 flex items-center gap-4">
-              <label class="flex items-center gap-2">
-                <input
-                  type="checkbox"
-                  bind:checked={showAllHighlights}
-                  class="rounded"
-                />
-                <span class="text-sm text-gray-600">Show Issue Highlights</span>
-              </label>
               <Button
                 variant="outline"
                 size="sm"
@@ -284,8 +264,8 @@
       <Card class="max-w-2xl w-full mx-4 max-h-[80vh] overflow-y-auto">
         <CardHeader>
           <CardTitle class="flex items-center gap-2">
-            <span class="text-lg">{getCategoryIcon(selectedIssue.category)}</span>
-            Issue #{auditData?.issues?.indexOf(selectedIssue) + 1}: {selectedIssue.category}
+            <span class="text-lg">{getCategoryIcon(selectedIssue.category || '')}</span>
+            Issue #{((auditData?.issues?.indexOf(selectedIssue) ?? -1) + 1)}: {selectedIssue.category}
           </CardTitle>
           <CardDescription>
             Detailed information about this compliance issue
@@ -308,7 +288,7 @@
             <div>
               <span class="text-sm text-gray-500">Severity:</span>
               <span class="ml-1 px-2 py-1 rounded text-xs font-medium text-white" 
-                    style="background-color: {getSeverityColor(selectedIssue.severity)}">
+                   style="background-color: {getSeverityColor(selectedIssue.severity || '')}">
                 {selectedIssue.severity}
               </span>
             </div>

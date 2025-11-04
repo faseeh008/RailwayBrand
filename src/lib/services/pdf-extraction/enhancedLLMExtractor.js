@@ -436,8 +436,32 @@ Look for ANY mention of:
       return this.validateStructure(parsed);
     } catch (parseError) {
       console.error('❌ JSON parsing failed:', parseError);
-      console.log('📄 Problematic JSON:', jsonText.substring(0, 500));
-      throw new Error(`JSON parsing failed: ${parseError.message}`);
+      console.log('📄 Problematic JSON:', jsonText.substring(0, 800));
+      console.log('📏 Full JSON length:', jsonText.length);
+      
+      // Try to fix truncated strings more aggressively
+      let fixedJson = jsonText;
+      
+      // Find and close any unclosed strings before structural characters
+      // Pattern: ": "text that isn't closed before }, or comma
+      fixedJson = fixedJson.replace(/:\\s*"([^"]*?)(?=\\s*[,}\\n]|$)/g, (match, content) => {
+        if (match[match.length - 1] !== '"') {
+          // String is truncated - escape quotes and close it
+          const escaped = content.replace(/([^\\\\])"/g, '$1\\\\"');
+          return `:"${escaped}"`;
+        }
+        return match;
+      });
+      
+      // Try parsing again with fixed JSON
+      try {
+        const parsed = JSON.parse(fixedJson);
+        console.log('✅ JSON fixed and parsed successfully');
+        return this.validateStructure(parsed);
+      } catch (retryError) {
+        console.error('❌ Retry parsing also failed:', retryError);
+        throw new Error(`JSON parsing failed: ${parseError.message}`);
+      }
     }
   }
 
@@ -457,6 +481,81 @@ Look for ANY mention of:
     fixed = fixed.replace(/:\\s*"([^"\\]*(\\.[^"\\]*)*)"\\s*([,}])/g, (match) => {
       return match.replace(/([^\\])"/g, '$1\\"');
     });
+    
+    // Fix truncated strings - detect strings that aren't properly closed
+    // Look for pattern: ": "text that ends abruptly before } or comma or newline
+    let inString = false;
+    let escapeNext = false;
+    let fixedArray = fixed.split('');
+    
+    for (let i = 0; i < fixedArray.length; i++) {
+      const char = fixedArray[i];
+      
+      if (escapeNext) {
+        escapeNext = false;
+        continue;
+      }
+      
+      if (char === '\\') {
+        escapeNext = true;
+        continue;
+      }
+      
+      if (char === '"') {
+        inString = !inString;
+      } else if (!inString && (char === '}' || char === ']') && i > 0) {
+        // If we hit a closing brace while we should be in a string (based on context),
+        // check if we need to close a truncated string
+        // Look backwards for the last unclosed string
+        let j = i - 1;
+        while (j >= 0 && fixedArray[j] !== '\n' && fixedArray[j] !== '\r') {
+          if (fixedArray[j] === ':' && j + 1 < fixedArray.length && fixedArray[j + 1] === ' ' && j + 2 < fixedArray.length && fixedArray[j + 2] === '"') {
+            // Found a string start, check if it's closed
+            let k = j + 3;
+            let inStringCheck = true;
+            while (k < i && inStringCheck) {
+              if (fixedArray[k] === '\\') {
+                k += 2;
+                continue;
+              }
+              if (fixedArray[k] === '"') {
+                inStringCheck = false;
+              }
+              k++;
+            }
+            if (inStringCheck) {
+              // String is not closed, close it before the brace
+              fixedArray.splice(i, 0, '"');
+              i++;
+              break;
+            }
+          }
+          j--;
+        }
+      }
+    }
+    
+    // If still in string at end, close it
+    if (inString) {
+      fixedArray.push('"');
+    }
+    
+    fixed = fixedArray.join('');
+    
+    // Close incomplete structures
+    const openBraces = (fixed.match(/\{/g) || []).length;
+    const closeBraces = (fixed.match(/\}/g) || []).length;
+    const openBrackets = (fixed.match(/\[/g) || []).length;
+    const closeBrackets = (fixed.match(/\]/g) || []).length;
+    
+    if (openBraces > closeBraces) {
+      fixed = fixed.trim().replace(/,\s*$/, '');
+      fixed = fixed + '}'.repeat(openBraces - closeBraces);
+    }
+    if (openBrackets > closeBrackets) {
+      fixed = fixed.trim().replace(/,\s*$/, '');
+      fixed = fixed + ']'.repeat(openBrackets - closeBrackets);
+    }
     
     return fixed;
   }

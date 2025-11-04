@@ -115,66 +115,96 @@ export class UniversalFontAnalyzer {
     
     if (!fontData) return normalized;
     
+    // IMPROVED: Handle typography structure from scraper (with fonts array, primary, secondary, weights)
+    if (fontData.typography && typeof fontData.typography === 'object') {
+      // Extract all fonts from typography structure
+      if (Array.isArray(fontData.typography.fonts)) {
+        fontData.typography.fonts.forEach(font => {
+          const cleanedFont = this.cleanFontName(font);
+          if (cleanedFont && this.isValidFontName(cleanedFont)) {
+            normalized.allFonts.add(cleanedFont);
+          }
+        });
+      }
+      
+      // Use primary/secondary from typography if available
+      if (fontData.typography.primary) {
+        const cleaned = this.cleanFontName(fontData.typography.primary);
+        if (cleaned && this.isValidFontName(cleaned)) {
+          normalized.primary = cleaned;
+          normalized.allFonts.add(cleaned);
+        }
+      }
+      
+      if (fontData.typography.secondary) {
+        const cleaned = this.cleanFontName(fontData.typography.secondary);
+        if (cleaned && this.isValidFontName(cleaned)) {
+          normalized.secondary = cleaned;
+          normalized.allFonts.add(cleaned);
+        }
+      }
+      
+      // Normalize and add weights (convert numeric to semantic names)
+      if (Array.isArray(fontData.typography.weights)) {
+        fontData.typography.weights.forEach(weight => {
+          const normalizedWeight = this.normalizeWeight(weight);
+          if (normalizedWeight) {
+            normalized.weights.add(normalizedWeight);
+          }
+        });
+      }
+      
+      if (Array.isArray(fontData.typography.fontSize)) {
+        normalized.sizes = fontData.typography.fontSize;
+      }
+    }
+    
     // IMPROVED: Handle simple array format from scraper
     if (Array.isArray(fontData)) {
       fontData.forEach(font => {
         const cleanedFont = this.cleanFontName(font);
-        if (cleanedFont) {
+        if (cleanedFont && this.isValidFontName(cleanedFont)) {
           normalized.allFonts.add(cleanedFont);
         }
       });
       
-      // Set primary and secondary from array
-      const fontArray = Array.from(normalized.allFonts);
-      if (fontArray.length > 0) {
-        normalized.primary = fontArray[0];
+      // Set primary and secondary from array, preferring valid font names
+      const validFonts = Array.from(normalized.allFonts).filter(f => this.isValidFontName(f));
+      if (validFonts.length > 0) {
+        normalized.primary = this.findBestFontName(validFonts) || validFonts[0];
       }
-      if (fontArray.length > 1) {
-        normalized.secondary = fontArray[1];
+      if (validFonts.length > 1) {
+        normalized.secondary = validFonts.find(f => f !== normalized.primary) || validFonts[1];
       }
       
       return normalized;
     }
     
-    // Extract from primary font
-    if (fontData.primary) {
-      if (typeof fontData.primary === 'string') {
-        normalized.primary = this.cleanFontName(fontData.primary);
-      } else if (fontData.primary.font) {
-        normalized.primary = this.cleanFontName(fontData.primary.font);
-        if (fontData.primary.weights) {
-          fontData.primary.weights.forEach(weight => normalized.weights.add(weight.toLowerCase()));
-        }
-      }
-    }
-    
-    // Extract from secondary font
-    if (fontData.secondary) {
-      if (typeof fontData.secondary === 'string') {
-        normalized.secondary = this.cleanFontName(fontData.secondary);
-      } else if (fontData.secondary.font) {
-        normalized.secondary = this.cleanFontName(fontData.secondary.font);
-        if (fontData.secondary.weights) {
-          fontData.secondary.weights.forEach(weight => normalized.weights.add(weight.toLowerCase()));
-        }
-      }
-    }
-    
-    // Extract from all fonts array
+    // First, extract ALL fonts from allFonts array to find valid ones
     if (fontData.allFonts && Array.isArray(fontData.allFonts)) {
       fontData.allFonts.forEach(fontObj => {
         if (typeof fontObj === 'string') {
-          normalized.allFonts.add(this.cleanFontName(fontObj));
+          const fontName = this.cleanFontName(fontObj);
+          if (fontName && this.isValidFontName(fontName)) {
+            normalized.allFonts.add(fontName);
+          }
         } else if (fontObj.font) {
           const fontName = this.cleanFontName(fontObj.font);
-          normalized.allFonts.add(fontName);
-          
-          if (fontObj.weights) {
-            fontObj.weights.forEach(weight => normalized.weights.add(weight.toLowerCase()));
-          }
-          
-          if (fontObj.usage) {
-            normalized.usage[fontName] = fontObj.usage;
+          if (fontName && this.isValidFontName(fontName)) {
+            normalized.allFonts.add(fontName);
+            
+            if (fontObj.weights) {
+              fontObj.weights.forEach(weight => {
+                const normalizedWeight = this.normalizeWeight(weight);
+                if (normalizedWeight) {
+                  normalized.weights.add(normalizedWeight);
+                }
+              });
+            }
+            
+            if (fontObj.usage) {
+              normalized.usage[fontName] = fontObj.usage;
+            }
           }
         }
       });
@@ -183,16 +213,126 @@ export class UniversalFontAnalyzer {
     // Extract from simple fonts array
     if (fontData.fonts && Array.isArray(fontData.fonts)) {
       fontData.fonts.forEach(font => {
-        normalized.allFonts.add(this.cleanFontName(font));
+        const fontName = this.cleanFontName(font);
+        if (fontName && this.isValidFontName(fontName)) {
+          normalized.allFonts.add(fontName);
+        }
       });
     }
     
-    // Set primary if not already set
-    if (!normalized.primary && normalized.allFonts.size > 0) {
-      normalized.primary = Array.from(normalized.allFonts)[0];
+    // Extract from primary font - but validate it's a real font name
+    if (fontData.primary) {
+      let primaryFont = null;
+      if (typeof fontData.primary === 'string') {
+        primaryFont = this.cleanFontName(fontData.primary);
+      } else if (fontData.primary.font) {
+        primaryFont = this.cleanFontName(fontData.primary.font);
+        if (fontData.primary.weights) {
+          fontData.primary.weights.forEach(weight => {
+            const normalizedWeight = this.normalizeWeight(weight);
+            if (normalizedWeight) {
+              normalized.weights.add(normalizedWeight);
+            }
+          });
+        }
+      }
+      
+      // Only use primary if it's a valid font name
+      if (primaryFont && this.isValidFontName(primaryFont)) {
+        normalized.primary = primaryFont;
+        normalized.allFonts.add(primaryFont);
+      }
+    }
+    
+    // Extract from secondary font - but validate it's a real font name
+    if (fontData.secondary) {
+      let secondaryFont = null;
+      if (typeof fontData.secondary === 'string') {
+        secondaryFont = this.cleanFontName(fontData.secondary);
+      } else if (fontData.secondary.font) {
+        secondaryFont = this.cleanFontName(fontData.secondary.font);
+        if (fontData.secondary.weights) {
+          fontData.secondary.weights.forEach(weight => {
+            const normalizedWeight = this.normalizeWeight(weight);
+            if (normalizedWeight) {
+              normalized.weights.add(normalizedWeight);
+            }
+          });
+        }
+      }
+      
+      // Only use secondary if it's a valid font name
+      if (secondaryFont && this.isValidFontName(secondaryFont)) {
+        normalized.secondary = secondaryFont;
+        normalized.allFonts.add(secondaryFont);
+      }
+    }
+    
+    // Extract weights from top-level weights array
+    if (Array.isArray(fontData.weights)) {
+      fontData.weights.forEach(weight => {
+        const normalizedWeight = this.normalizeWeight(weight);
+        if (normalizedWeight) {
+          normalized.weights.add(normalizedWeight);
+        }
+      });
+    }
+    
+    // If primary/secondary are invalid, try to extract valid fonts from allFonts
+    const validFonts = Array.from(normalized.allFonts).filter(f => this.isValidFontName(f));
+    
+    if (!normalized.primary && validFonts.length > 0) {
+      // Prefer fonts that look like actual font names (common ones, single words, etc.)
+      const preferredFont = this.findBestFontName(validFonts);
+      normalized.primary = preferredFont || validFonts[0];
+    }
+    
+    if (!normalized.secondary && validFonts.length > 1) {
+      normalized.secondary = validFonts.find(f => f !== normalized.primary) || validFonts[1];
     }
     
     return normalized;
+  }
+
+  /**
+   * Normalize font weight: converts numeric (400, 700) to semantic (regular, bold) and vice versa
+   * @param {string|number} weight - Font weight (numeric string like "400" or semantic like "Bold")
+   * @returns {string} - Normalized weight in lowercase semantic form
+   */
+  normalizeWeight(weight) {
+    if (!weight) return null;
+    
+    // Convert to string and lowercase for consistent matching
+    const weightStr = String(weight).toLowerCase().trim();
+    
+    // If it's already a semantic name, return it
+    if (this.fontWeightMapping[weightStr]) {
+      // Get numeric value and convert back to semantic for consistency
+      const numValue = this.fontWeightMapping[weightStr];
+      // Map numeric back to semantic name
+      for (const [semantic, numeric] of Object.entries(this.fontWeightMapping)) {
+        if (numeric === numValue && semantic !== String(numValue)) {
+          return semantic.toLowerCase();
+        }
+      }
+      return weightStr;
+    }
+    
+    // If it's a numeric string, convert to semantic
+    const numValue = parseInt(weightStr);
+    if (!isNaN(numValue)) {
+      // Map numeric to semantic name
+      for (const [semantic, numeric] of Object.entries(this.fontWeightMapping)) {
+        if (numeric === numValue && semantic !== String(numValue)) {
+          return semantic.toLowerCase();
+        }
+      }
+      // If no exact match, return the numeric value as string for comparison
+      return String(numValue);
+    }
+    
+    // Unknown format, return as-is
+    return weightStr;
   }
 
   cleanFontName(fontName) {
@@ -205,13 +345,118 @@ export class UniversalFontAnalyzer {
       .toLowerCase();
   }
 
+  /**
+   * Validates if a font name is actually a font name and not a heading/text
+   * Rejects names that contain common non-font words or are clearly not font names
+   */
+  isValidFontName(fontName) {
+    if (!fontName || typeof fontName !== 'string') return false;
+    
+    const lower = fontName.toLowerCase();
+    const words = lower.split(/\s+/);
+    
+    // Reject if contains common non-font words
+    const invalidWords = [
+      'guideline', 'guidelines', 'brand', 'branding', 'style', 'styles',
+      'manual', 'guide', 'document', 'version', 'updated', 'revised',
+      'chapter', 'section', 'page', 'typography', 'font', 'fonts',
+      'usage', 'used', 'using', 'use', 'with', 'from', 'for', 'and',
+      'the', 'is', 'are', 'there', 'these', 'this', 'that', 'flexibility',
+      'built', 'in', 'have', 'been', 'can', 'be', 'should', 'must',
+      'primary', 'secondary', 'heading', 'headings', 'body', 'text',
+      'element', 'elements', 'general', 'specific', 'recommended'
+    ];
+    
+    // Check if any invalid word appears in the font name
+    if (invalidWords.some(word => lower.includes(word))) {
+      return false;
+    }
+    
+    // Reject if it's clearly a sentence or phrase (more than 3 words usually)
+    if (words.length > 3) {
+      return false;
+    }
+    
+    // Reject if it contains numbers (unless it's a font variant like "Helvetica Neue 55")
+    if (/\d{2,}/.test(fontName) && !/^(helvetica|futura|univers|avenir)/i.test(fontName)) {
+      return false;
+    }
+    
+    // Accept known common font names
+    const commonFonts = [
+      'helvetica', 'arial', 'times', 'georgia', 'verdana', 'courier',
+      'impact', 'comic', 'tahoma', 'trebuchet', 'lucida', 'palatino',
+      'garamond', 'baskerville', 'bookman', 'century', 'futura',
+      'gill', 'optima', 'perpetua', 'rockwell', 'sabon', 'univers',
+      'inter', 'roboto', 'montserrat', 'lato', 'open sans', 'poppins',
+      'raleway', 'source sans', 'ubuntu', 'nunito', 'playfair',
+      'merriweather', 'crimson', 'lora', 'dancing script', 'pacifico',
+      'lobster', 'raleway', 'oswald', 'droid', 'noto sans', 'omnes'
+    ];
+    
+    // Check if it matches any common font
+    if (commonFonts.some(font => lower.includes(font) || font.includes(lower))) {
+      return true;
+    }
+    
+    // Accept single word or two-word combinations that look like font names
+    // (proper nouns starting with capital, or common font-like patterns)
+    if (words.length <= 2) {
+      // Reject if it's all lowercase and looks like a generic word
+      if (words.length === 1 && lower.length < 3) {
+        return false;
+      }
+      
+      // Accept if it follows font naming patterns
+      return true;
+    }
+    
+    // Default: reject if unsure
+    return false;
+  }
+
+  /**
+   * Finds the best/most likely font name from an array of potential fonts
+   * Prioritizes common fonts and shorter, simpler names
+   */
+  findBestFontName(fontList) {
+    if (!Array.isArray(fontList) || fontList.length === 0) return null;
+    
+    // Priority list of known fonts (most common first)
+    const priorityFonts = [
+      'omnes', 'montserrat', 'helvetica', 'arial', 'inter', 'roboto',
+      'lato', 'open sans', 'poppins', 'times', 'georgia',
+      'futura', 'univers', 'gotham', 'proxima nova', 'source sans'
+    ];
+    
+    // First, check for exact matches with priority fonts
+    for (const priority of priorityFonts) {
+      const match = fontList.find(f => 
+        f.toLowerCase().includes(priority) || priority.includes(f.toLowerCase())
+      );
+      if (match) return match;
+    }
+    
+    // Then prefer shorter names (more likely to be actual font names)
+    const sorted = [...fontList].sort((a, b) => a.length - b.length);
+    
+    // Prefer single-word or two-word fonts
+    const simpleFonts = sorted.filter(f => f.split(/\s+/).length <= 2);
+    if (simpleFonts.length > 0) {
+      return simpleFonts[0];
+    }
+    
+    // Fallback to shortest
+    return sorted[0];
+  }
+
   analyzePrimaryFont(scraped, brand) {
     if (!brand.primary) {
       return { score: 0.5, issues: [] };
     }
     
     const scrapedPrimary = scraped.primary || Array.from(scraped.allFonts)[0];
-    if (!scrapedPrimary) {
+    if (!scrapedPrimary || scraped.allFonts.size === 0) {
       return {
         score: 0,
         issues: [{
@@ -224,29 +469,68 @@ export class UniversalFontAnalyzer {
       };
     }
     
-    // IMPROVED: Check if brand font is in the list of scraped fonts
+    // IMPROVED: Check ALL fonts in the stack for brand font (primary OR secondary)
     const brandFontLower = brand.primary.toLowerCase();
-    const hasBrandFont = Array.from(scraped.allFonts).some(font => 
-      font.toLowerCase().includes(brandFontLower) || brandFontLower.includes(font.toLowerCase())
-    );
+    const brandFontVariations = this.getFontVariations(brand.primary);
     
-    const similarity = this.fontSimilarity(scrapedPrimary, brand.primary);
+    // Also check secondary font if available
+    const brandSecondaryLower = brand.secondary?.toLowerCase();
+    const brandSecondaryVariations = brand.secondary ? this.getFontVariations(brand.secondary) : [];
     
-    // IMPROVED: If brand font is found anywhere in the font list, give high score
-    if (hasBrandFont) {
-      console.log(`✅ Brand font "${brand.primary}" found in scraped fonts list`);
-      return { score: 0.85, issues: [] }; // High score when brand font is found
+    // Check if primary brand font exists
+    const hasBrandPrimaryFont = Array.from(scraped.allFonts).some(scrapedFont => {
+      const scrapedFontLower = scrapedFont.toLowerCase();
+      
+      // Direct match
+      if (scrapedFontLower === brandFontLower || 
+          scrapedFontLower.includes(brandFontLower) || 
+          brandFontLower.includes(scrapedFontLower)) {
+        return true;
+      }
+      
+      // Check font family variations
+      return brandFontVariations.some(variation => 
+        scrapedFontLower.includes(variation) || variation.includes(scrapedFontLower)
+      );
+    });
+    
+    // Check if secondary brand font exists
+    const hasBrandSecondaryFont = brandSecondaryLower ? Array.from(scraped.allFonts).some(scrapedFont => {
+      const scrapedFontLower = scrapedFont.toLowerCase();
+      
+      // Direct match
+      if (scrapedFontLower === brandSecondaryLower || 
+          scrapedFontLower.includes(brandSecondaryLower) || 
+          brandSecondaryLower.includes(scrapedFontLower)) {
+        return true;
+      }
+      
+      // Check font family variations
+      return brandSecondaryVariations.some(variation => 
+        scrapedFontLower.includes(variation) || variation.includes(scrapedFontLower)
+      );
+    }) : false;
+    
+    // If EITHER primary or secondary brand font is found, give high score (no issue)
+    if (hasBrandPrimaryFont || hasBrandSecondaryFont) {
+      console.log(`✅ Brand font found in scraped fonts list (primary: ${hasBrandPrimaryFont}, secondary: ${hasBrandSecondaryFont})`);
+      return { score: 0.9, issues: [] }; // High score when any brand font is found in stack
     }
+    
+    // If not found, calculate similarity and generate issue
+    const similarity = this.fontSimilarity(scrapedPrimary, brand.primary);
     
     const issues = [];
     
     if (similarity < 0.7) {
+      const foundFonts = Array.from(scraped.allFonts).slice(0, 5).join(', ');
       issues.push({
         category: 'typography',
         type: 'primary_font_mismatch',
         severity: similarity < 0.3 ? 'high' : 'medium',
         message: `Primary font should be "${brand.primary}" but found "${scrapedPrimary}"`,
-        suggestion: `Update font-family to use "${brand.primary}" as the primary font`,
+        recommendation: `Update font-family to use "${brand.primary}" as the primary font. Found fonts: ${foundFonts}`,
+        suggestion: `Use font-family: "${brand.primary}", ... (with fallbacks)`,
         context: {
           expected: brand.primary,
           found: scrapedPrimary,
@@ -258,20 +542,65 @@ export class UniversalFontAnalyzer {
     return { score: similarity, issues };
   }
 
+  /**
+   * Get font family variations for matching (e.g., "Helvetica Neue" -> ["helvetica neue", "helvetica"])
+   */
+  getFontVariations(fontName) {
+    if (!fontName) return [];
+    
+    const variations = new Set();
+    const lower = fontName.toLowerCase();
+    
+    variations.add(lower); // Add original
+    
+    // Split multi-word fonts (e.g., "Helvetica Neue" -> ["helvetica", "neue"])
+    const words = lower.split(/\s+/);
+    
+    // Add first word if multi-word (e.g., "helvetica neue" -> "helvetica")
+    if (words.length > 1) {
+      variations.add(words[0]);
+    }
+    
+    // Add common variations from font family groups
+    for (const [family, variants] of Object.entries(this.fontFamilies)) {
+      if (lower.includes(family) || family.includes(lower)) {
+        variants.forEach(v => variations.add(v));
+        variations.add(family);
+      }
+    }
+    
+    return Array.from(variations);
+  }
+
   analyzeSecondaryFont(scraped, brand) {
     if (!brand.secondary) {
       return { score: 0.5, issues: [] };
     }
     
-    // IMPROVED: Check if brand secondary font is in the list
+    // IMPROVED: Check ALL fonts in the stack for brand secondary font
     const brandFontLower = brand.secondary.toLowerCase();
-    const hasBrandFont = Array.from(scraped.allFonts).some(font => 
-      font.toLowerCase().includes(brandFontLower) || brandFontLower.includes(font.toLowerCase())
-    );
+    const brandFontVariations = this.getFontVariations(brand.secondary);
+    
+    // Check if brand secondary font (or any variation) exists anywhere in the scraped font stack
+    const hasBrandFont = Array.from(scraped.allFonts).some(scrapedFont => {
+      const scrapedFontLower = scrapedFont.toLowerCase();
+      
+      // Direct match
+      if (scrapedFontLower === brandFontLower || 
+          scrapedFontLower.includes(brandFontLower) || 
+          brandFontLower.includes(scrapedFontLower)) {
+        return true;
+      }
+      
+      // Check font family variations
+      return brandFontVariations.some(variation => 
+        scrapedFontLower.includes(variation) || variation.includes(scrapedFontLower)
+      );
+    });
     
     if (hasBrandFont) {
       console.log(`✅ Brand secondary font "${brand.secondary}" found in scraped fonts list`);
-      return { score: 0.85, issues: [] }; // High score when brand font is found
+      return { score: 0.9, issues: [] }; // High score when brand font is found in stack
     }
     
     const scrapedSecondary = scraped.secondary || 
@@ -295,12 +624,14 @@ export class UniversalFontAnalyzer {
     const issues = [];
     
     if (similarity < 0.6) {
+      const foundFonts = Array.from(scraped.allFonts).slice(0, 5).join(', ');
       issues.push({
         category: 'typography',
         type: 'secondary_font_mismatch',
         severity: 'medium',
         message: `Secondary font should be similar to "${brand.secondary}"`,
-        suggestion: `Use "${brand.secondary}" or a similar font family`
+        recommendation: `Use "${brand.secondary}" or a similar font family. Found fonts: ${foundFonts}`,
+        suggestion: `Use font-family: "${brand.secondary}", ... (with fallbacks)`
       });
     }
     
@@ -378,10 +709,14 @@ export class UniversalFontAnalyzer {
   }
 
   findWeightMatch(brandWeight, scrapedWeights) {
+    // Normalize brand weight
+    const normalizedBrand = this.normalizeWeight(brandWeight);
+    if (!normalizedBrand) return false;
+    
     // Get numeric value for brand weight
-    let brandNum = this.fontWeightMapping[brandWeight.toLowerCase()];
-    if (!brandNum && !isNaN(brandWeight)) {
-      brandNum = parseInt(brandWeight);
+    let brandNum = this.fontWeightMapping[normalizedBrand];
+    if (!brandNum && !isNaN(normalizedBrand)) {
+      brandNum = parseInt(normalizedBrand);
     }
     if (!brandNum) return false;
     
@@ -401,6 +736,15 @@ export class UniversalFontAnalyzer {
       // Also check if they're the same semantic name
       return scrapedWeight.toLowerCase() === brandWeight.toLowerCase();
     });
+  }
+
+  /**
+   * Get weight category for matching (light: 100-300, regular: 400-500, bold: 600-900)
+   */
+  getWeightCategory(weightNum) {
+    if (weightNum <= 300) return 'light';
+    if (weightNum <= 500) return 'regular';
+    return 'bold';
   }
 
   calculateFontScore(analysis) {

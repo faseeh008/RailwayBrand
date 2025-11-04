@@ -23,10 +23,16 @@ export class VisualAuditScraper {
     const screenshotPath = await this.captureFullPageScreenshot(url);
     const elementPositions = await this.extractElementPositions(url);
     
+    // Leave annotation to API layer (+server). Only return raw screenshot and positions here.
+    const annotatedPath = null;
+
     return {
       ...scrapedData,
       visualData: {
+        // Maintain legacy field expected by server for annotators
         screenshot: screenshotPath,
+        originalScreenshot: screenshotPath,
+        annotatedScreenshot: annotatedPath || null,
         elementPositions: elementPositions,
         viewport: scrapedData.viewport,
         timestamp: new Date().toISOString()
@@ -230,29 +236,89 @@ export class VisualAuditScraper {
       // Wait for content to load
       await this.waitForContent(page);
       
-      // Extract elements with their positions
+      // Extract elements with their positions, prioritizing logo detection
       const elements = await page.evaluate(() => {
         const elements = [];
         
-        // Get all relevant elements
+        // First, specifically look for logo elements
+        const logoSelectors = [
+          'header img',
+          '.logo img',
+          '[class*="logo"] img',
+          '[class*="brand"] img',
+          'nav img',
+          'img[alt*="logo" i]',
+          'img[src*="logo" i]',
+          '[class*="logo"]'
+        ];
+        
+        const logoElements = new Set();
+        logoSelectors.forEach(selector => {
+          try {
+            document.querySelectorAll(selector).forEach(el => {
+              logoElements.add(el);
+            });
+          } catch (e) {
+            // Ignore invalid selectors
+          }
+        });
+        
+        // Add logo elements first with special flag
+        logoElements.forEach(el => {
+          const rect = el.getBoundingClientRect();
+          if (rect.width > 10 && rect.height > 10) {
+            const isImg = el.tagName.toLowerCase() === 'img';
+            elements.push({
+              tag: el.tagName.toLowerCase(),
+              text: el.textContent?.slice(0, 100) || '',
+              classes: el.className || '',
+              id: el.id || '',
+              src: isImg ? (el.src || el.getAttribute('src') || '') : '',
+              alt: isImg ? (el.alt || '') : '',
+              isLogo: true,
+              position: {
+                x: Math.round(rect.x),
+                y: Math.round(rect.y),
+                width: Math.round(rect.width),
+                height: Math.round(rect.height)
+              },
+              styles: {
+                color: getComputedStyle(el).color,
+                backgroundColor: getComputedStyle(el).backgroundColor,
+                fontSize: getComputedStyle(el).fontSize,
+                fontFamily: getComputedStyle(el).fontFamily,
+                fontWeight: getComputedStyle(el).fontWeight
+              }
+            });
+          }
+        });
+        
+        // Get all other relevant elements
         const selectors = [
           'h1, h2, h3, h4, h5, h6',
           'p, span, div[class*="text"]',
           'a, button',
-          'img[src*="logo"], [class*="logo"]',
+          'img',
           'header, footer, nav',
           'div[class*="card"], section, article'
         ];
         
         selectors.forEach(selector => {
           document.querySelectorAll(selector).forEach(el => {
+            // Skip if already added as logo
+            if (logoElements.has(el)) return;
+            
             const rect = el.getBoundingClientRect();
-            if (rect.width > 10 && rect.height > 10) { // Filter tiny elements
+            if (rect.width > 10 && rect.height > 10) {
+              const isImg = el.tagName.toLowerCase() === 'img';
               elements.push({
                 tag: el.tagName.toLowerCase(),
                 text: el.textContent?.slice(0, 100) || '',
                 classes: el.className || '',
                 id: el.id || '',
+                src: isImg ? (el.src || el.getAttribute('src') || '') : '',
+                alt: isImg ? (el.alt || '') : '',
+                isLogo: false,
                 position: {
                   x: Math.round(rect.x),
                   y: Math.round(rect.y),
@@ -295,6 +361,19 @@ export class VisualAuditScraper {
       // Wait for any dynamic content using delay instead of waitForTimeout
       await new Promise(resolve => setTimeout(resolve, 2000));
       
+      // Wait for fonts to load (important for web fonts like Google Fonts)
+      try {
+        await page.evaluate(async () => {
+          if (document.fonts && document.fonts.ready) {
+            await document.fonts.ready;
+          }
+          // Additional wait for font loading
+          await new Promise(resolve => setTimeout(resolve, 500));
+        });
+      } catch (error) {
+        console.log('⚠️ Font loading check failed, continuing...');
+      }
+      
       // Scroll to trigger lazy loading
       await page.evaluate(() => {
         window.scrollTo(0, document.body.scrollHeight);
@@ -334,9 +413,10 @@ export class VisualAuditScraper {
         return Array.from(colorSet);
       });
 
-      // Extract fonts with multiple fallbacks
+      // Extract fonts with priority on CSS declarations and Google Fonts
       const fonts = await page.evaluate(() => {
         const fontSet = new Set();
+        const declaredFonts = new Set(); // Fonts declared in CSS (highest priority)
         const fontData = {
           primary: null,
           secondary: null,
@@ -344,7 +424,97 @@ export class VisualAuditScraper {
           fontSize: []
         };
         
-        // Method 1: Get fonts from all elements
+        // Method 0: Extract fonts from Google Fonts links and CSS stylesheets (highest priority)
+        try {
+          // Check Google Fonts links
+          const googleFontsLinks = Array.from(document.querySelectorAll('link[href*="fonts.googleapis.com"]'));
+          googleFontsLinks.forEach(link => {
+            const href = link.href;
+            // Extract font family name from URL: ...?family=Montserrat:wght@400;700
+            const familyMatch = href.match(/family=([^:&]+)/i);
+            if (familyMatch) {
+              const fontName = decodeURIComponent(familyMatch[1].replace(/\+/g, ' '));
+              const cleanFont = fontName.trim();
+              if (cleanFont) {
+                declaredFonts.add(cleanFont);
+                fontSet.add(cleanFont);
+                if (!fontData.primary) {
+                  fontData.primary = cleanFont;
+                }
+                console.log(`✅ Found font from Google Fonts link: ${cleanFont}`);
+              }
+            }
+          });
+          
+          // Extract from CSS stylesheets and <style> tags
+          Array.from(document.styleSheets).forEach(sheet => {
+            try {
+              Array.from(sheet.cssRules || []).forEach(rule => {
+                if (rule.style && rule.style.fontFamily) {
+                  const fontFamily = rule.style.fontFamily;
+                  fontFamily.split(',').forEach(font => {
+                    const cleanFont = font.trim().replace(/['"]/g, '');
+                    if (cleanFont && cleanFont !== 'serif' && cleanFont !== 'sans-serif' && cleanFont !== 'monospace' && 
+                        !cleanFont.includes('ui-') && !cleanFont.includes('system-')) {
+                      declaredFonts.add(cleanFont);
+                      fontSet.add(cleanFont);
+                      if (!fontData.primary) {
+                        fontData.primary = cleanFont;
+                      } else if (!fontData.secondary && cleanFont !== fontData.primary) {
+                        fontData.secondary = cleanFont;
+                      }
+                    }
+                  });
+                }
+                // Also check @font-face rules
+                if (rule instanceof CSSFontFaceRule) {
+                  const fontFamily = rule.style.fontFamily;
+                  if (fontFamily) {
+                    const cleanFont = fontFamily.replace(/['"]/g, '').trim();
+                    if (cleanFont) {
+                      declaredFonts.add(cleanFont);
+                      fontSet.add(cleanFont);
+                      if (!fontData.primary) {
+                        fontData.primary = cleanFont;
+                      }
+                    }
+                  }
+                }
+              });
+            } catch (e) {
+              // Cross-origin stylesheet or other error
+            }
+          });
+          
+          // Check inline <style> tags
+          Array.from(document.querySelectorAll('style')).forEach(styleTag => {
+            const styleText = styleTag.textContent || styleTag.innerText || '';
+            // Extract font-family declarations
+            const fontFamilyMatches = styleText.match(/font-family\s*:\s*([^;]+)/gi);
+            if (fontFamilyMatches) {
+              fontFamilyMatches.forEach(match => {
+                const fontValue = match.replace(/font-family\s*:\s*/i, '').trim();
+                fontValue.split(',').forEach(font => {
+                  const cleanFont = font.trim().replace(/['"]/g, '');
+                  if (cleanFont && cleanFont !== 'serif' && cleanFont !== 'sans-serif' && cleanFont !== 'monospace' &&
+                      !cleanFont.includes('ui-') && !cleanFont.includes('system-')) {
+                    declaredFonts.add(cleanFont);
+                    fontSet.add(cleanFont);
+                    if (!fontData.primary) {
+                      fontData.primary = cleanFont;
+                    } else if (!fontData.secondary && cleanFont !== fontData.primary) {
+                      fontData.secondary = cleanFont;
+                    }
+                  }
+                });
+              });
+            }
+          });
+        } catch (e) {
+          console.warn('⚠️ Failed to extract fonts from CSS/links:', e);
+        }
+        
+        // Method 1: Get fonts from all elements (but prioritize declared fonts)
         const elements = document.querySelectorAll('*');
         elements.forEach(el => {
           const styles = getComputedStyle(el);
@@ -352,9 +522,21 @@ export class VisualAuditScraper {
             // Clean and add fonts
             styles.fontFamily.split(',').forEach(font => {
               const cleanFont = font.trim().replace(/['"]/g, '');
-              if (cleanFont && cleanFont !== 'serif' && cleanFont !== 'sans-serif' && cleanFont !== 'monospace') {
+              // Skip generic and system fonts
+              if (cleanFont && cleanFont !== 'serif' && cleanFont !== 'sans-serif' && cleanFont !== 'monospace' &&
+                  !cleanFont.includes('ui-') && !cleanFont.includes('system-') && 
+                  cleanFont !== 'cursive' && cleanFont !== 'fantasy') {
+                
                 fontSet.add(cleanFont);
-                if (!fontData.primary) {
+                
+                // Prioritize declared fonts from CSS
+                if (declaredFonts.has(cleanFont)) {
+                  if (!fontData.primary || !declaredFonts.has(fontData.primary)) {
+                    fontData.primary = cleanFont;
+                  } else if (!fontData.secondary && cleanFont !== fontData.primary) {
+                    fontData.secondary = cleanFont;
+                  }
+                } else if (!fontData.primary) {
                   fontData.primary = cleanFont;
                 } else if (!fontData.secondary && cleanFont !== fontData.primary) {
                   fontData.secondary = cleanFont;
@@ -372,6 +554,17 @@ export class VisualAuditScraper {
           }
         });
         
+        // Ensure primary/secondary are from declared fonts if available
+        if (declaredFonts.size > 0) {
+          const declaredArray = Array.from(declaredFonts);
+          if (declaredArray.length > 0 && (!fontData.primary || !declaredFonts.has(fontData.primary))) {
+            fontData.primary = declaredArray[0];
+          }
+          if (declaredArray.length > 1 && (!fontData.secondary || !declaredFonts.has(fontData.secondary))) {
+            fontData.secondary = declaredArray[1];
+          }
+        }
+        
         // Method 2: Check body computed style if no fonts found
         if (fontSet.size === 0) {
           try {
@@ -379,9 +572,12 @@ export class VisualAuditScraper {
             if (bodyStyle.fontFamily) {
               bodyStyle.fontFamily.split(',').forEach(font => {
                 const cleanFont = font.trim().replace(/['"]/g, '');
-                if (cleanFont && cleanFont !== 'serif' && cleanFont !== 'sans-serif' && cleanFont !== 'monospace') {
+                if (cleanFont && cleanFont !== 'serif' && cleanFont !== 'sans-serif' && cleanFont !== 'monospace' &&
+                    !cleanFont.includes('ui-') && !cleanFont.includes('system-')) {
                   fontSet.add(cleanFont);
-                  fontData.primary = cleanFont;
+                  if (!fontData.primary) {
+                    fontData.primary = cleanFont;
+                  }
                 }
               });
             }
@@ -390,9 +586,12 @@ export class VisualAuditScraper {
             if (htmlStyle.fontFamily && fontSet.size === 0) {
               htmlStyle.fontFamily.split(',').forEach(font => {
                 const cleanFont = font.trim().replace(/['"]/g, '');
-                if (cleanFont && cleanFont !== 'serif' && cleanFont !== 'sans-serif' && cleanFont !== 'monospace') {
+                if (cleanFont && cleanFont !== 'serif' && cleanFont !== 'sans-serif' && cleanFont !== 'monospace' &&
+                    !cleanFont.includes('ui-') && !cleanFont.includes('system-')) {
                   fontSet.add(cleanFont);
-                  fontData.primary = cleanFont;
+                  if (!fontData.primary) {
+                    fontData.primary = cleanFont;
+                  }
                 }
               });
             }

@@ -411,6 +411,47 @@ export class EnhancedComplianceAnalyzer {
       }
     }
 
+    // Generate specific, user-friendly issues and recommendations
+    try {
+      const { SpecificIssueGenerator } = await import('./specificIssueGenerator.js');
+      const { SpecificRecommendationGenerator } = await import('./specificRecommendationGenerator.js');
+      const issueGen = new SpecificIssueGenerator();
+      const recoGen = new SpecificRecommendationGenerator();
+
+      // Colors
+      const specificColorIssues = issueGen.generateColorIssues(
+        scrapedData.colors?.palette || scrapedData.colors || [],
+        brandGuidelines.colors || {}
+      );
+      // Typography
+      const specificTypeIssues = issueGen.generateTypographyIssues(
+        scrapedData.typography || {},
+        brandGuidelines.typography || {}
+      );
+      // Logo
+      const specificLogoIssues = issueGen.generateLogoIssues(
+        scrapedData.logo || {},
+        brandGuidelines.logo || {}
+      );
+
+      const specificIssues = [
+        ...specificColorIssues,
+        ...specificTypeIssues,
+        ...specificLogoIssues
+      ];
+
+      // Prefer specific issues by appending them (front) for visibility
+      analysis.issues = [...specificIssues, ...analysis.issues];
+
+      // Specific recommendations from specific issues
+      const colorRecs = recoGen.generateColorRecommendations(specificColorIssues, brandGuidelines.colors || {});
+      const typeRecs = recoGen.generateTypographyRecommendations(specificTypeIssues, brandGuidelines.typography || {});
+      const logoRecs = recoGen.generateLogoRecommendations(specificLogoIssues, brandGuidelines.logo || {});
+      analysis.recommendations = [...colorRecs, ...typeRecs, ...logoRecs, ...analysis.recommendations];
+    } catch (e) {
+      console.warn('⚠️ Failed to generate specific issues/recommendations:', e?.message || e);
+    }
+
     console.log(`✅ Enhanced compliance analysis complete - Overall Score: ${(analysis.overallScore * 100).toFixed(1)}%`);
     return analysis;
   }

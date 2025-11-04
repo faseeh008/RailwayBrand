@@ -1,11 +1,13 @@
+// @ts-nocheck
 import { json } from '@sveltejs/kit';
 import { VisualAuditScraper } from '$lib/services/web-scraping/visualAuditScraper.js';
 import { ScreenshotAnnotator } from '$lib/services/web-scraping/screenshotAnnotator.js';
-import { FixedScreenshotAnnotator } from '$lib/services/web-scraping/fixedScreenshotAnnotator.js';
 import { enhancedComplianceAnalyzer } from '$lib/services/audit/enhancedComplianceAnalyzer.js';
 import { SolutionLLMProcessor } from '$lib/services/audit/solutionLLMProcessor.js';
 import { PdfsBrandGuidelineRepository } from '$lib/repositories/pdfsBrandGuidelineRepository.js';
 import { ScrapedDataRepository } from '$lib/repositories/scrapedDataRepository.js';
+import { AnalysisRepository } from '$lib/repositories/analysisRepository.js';
+import { generateFixPrompt } from '$lib/services/prompt/promptBuilder.js';
 import fs from 'fs';
 import path from 'path';
 
@@ -188,6 +190,14 @@ export async function POST({ request }) {
     const screenshotAnnotator = new ScreenshotAnnotator();
     const brandRepo = new PdfsBrandGuidelineRepository();
     const scrapedRepo = new ScrapedDataRepository();
+    const analysisRepo = new AnalysisRepository();
+    
+    // Import logo image analyzer
+    const { LogoImageAnalyzer } = await import('$lib/services/audit/logoImageAnalyzer.js');
+    const logoImageAnalyzer = new LogoImageAnalyzer();
+    
+    // Track processing start time
+    const processingStartTime = Date.now();
     
     // Get brand guidelines (brandId can be string (number) for pdfsBrandGuidelines)
     console.log(`📋 Fetching brand guidelines for ID: ${brandId}`);
@@ -341,6 +351,64 @@ export async function POST({ request }) {
       brandGuidelines
     );
     
+    // Run logo image analysis if screenshot and logo elements are available
+    let logoImageAnalysis = null;
+    if (scrapedData.visualData?.screenshot && scrapedData.visualData?.elementPositions) {
+      try {
+        console.log(`🖼️ Starting logo image analysis...`);
+        
+        // Find logo elements from scraped data
+        const logoElements = scrapedData.visualData.elementPositions.filter(
+          el => el.isLogo === true || 
+                el.tag === 'img' && (
+                  el.classes?.toLowerCase().includes('logo') ||
+                  el.id?.toLowerCase().includes('logo') ||
+                  el.alt?.toLowerCase().includes('logo') ||
+                  el.src?.toLowerCase().includes('logo')
+                )
+        );
+        
+        if (logoElements.length > 0) {
+          console.log(`✅ Found ${logoElements.length} logo element(s) for analysis`);
+          
+          // Analyze the first logo element (most prominent)
+          const primaryLogo = logoElements[0];
+          logoImageAnalysis = await logoImageAnalyzer.analyzeLogo({
+            screenshotPath: scrapedData.visualData.screenshot,
+            logoElement: primaryLogo,
+            brandGuidelines: brandGuidelines
+          });
+          
+          console.log(`🖼️ Logo image analysis complete:`, {
+            detected: logoImageAnalysis.detected,
+            confidence: logoImageAnalysis.confidence,
+            issues: logoImageAnalysis.issues?.length || 0
+          });
+          
+          // Merge logo image analysis issues into audit results
+          if (logoImageAnalysis.issues && logoImageAnalysis.issues.length > 0) {
+            // Replace or supplement existing logo issues with image analysis results
+            const existingLogoIssues = auditResults.issues?.filter(i => i.category === 'logo') || [];
+            const otherIssues = auditResults.issues?.filter(i => i.category !== 'logo') || [];
+            
+            // Use image analysis issues if logo was detected, otherwise keep existing issues
+            if (logoImageAnalysis.detected) {
+              auditResults.issues = [...otherIssues, ...logoImageAnalysis.issues];
+              console.log(`✅ Merged ${logoImageAnalysis.issues.length} logo image analysis issues`);
+            } else {
+              // Keep existing logo issues if image analysis didn't detect logo
+              auditResults.issues = [...otherIssues, ...existingLogoIssues];
+            }
+          }
+        } else {
+          console.log(`⚠️ No logo elements found for image analysis`);
+        }
+      } catch (logoAnalysisError) {
+        console.warn('⚠️ Logo image analysis failed, continuing with DOM-based analysis:', logoAnalysisError);
+        // Continue without image analysis - DOM-based detection will be used
+      }
+    }
+    
     // Process recommendations with LLM for actionable solutions
     console.log(`🛠️ Processing recommendations with LLM...`);
     let enhancedRecommendations = [];
@@ -388,14 +456,14 @@ export async function POST({ request }) {
     let visualReport = null;
     if (scrapedData.visualData?.screenshot) {
       try {
-        console.log(`🎯 Creating targeted visual audit report using FixedScreenshotAnnotator...`);
-        const fixedAnnotator = new FixedScreenshotAnnotator();
-        const annotatedScreenshot = await fixedAnnotator.createTargetedAnnotations(
+        console.log(`🎨 Creating visual audit report using ScreenshotAnnotator (primary)...`);
+        const annotatedScreenshot = await screenshotAnnotator.annotateScreenshot(
           scrapedData.visualData.screenshot,
           auditResults,
-          scrapedData.visualData.elementPositions || []
+          scrapedData.visualData.elementPositions || [],
+          brandGuidelines
         );
-        console.log(`✅ FixedScreenshotAnnotator created annotated screenshot: ${annotatedScreenshot}`);
+        console.log(`✅ ScreenshotAnnotator created annotated screenshot: ${annotatedScreenshot}`);
         visualReport = {
           ...auditResults,
           visualData: {
@@ -404,34 +472,15 @@ export async function POST({ request }) {
           }
         };
       } catch (annotationError) {
-        console.warn('⚠️ FixedScreenshotAnnotator failed, falling back to ScreenshotAnnotator:', annotationError);
-        // Fallback to standard annotation using ScreenshotAnnotator
-        try {
-          console.log(`🎨 Using ScreenshotAnnotator as fallback...`);
-          const annotatedScreenshot = await screenshotAnnotator.annotateScreenshot(
-            scrapedData.visualData.screenshot,
-            auditResults,
-            scrapedData.visualData.elementPositions || []
-          );
-          console.log(`✅ ScreenshotAnnotator created annotated screenshot: ${annotatedScreenshot}`);
-          visualReport = {
-            ...auditResults,
-            visualData: {
-              ...scrapedData.visualData,
-              annotatedScreenshot
-            }
-          };
-        } catch (fallbackError) {
-          console.warn('⚠️ Standard annotation also failed:', fallbackError);
-          visualReport = {
-            ...auditResults,
-            visualData: scrapedData.visualData
-          };
-        }
+        console.warn('⚠️ ScreenshotAnnotator failed; returning unannotated screenshot:', annotationError);
+        visualReport = {
+          ...auditResults,
+          visualData: scrapedData.visualData
+        };
       }
     } else {
-      console.warn('⚠️ No screenshot available for annotation - FixedScreenshotAnnotator and ScreenshotAnnotator require a screenshot file');
-      console.warn('💡 Screenshot generation requires Chrome/Puppeteer. Element positions are still available for interactive highlights.');
+      console.warn('⚠️ No screenshot available for annotation - ScreenshotAnnotator requires a screenshot file');
+      console.warn('💡 Screenshot generation requires Chrome/Puppeteer. Element positions are still available.');
     }
     
     // Use visual report if available, otherwise use basic audit results
@@ -518,6 +567,100 @@ export async function POST({ request }) {
     }
     
     // Return comprehensive results
+    // Build AI Fix Prompt with element context
+    const fixPrompt = generateFixPrompt(
+      auditResults,
+      brandGuidelines,
+      '',
+      { level: 'standard' },
+      scrapedData, // code/context summary
+      finalReport.visualData?.elementPositions || scrapedData.visualData?.elementPositions || []
+    );
+
+    // Calculate severity breakdown from issues
+    const severityBreakdown = {
+      critical: 0,
+      high: 0,
+      medium: 0,
+      low: 0
+    };
+    
+    (auditResults.issues || []).forEach(issue => {
+      const severity = (issue.severity || 'medium').toLowerCase();
+      if (severityBreakdown.hasOwnProperty(severity)) {
+        severityBreakdown[severity]++;
+      } else {
+        severityBreakdown.medium++;
+      }
+    });
+
+    // Convert category scores to percentage integers for database
+    const categoryScores = auditResults.categoryScores || {};
+    const categoryScoresForDb = {};
+    Object.keys(categoryScores).forEach(key => {
+      if (typeof categoryScores[key] === 'number') {
+        categoryScoresForDb[key] = Math.round(categoryScores[key] * 100);
+      }
+    });
+
+    // Prepare analysis result data for database
+    // Note: Avoid FK violations if the ID is from pdfsBrandGuidelines (different table)
+    const analysisDataForDb = {
+      brandGuidelineId: null,
+      websiteUrl: url,
+      websiteTitle: scrapedData.title || scrapedData.url || url,
+      
+      // Map issues to violations format (for backward compatibility)
+      violations: (auditResults.issues || []).map(issue => ({
+        elementType: issue.element || issue.selector || 'unknown',
+        issueType: issue.type || issue.category || 'general',
+        severity: (issue.severity || 'medium').toLowerCase(),
+        found: issue.found || issue.details?.found || null,
+        expected: issue.expected || issue.details?.expected || null,
+        suggestion: issue.recommendation || issue.action || '',
+        affectedElements: issue.elementPositions?.length || 1,
+        examples: issue.examples || [],
+        location: issue.location || issue.selector || '',
+        impact: issue.impact || '',
+        priority: issue.priority || issue.severity || 'medium'
+      })),
+      
+      // Store full issues array
+      issues: issuesWithPositions,
+      
+      // Store recommendations
+      recommendations: enhancedRecommendations,
+      
+      // Summary metrics
+      score: Math.round((auditResults.overallScore || 0) * 100), // Convert to 0-100 integer
+      totalViolations: auditResults.issues?.length || 0,
+      severityBreakdown: severityBreakdown,
+      categoryScores: categoryScoresForDb,
+      
+      // Screenshots (store as base64 data URLs)
+      screenshot: screenshotDataUrl,
+      annotatedScreenshot: targetedScreenshotDataUrl || screenshotDataUrl,
+      
+      // AI fix prompt
+      fixPrompt: fixPrompt,
+      
+      // Metadata
+      analysisType: 'visual_compliance',
+      processingTime: Date.now() - processingStartTime,
+      elementsAnalyzed: scrapedData.elements?.length || finalReport.visualData?.elementPositions?.length || 0
+    };
+
+    // Save analysis results to database
+    let savedAnalysis = null;
+    try {
+      console.log('💾 Saving analysis results to database...');
+      savedAnalysis = await analysisRepo.create(analysisDataForDb);
+      console.log(`✅ Analysis results saved with ID: ${savedAnalysis.id}`);
+    } catch (dbError) {
+      console.error('❌ Failed to save analysis results to database:', dbError);
+      // Continue with response even if DB save fails
+    }
+
     const response = {
       // Spread audit results
       overallScore: auditResults.overallScore,
@@ -538,7 +681,9 @@ export async function POST({ request }) {
         timestamp: finalReport.visualData?.timestamp || new Date().toISOString()
       },
       interactive: true,
-      scrapedDataId: savedData.id
+      scrapedDataId: savedData.id,
+      analysisId: savedAnalysis?.id || null, // Include analysis ID if saved
+      fixPrompt
     };
     
     console.log(`✅ Visual audit completed successfully`);

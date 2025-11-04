@@ -7,14 +7,15 @@ export class ScreenshotAnnotator {
   constructor() {
     this.issueTypes = {
       colors: { color: '#FF6B6B', label: 'Color Issue' },
-      typography: { color: '#4ECDC4', label: 'Typography Issue' },
-      logo: { color: '#45B7D1', label: 'Logo Issue' },
-      layout: { color: '#96CEB4', label: 'Layout Issue' },
+      // Use blue for typography per request
+      typography: { color: '#3B82F6', label: 'Typography Issue' },
+      // Use yellow for logo per request
+      logo: { color: '#FACC15', label: 'Logo Issue' },
       spacing: { color: '#FFA726', label: 'Spacing Issue' }
     };
   }
 
-  async annotateScreenshot(screenshotPath, auditResults, elementPositions = []) {
+  async annotateScreenshot(screenshotPath, auditResults, elementPositions = [], brandGuidelines = null) {
     try {
       console.log(`🎨 Starting screenshot annotation...`);
       
@@ -25,18 +26,23 @@ export class ScreenshotAnnotator {
       // Draw original screenshot
       ctx.drawImage(image, 0, 0);
       
+      // Extract allowed colors from brand guidelines
+      const allowedColors = this.extractAllowedColors(brandGuidelines);
+      console.log(`🎨 Allowed colors from brand guidelines:`, allowedColors);
+      
       // Add annotations for each issue
       if (auditResults.issues && auditResults.issues.length > 0) {
         auditResults.issues.forEach((issue, index) => {
-          this.annotateIssue(ctx, issue, index, elementPositions);
+          this.annotateIssue(ctx, issue, index, elementPositions, allowedColors);
         });
       }
       
-      // Add legend
-      this.addLegend(ctx, canvas.width, canvas.height);
+      // Note: Legend is now displayed in the fullscreen modal overlay, not on the screenshot
+      // This prevents it from covering the logo area
+      // this.addLegend(ctx, canvas.width, canvas.height);
       
-      // Add overall score
-      this.addScoreOverlay(ctx, canvas.width, auditResults.overallScore || 0);
+      // Add overall score (positioned at bottom-right to avoid overlap)
+      this.addScoreOverlay(ctx, canvas.width, canvas.height, auditResults.overallScore || 0);
       
       // Save annotated screenshot
       const annotatedPath = screenshotPath.replace('.png', '-annotated.png');
@@ -52,36 +58,192 @@ export class ScreenshotAnnotator {
     }
   }
 
-  annotateIssue(ctx, issue, index, elementPositions) {
-    const issueConfig = this.issueTypes[issue.category] || this.issueTypes.layout;
+  // Extract allowed colors from brand guidelines
+  extractAllowedColors(brandGuidelines) {
+    if (!brandGuidelines) return new Set();
+    
+    const allowedColors = new Set();
+    const colors = brandGuidelines.colors || {};
+    
+    // Add primary color
+    if (colors.primary?.hex) {
+      allowedColors.add(this.normalizeColorToHex(colors.primary.hex));
+    }
+    
+    // Add secondary color
+    if (colors.secondary?.hex) {
+      allowedColors.add(this.normalizeColorToHex(colors.secondary.hex));
+    }
+    
+    // Add palette colors
+    if (Array.isArray(colors.palette)) {
+      colors.palette.forEach(color => {
+        const normalized = this.normalizeColorToHex(color);
+        if (normalized) allowedColors.add(normalized);
+      });
+    }
+    
+    // Add neutral colors
+    if (Array.isArray(colors.neutral)) {
+      colors.neutral.forEach(neutral => {
+        if (neutral?.hex) {
+          const normalized = this.normalizeColorToHex(neutral.hex);
+          if (normalized) allowedColors.add(normalized);
+        }
+      });
+    }
+    
+    return allowedColors;
+  }
+
+  // Normalize color to hex format for comparison
+  normalizeColorToHex(color) {
+    if (!color) return null;
+    
+    const colorStr = String(color).trim().toLowerCase();
+    
+    // Already hex format
+    if (colorStr.startsWith('#')) {
+      return colorStr.length === 7 ? colorStr : colorStr.length === 4 ? 
+        `#${colorStr[1]}${colorStr[1]}${colorStr[2]}${colorStr[2]}${colorStr[3]}${colorStr[3]}` : colorStr;
+    }
+    
+    // RGB format
+    const rgbMatch = colorStr.match(/rgb\((\d+),\s*(\d+),\s*(\d+)\)/);
+    if (rgbMatch) {
+      const r = parseInt(rgbMatch[1]).toString(16).padStart(2, '0');
+      const g = parseInt(rgbMatch[2]).toString(16).padStart(2, '0');
+      const b = parseInt(rgbMatch[3]).toString(16).padStart(2, '0');
+      return `#${r}${g}${b}`;
+    }
+    
+    // RGBA format (ignore alpha)
+    const rgbaMatch = colorStr.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)/);
+    if (rgbaMatch) {
+      const r = parseInt(rgbaMatch[1]).toString(16).padStart(2, '0');
+      const g = parseInt(rgbaMatch[2]).toString(16).padStart(2, '0');
+      const b = parseInt(rgbaMatch[3]).toString(16).padStart(2, '0');
+      return `#${r}${g}${b}`;
+    }
+    
+    return null;
+  }
+
+  // Check if a color is compliant with brand guidelines
+  isColorCompliant(elementColor, allowedColors) {
+    if (!elementColor || allowedColors.size === 0) return true; // If no guidelines, assume compliant
+    
+    const normalized = this.normalizeColorToHex(elementColor);
+    if (!normalized) return true; // Can't normalize, assume compliant
+    
+    // Check if color matches any allowed color
+    return allowedColors.has(normalized);
+  }
+
+  annotateIssue(ctx, issue, index, elementPositions, allowedColors = new Set()) {
+    // Resolve category robustly; map aliases like 'color' -> 'colors'
+    const category = this.resolveCategory(issue);
+    const issueConfig = this.issueTypes[category] || this.issueTypes.layout;
     
     // Find relevant elements for this issue
-    const relevantElements = this.findRelevantElements(issue, elementPositions);
+    const relevantElements = this.findRelevantElements({ ...issue, category }, elementPositions, allowedColors);
     
+    // Draw ONLY element outlines. Do not draw badges, labels, or general boxes.
     if (relevantElements.length > 0) {
       relevantElements.forEach(element => {
         this.drawElementHighlight(ctx, element, issueConfig.color, index + 1);
       });
-      
-      // Add issue description near the first element
-      const firstElement = relevantElements[0];
-      this.drawIssueLabel(ctx, firstElement, issue, index + 1, issueConfig.color);
-    } else {
-      // If no specific elements found, add a general annotation
-      this.drawGeneralAnnotation(ctx, issue, index + 1, issueConfig.color);
     }
   }
 
-  findRelevantElements(issue, elementPositions) {
+  // Normalize and robustly resolve an issue category
+  resolveCategory(issue) {
+    const direct = (issue?.category || issue?.Category || '').toString().toLowerCase().trim();
+    const type = (issue?.type || issue?.Type || '').toString().toLowerCase();
+    const group = (issue?.group || issue?.Group || '').toString().toLowerCase();
+    const tags = Array.isArray(issue?.tags) ? issue.tags.map(t => String(t).toLowerCase()) : [];
+
+    const candidates = [direct, type, group, ...tags];
+
+    // Map common aliases to our canonical keys
+    const normalize = (val) => {
+      if (!val) return '';
+      if (val === 'color' || val.includes('color')) return 'colors';
+      if (val.startsWith('typography') || val.includes('font') || val === 'text') return 'typography';
+      if (val.includes('logo')) return 'logo';
+      if (val.includes('spacing') || val.includes('margin') || val.includes('padding')) return 'spacing';
+      if (val.includes('layout') || val.includes('grid')) return 'layout';
+      return '';
+    };
+
+    for (const c of candidates) {
+      const norm = normalize(c);
+      if (norm && this.issueTypes[norm]) return norm;
+    }
+
+    // Fallback to text-based inference
+    return this.determineIssueCategory(issue);
+  }
+
+  // Try to infer the category based on message/type text when not provided
+  determineIssueCategory(issue) {
+    const text = (issue?.message || issue?.description || '').toLowerCase();
+    const type = (issue?.type || '').toLowerCase();
+    if (
+      text.includes('color') || text.includes('palette') || text.includes('hex') ||
+      type.includes('color') || type.includes('palette')
+    ) {
+      return 'colors';
+    }
+    if (
+      text.includes('font') || text.includes('typography') || text.includes('heading') || text.includes('text') ||
+      type.includes('font') || type.includes('typography')
+    ) {
+      return 'typography';
+    }
+    if (
+      text.includes('logo') || type.includes('logo')
+    ) {
+      return 'logo';
+    }
+    if (
+      text.includes('spacing') || text.includes('margin') || text.includes('padding') ||
+      type.includes('spacing')
+    ) {
+      return 'spacing';
+    }
+    return 'layout';
+  }
+
+  findRelevantElements(issue, elementPositions, allowedColors = new Set()) {
     if (!elementPositions || elementPositions.length === 0) {
       return [];
     }
 
     switch (issue.category) {
       case 'colors':
-        return elementPositions.filter(el => 
-          el.styles && el.styles.color && this.isColorElement(el)
-        );
+        return elementPositions.filter(el => {
+          if (!el.styles || !el.position) return false;
+          
+          // Check if element has colors that are non-compliant
+          const textColor = el.styles.color;
+          const bgColor = el.styles.backgroundColor;
+          
+          // Check text color (skip if no text color specified)
+          const hasTextColor = textColor && textColor !== 'transparent' && textColor !== '';
+          const textColorCompliant = !hasTextColor || this.isColorCompliant(textColor, allowedColors);
+          
+          // Check background color (ignore transparent/empty backgrounds)
+          const isTransparentBg = !bgColor || bgColor === 'transparent' || 
+                                  bgColor === 'rgba(0, 0, 0, 0)' || 
+                                  bgColor === '' ||
+                                  bgColor === 'rgba(255, 255, 255, 0)';
+          const hasBgColor = bgColor && !isTransparentBg;
+          const bgColorCompliant = !hasBgColor || this.isColorCompliant(bgColor, allowedColors);
+          
+          // Only highlight if either color is non-compliant and actually present
+          return (hasTextColor && !textColorCompliant) || (hasBgColor && !bgColorCompliant);
+        });
       
       case 'typography':
         return elementPositions.filter(el => 
@@ -89,9 +251,11 @@ export class ScreenshotAnnotator {
         );
       
       case 'logo':
-        return elementPositions.filter(el => 
-          el.tag === 'img' || el.classes.toLowerCase().includes('logo')
-        );
+        return elementPositions.filter(el => {
+          const classes = (el.classes || '').toLowerCase();
+          const id = (el.id || '').toLowerCase();
+          return el.tag === 'img' || classes.includes('logo') || id.includes('logo');
+        });
       
       case 'layout':
         return elementPositions.filter(el => 
@@ -104,13 +268,6 @@ export class ScreenshotAnnotator {
           this.elementMatchesIssue(el, issue)
         );
     }
-  }
-
-  isColorElement(element) {
-    return element.styles && (
-      element.styles.color !== 'rgb(0, 0, 0)' ||
-      element.styles.backgroundColor !== 'rgba(0, 0, 0, 0)'
-    );
   }
 
   isTextElement(element) {
@@ -128,7 +285,14 @@ export class ScreenshotAnnotator {
   }
 
   drawElementHighlight(ctx, element, color, issueNumber) {
-    const { x, y, width, height } = element.position;
+    // Handle both nested and direct position structures
+    const position = element.position || element;
+    const { x = 0, y = 0, width = 0, height = 0 } = position;
+    
+    // Skip if position is invalid
+    if (!width || !height || width < 5 || height < 5) {
+      return;
+    }
     
     // Draw highlight rectangle
     ctx.strokeStyle = color;
@@ -149,159 +313,107 @@ export class ScreenshotAnnotator {
     ctx.fillRect(x - markerSize/2, y + height - markerSize/2, markerSize, markerSize);
     // Bottom-right
     ctx.fillRect(x + width - markerSize/2, y + height - markerSize/2, markerSize, markerSize);
-    
-    // Draw issue number badge
-    this.drawIssueBadge(ctx, x, y, issueNumber, color);
-  }
-
-  drawIssueBadge(ctx, x, y, issueNumber, color) {
-    const badgeSize = 24;
-    const badgeX = x - badgeSize;
-    const badgeY = y - badgeSize;
-    
-    // Badge background
-    ctx.fillStyle = color;
-    ctx.beginPath();
-    ctx.arc(badgeX + badgeSize/2, badgeY + badgeSize/2, badgeSize/2, 0, Math.PI * 2);
-    ctx.fill();
-    
-    // Issue number
-    ctx.fillStyle = '#FFFFFF';
-    ctx.font = 'bold 12px Arial';
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.fillText(issueNumber.toString(), badgeX + badgeSize/2, badgeY + badgeSize/2);
-  }
-
-  drawIssueLabel(ctx, element, issue, issueNumber, color) {
-    const { x, y, width } = element.position;
-    const labelX = x + width + 10;
-    const labelY = y;
-    
-    // Label background
-    ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
-    ctx.strokeStyle = color;
-    ctx.lineWidth = 2;
-    ctx.fillRect(labelX, labelY, 300, 80);
-    ctx.strokeRect(labelX, labelY, 300, 80);
-    
-    // Issue text
-    ctx.fillStyle = '#333333';
-    ctx.font = 'bold 14px Arial';
-    ctx.textAlign = 'left';
-    ctx.textBaseline = 'top';
-    
-    // Issue number and category
-    ctx.fillText(`Issue #${issueNumber}: ${issue.category}`, labelX + 10, labelY + 10);
-    
-    // Issue message (truncated)
-    ctx.font = '12px Arial';
-    const message = issue.message && issue.message.length > 50 ? 
-      issue.message.substring(0, 50) + '...' : (issue.message || 'No description');
-    ctx.fillText(message, labelX + 10, labelY + 35);
-    
-    // Severity
-    ctx.fillStyle = this.getSeverityColor(issue.severity);
-    ctx.fillText(`Severity: ${issue.severity}`, labelX + 10, labelY + 55);
-  }
-
-  drawGeneralAnnotation(ctx, issue, issueNumber, color) {
-    // Draw a general annotation in the top-left area
-    const x = 50;
-    const y = 50 + (issueNumber - 1) * 100;
-    
-    // Issue marker
-    ctx.fillStyle = color;
-    ctx.beginPath();
-    ctx.arc(x, y, 15, 0, Math.PI * 2);
-    ctx.fill();
-    
-    // Issue number
-    ctx.fillStyle = '#FFFFFF';
-    ctx.font = 'bold 12px Arial';
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.fillText(issueNumber.toString(), x, y);
-    
-    // Issue label
-    ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
-    ctx.strokeStyle = color;
-    ctx.lineWidth = 2;
-    ctx.fillRect(x + 25, y - 20, 300, 60);
-    ctx.strokeRect(x + 25, y - 20, 300, 60);
-    
-    // Issue text
-    ctx.fillStyle = '#333333';
-    ctx.font = 'bold 14px Arial';
-    ctx.textAlign = 'left';
-    ctx.fillText(`Issue #${issueNumber}: ${issue.category}`, x + 35, y - 5);
-    
-    ctx.font = '12px Arial';
-    const message = issue.message && issue.message.length > 50 ? 
-      issue.message.substring(0, 50) + '...' : (issue.message || 'No description');
-    ctx.fillText(message, x + 35, y + 15);
   }
 
   addLegend(ctx, canvasWidth, canvasHeight) {
+    // Fixed position at top-left (always visible regardless of scroll)
     const legendX = 20;
-    const legendY = canvasHeight - 150;
+    const legendY = 20; // Fixed at top instead of bottom
     
-    // Legend background
-    ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
-    ctx.fillRect(legendX, legendY, 200, 130);
-    ctx.strokeStyle = '#CCCCCC';
-    ctx.strokeRect(legendX, legendY, 200, 130);
+    // Calculate legend height based on number of issue types
+    const legendItemHeight = 20;
+    const titleHeight = 30;
+    const padding = 20;
+    const itemCount = Object.keys(this.issueTypes).length;
+    const legendHeight = titleHeight + (itemCount * legendItemHeight) + padding;
+    
+    // Legend background with shadow effect
+    ctx.shadowColor = 'rgba(0, 0, 0, 0.15)';
+    ctx.shadowBlur = 8;
+    ctx.shadowOffsetX = 0;
+    ctx.shadowOffsetY = 2;
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.95)';
+    ctx.fillRect(legendX, legendY, 220, legendHeight);
+    ctx.strokeStyle = '#DDDDDD';
+    ctx.lineWidth = 2;
+    ctx.strokeRect(legendX, legendY, 220, legendHeight);
+    
+    // Reset shadow
+    ctx.shadowColor = 'transparent';
+    ctx.shadowBlur = 0;
+    ctx.shadowOffsetX = 0;
+    ctx.shadowOffsetY = 0;
     
     // Legend title
     ctx.fillStyle = '#333333';
     ctx.font = 'bold 16px Arial';
     ctx.textAlign = 'left';
-    ctx.fillText('Audit Issues Legend', legendX + 10, legendY + 25);
+    ctx.fillText('Audit Issues Legend', legendX + 12, legendY + 22);
     
     // Issue type items
-    let yOffset = legendY + 50;
+    let yOffset = legendY + titleHeight + 8;
     Object.entries(this.issueTypes).forEach(([type, config]) => {
-      // Color indicator
+      // Color indicator (square with border)
       ctx.fillStyle = config.color;
-      ctx.fillRect(legendX + 10, yOffset - 8, 12, 12);
+      ctx.fillRect(legendX + 12, yOffset - 8, 14, 14);
+      ctx.strokeStyle = '#333333';
+      ctx.lineWidth = 1;
+      ctx.strokeRect(legendX + 12, yOffset - 8, 14, 14);
       
       // Label
       ctx.fillStyle = '#333333';
-      ctx.font = '12px Arial';
-      ctx.fillText(config.label, legendX + 30, yOffset);
+      ctx.font = '13px Arial';
+      ctx.textAlign = 'left';
+      ctx.fillText(config.label, legendX + 32, yOffset);
       
-      yOffset += 20;
+      yOffset += legendItemHeight;
     });
   }
 
-  addScoreOverlay(ctx, canvasWidth, overallScore) {
+  addScoreOverlay(ctx, canvasWidth, canvasHeight, overallScore) {
     const scoreColor = this.getScoreColor(overallScore);
     const scoreText = `Overall Compliance: ${Math.round(overallScore * 100)}%`;
     
-    // Score background
-    ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
-    ctx.fillRect(canvasWidth - 250, 20, 230, 60);
+    // Calculate position - place at bottom-right to avoid overlapping with screenshot content
+    const scoreWidth = 240;
+    const scoreHeight = 70;
+    const scoreX = canvasWidth - scoreWidth - 20; // 20px from right edge
+    const scoreY = canvasHeight - scoreHeight - 20; // 20px from bottom edge
+    
+    // Score background with shadow effect
+    ctx.shadowColor = 'rgba(0, 0, 0, 0.15)';
+    ctx.shadowBlur = 8;
+    ctx.shadowOffsetX = 0;
+    ctx.shadowOffsetY = 2;
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.95)';
+    ctx.fillRect(scoreX, scoreY, scoreWidth, scoreHeight);
     ctx.strokeStyle = scoreColor;
     ctx.lineWidth = 3;
-    ctx.strokeRect(canvasWidth - 250, 20, 230, 60);
+    ctx.strokeRect(scoreX, scoreY, scoreWidth, scoreHeight);
+    
+    // Reset shadow
+    ctx.shadowColor = 'transparent';
+    ctx.shadowBlur = 0;
+    ctx.shadowOffsetX = 0;
+    ctx.shadowOffsetY = 0;
     
     // Score text
     ctx.fillStyle = '#333333';
     ctx.font = 'bold 18px Arial';
     ctx.textAlign = 'center';
-    ctx.fillText(scoreText, canvasWidth - 135, 45);
+    ctx.fillText(scoreText, scoreX + scoreWidth / 2, scoreY + 28);
     
     // Score bar
     const barWidth = 200;
-    const barHeight = 12;
-    const barX = canvasWidth - 225;
-    const barY = 55;
+    const barHeight = 14;
+    const barX = scoreX + 20;
+    const barY = scoreY + 42;
     
-    // Background bar
+    // Background bar with rounded ends
     ctx.fillStyle = '#EEEEEE';
     ctx.fillRect(barX, barY, barWidth, barHeight);
     
-    // Progress bar
+    // Progress bar with rounded ends
     ctx.fillStyle = scoreColor;
     ctx.fillRect(barX, barY, barWidth * overallScore, barHeight);
   }

@@ -10,10 +10,12 @@
 	import { Input } from '$lib/components/ui/input';
 	import { Label } from '$lib/components/ui/label';
 	import { Separator } from '$lib/components/ui/separator';
-	import { Upload, Link, AlertTriangle, CheckCircle, Download, RefreshCw, ArrowRight, FileText } from 'lucide-svelte';
+	import { Upload, Link, AlertTriangle, CheckCircle, Download, RefreshCw, ArrowRight, FileText, X } from 'lucide-svelte';
 	import { convertAPIClient } from '$lib/services/pdf-extraction/convertapiClient.js';
 	import AuditResults from '$lib/components/AuditResults.svelte';
+	import { onMount } from 'svelte';
 
+	const STORAGE_KEY = 'lastSelectedBrandGuideline';
 
 	let websiteUrl = '';
 	let uploadedFile: File | null = null;
@@ -30,6 +32,104 @@
 	let companyName = '';
 	let uploadingMessage = '';
 	let useVisualAudit = true;
+	let isLoadingBrand = false;
+
+	// Load persisted brand guideline on mount
+	onMount(async () => {
+		try {
+			const savedBrandData = localStorage.getItem(STORAGE_KEY);
+			if (savedBrandData) {
+				const brandData = JSON.parse(savedBrandData);
+				console.log('📦 Found saved brand guideline:', brandData);
+				
+				// Try to fetch full brand data from database using the ID
+				isLoadingBrand = true;
+				try {
+					// Try using the brand-guidelines endpoint first (newer schema)
+					let response = await fetch(`/api/brand-guidelines/${brandData.id}`);
+					if (response.ok) {
+						const result = await response.json();
+						selectedBrand = result.guideline || result.data || result;
+						// Ensure ID is preserved
+						if (selectedBrand && brandData.id) {
+							selectedBrand.id = brandData.id;
+						}
+						companyName = selectedBrand.brandName || selectedBrand.companyName || companyName;
+						// Save the loaded brand back to localStorage to keep it fresh
+						saveBrandGuideline(selectedBrand);
+						console.log('✅ Loaded brand guideline from database (brand-guidelines):', selectedBrand);
+					} else {
+						// Try alternative endpoint or use saved data
+						response = await fetch(`/api/brands?search=${encodeURIComponent(brandData.brandName || brandData.companyName || '')}`);
+						if (response.ok) {
+							const result = await response.json();
+							if (result.data && result.data.length > 0) {
+								// Find matching brand by ID or name
+								const found = result.data.find((b: any) => b.id === brandData.id || b.brandName === brandData.brandName);
+								if (found) {
+									selectedBrand = found;
+									// Ensure ID is preserved
+									if (selectedBrand && brandData.id) {
+										selectedBrand.id = brandData.id;
+									}
+									companyName = found.brandName || found.companyName || '';
+									// Save the loaded brand back to localStorage to keep it fresh
+									saveBrandGuideline(selectedBrand);
+									console.log('✅ Loaded brand guideline from database (brands search):', selectedBrand);
+								} else {
+									throw new Error('Brand not found in search results');
+								}
+							} else {
+								throw new Error('No brands found');
+							}
+						} else {
+							throw new Error('Both endpoints failed');
+						}
+					}
+				} catch (error) {
+					// Fallback to saved data if fetch fails
+					selectedBrand = brandData;
+					companyName = brandData.brandName || brandData.companyName || '';
+					console.log('⚠️ Using saved brand data (fetch failed):', error);
+				}
+				
+				// Skip to step 2 if brand is loaded
+				if (selectedBrand) {
+					currentStep = 2;
+					scrapingMessage = `✅ Using saved brand guidelines: ${selectedBrand.brandName || selectedBrand.companyName || 'Brand'}. Ready to analyze websites!`;
+				}
+			}
+		} catch (error) {
+			console.error('❌ Failed to load saved brand guideline:', error);
+		} finally {
+			isLoadingBrand = false;
+		}
+	});
+
+	// Save brand guideline to localStorage
+	function saveBrandGuideline(brand: any) {
+		try {
+			localStorage.setItem(STORAGE_KEY, JSON.stringify(brand));
+			console.log('💾 Saved brand guideline to localStorage');
+		} catch (error) {
+			console.error('❌ Failed to save brand guideline:', error);
+		}
+	}
+
+	// Clear saved brand guideline and go back to upload
+	function changeBrandGuideline() {
+		localStorage.removeItem(STORAGE_KEY);
+		selectedBrand = null;
+		companyName = '';
+		currentStep = 1;
+		websiteUrl = '';
+		scrapedData = null;
+		complianceAnalysis = null;
+		scrapingMessage = '';
+		scrapingError = '';
+		uploadingMessage = '';
+		console.log('🔄 Cleared brand guideline - returning to upload step');
+	}
 
 
 	// Step 1: Upload PDF
@@ -75,6 +175,9 @@
 			const result = await response.json();
 			selectedBrand = result.data;
 			console.log('✅ Brand guidelines stored:', selectedBrand.id);
+
+			// Save to localStorage for persistence
+			saveBrandGuideline(selectedBrand);
 
 			currentStep = 2;
 			scrapingMessage = `✅ Brand guidelines uploaded successfully! Ready to analyze website.`;
@@ -191,15 +294,29 @@
 	}
 
 	function startOver() {
-		currentStep = 1;
+		// Reset to step 2 (URL entry) if brand is saved, otherwise step 1 (upload)
+		const savedBrandData = localStorage.getItem(STORAGE_KEY);
+		if (savedBrandData) {
+			try {
+				const brandData = JSON.parse(savedBrandData);
+				selectedBrand = brandData;
+				companyName = brandData.brandName || brandData.companyName || '';
+				currentStep = 2;
+				scrapingMessage = `✅ Ready to analyze a new website with ${selectedBrand.brandName || selectedBrand.companyName || 'brand'} guidelines.`;
+			} catch (error) {
+				currentStep = 1;
+				selectedBrand = null;
+			}
+		} else {
+			currentStep = 1;
+			selectedBrand = null;
+		}
+		
 		uploadedFile = null;
 		websiteUrl = '';
-		selectedBrand = null;
 		scrapedData = null;
 		complianceAnalysis = null;
-		scrapingMessage = '';
 		scrapingError = '';
-		companyName = '';
 		uploadingMessage = '';
 		isUploading = false;
 		isScraping = false;
@@ -334,12 +451,30 @@
 					<CardDescription>Enter the website URL to scrape and analyze against the uploaded brand guidelines</CardDescription>
 				</CardHeader>
 				<CardContent class="space-y-4">
-					{#if selectedBrand}
-						<div class="rounded-lg bg-blue-50 p-4">
-							<p class="text-sm text-blue-800">
-								<strong>Brand Guidelines Loaded:</strong> {selectedBrand.brandName}
-							</p>
-							<p class="text-xs text-blue-600 mt-1">ID: {selectedBrand.id}</p>
+					{#if isLoadingBrand}
+						<div class="rounded-lg bg-gray-50 p-4 text-center">
+							<RefreshCw class="mx-auto h-6 w-6 animate-spin text-gray-400 mb-2" />
+							<p class="text-sm text-gray-600">Loading saved brand guidelines...</p>
+						</div>
+					{:else if selectedBrand}
+						<div class="rounded-lg bg-blue-50 p-4 border border-blue-200">
+							<div class="flex items-start justify-between">
+								<div class="flex-1">
+									<p class="text-sm text-blue-800 font-medium">
+										<strong>Brand Guidelines Loaded:</strong> {selectedBrand.brandName || selectedBrand.companyName || 'Brand'}
+									</p>
+									<p class="text-xs text-blue-600 mt-1">ID: {selectedBrand.id}</p>
+									<p class="text-xs text-blue-500 mt-2">You can test this guideline with different URLs without re-uploading</p>
+								</div>
+								<button
+									onclick={changeBrandGuideline}
+									class="ml-4 inline-flex items-center gap-2 whitespace-nowrap rounded-md text-sm font-medium outline-none transition-all focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 bg-white text-blue-700 hover:bg-blue-100 border border-blue-300 h-8 px-3"
+									title="Upload a different brand guideline"
+								>
+									<X class="h-4 w-4" />
+									Change
+								</button>
+							</div>
 						</div>
 					{:else}
 						<div class="rounded-lg bg-red-50 p-4">
@@ -436,6 +571,7 @@
 						brandName={selectedBrand?.brandName}
 						screenshot={scrapedData.screenshot}
 						visualData={complianceAnalysis.visualData}
+						fixPrompt={complianceAnalysis?.fixPrompt}
 					/>
 				{/if}
 			</div>
