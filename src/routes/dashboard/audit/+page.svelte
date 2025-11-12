@@ -149,17 +149,40 @@
 
 		try {
 			console.log('📄 Processing PDF file:', file.name);
+			scrapingError = '';
+			scrapingMessage = '';
 			
 			// Convert PDF to text using ConvertAPI
 			const text = await convertAPIClient.convertPdfToText(file);
 			console.log('✅ PDF converted to text:', text.length, 'characters');
 
-		// Use the company name entered by user
-		console.log('🏢 Using company name:', companyName);
-		
-		// Extract brand guidelines
-		const guidelines = await convertAPIClient.extractBrandGuidelines(text, companyName);
+			if (!text || text.length === 0) {
+				throw new Error('PDF conversion returned empty text. Please check if the PDF contains readable text.');
+			}
+
+			// Use the company name entered by user
+			console.log('🏢 Using company name:', companyName);
+			
+			// Extract brand guidelines
+			const guidelines = await convertAPIClient.extractBrandGuidelines(text, companyName);
 			console.log('✅ Brand guidelines extracted:', guidelines);
+
+			// Ensure brandName is set at root level (required by /api/brands)
+			if (!guidelines.brandName) {
+				guidelines.brandName = companyName || guidelines.metadata?.brandName || guidelines.brandName || 'Unknown Brand';
+			}
+			
+			// Ensure companyName is set
+			if (!guidelines.companyName) {
+				guidelines.companyName = guidelines.brandName;
+			}
+
+			console.log('📤 Sending to /api/brands:', {
+				brandName: guidelines.brandName,
+				hasColors: !!guidelines.colors,
+				hasTypography: !!guidelines.typography,
+				hasLogo: !!guidelines.logo
+			});
 
 			// Store in database
 			const response = await fetch('/api/brands', {
@@ -169,10 +192,22 @@
 			});
 
 			if (!response.ok) {
-				throw new Error(`Failed to store guidelines: ${response.statusText}`);
+				const errorData = await response.json().catch(() => ({ error: response.statusText }));
+				console.error('❌ API Error Response:', errorData);
+				throw new Error(errorData.error || errorData.details || `Failed to store guidelines: ${response.status} ${response.statusText}`);
 			}
 
 			const result = await response.json();
+			console.log('📥 API Response:', result);
+			
+			if (!result.success) {
+				throw new Error(result.error || 'Failed to store brand guidelines');
+			}
+
+			if (!result.data) {
+				throw new Error('No data returned from server');
+			}
+
 			selectedBrand = result.data;
 			console.log('✅ Brand guidelines stored:', selectedBrand.id);
 
@@ -184,7 +219,13 @@
 
 		} catch (error: any) {
 			console.error('❌ PDF processing failed:', error);
-			scrapingError = `PDF processing failed: ${error.message}`;
+			console.error('❌ Error details:', {
+				message: error.message,
+				stack: error.stack,
+				name: error.name
+			});
+			scrapingError = `PDF processing failed: ${error.message || 'Unknown error occurred'}`;
+			isUploading = false;
 		} finally {
 			isUploading = false;
 		}

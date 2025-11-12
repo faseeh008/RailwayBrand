@@ -24,7 +24,18 @@ export async function POST({ request }) {
       guidelines = await enhancedBrandExtractor.extractBrandGuidelines(text, companyName);
     }
 
+    // Ensure brandName is set at root level (required by frontend)
+    if (!guidelines.brandName) {
+      guidelines.brandName = companyName || guidelines.metadata?.brandName || 'Unknown Brand';
+    }
+    
+    // Ensure companyName is set
+    if (!guidelines.companyName) {
+      guidelines.companyName = guidelines.brandName;
+    }
+
     console.log('✅ Brand guidelines extracted successfully:', {
+      brandName: guidelines.brandName,
       colors: guidelines.colors?.palette?.length || 0,
       fonts: (guidelines.typography?.primary ? 1 : 0) + (guidelines.typography?.secondary ? 1 : 0),
       hasLogo: !!guidelines.logo?.clearSpace || !!guidelines.logo?.minSize,

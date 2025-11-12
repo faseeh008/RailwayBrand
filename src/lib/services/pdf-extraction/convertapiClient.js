@@ -13,7 +13,7 @@ export class ConvertAPIClient {
     if (browser) {
       this.initialize();
     }
-  }
+  } 
 
   async initialize() {
     // Get API key from environment or localStorage
@@ -36,11 +36,26 @@ export class ConvertAPIClient {
    */
   async convertPdfToText(pdfFile) {
     if (!this.isAvailable) {
-      throw new Error('ConvertAPI not available - missing API key');
+      const errorMsg = 'ConvertAPI not available - missing API key. Please set VITE_CONVERTAPI_SECRET in your .env file or configure it in the settings.';
+      console.error('❌', errorMsg);
+      throw new Error(errorMsg);
+    }
+
+    if (!pdfFile) {
+      throw new Error('PDF file is required');
+    }
+
+    if (pdfFile.type !== 'application/pdf') {
+      throw new Error(`Invalid file type: ${pdfFile.type}. Expected application/pdf`);
     }
 
     try {
       console.log('🔄 Converting PDF to text with ConvertAPI...');
+      console.log('📄 PDF File Info:', {
+        name: pdfFile.name,
+        size: pdfFile.size,
+        type: pdfFile.type
+      });
       console.log('🔑 Using API key:', {
         hasKey: !!this.apiKey,
         keyLength: this.apiKey ? this.apiKey.length : 0,
@@ -176,11 +191,27 @@ export class ConvertAPIClient {
       }
       
       console.error('❌ No valid text data found in response:', result);
-      throw new Error('ConvertAPI did not return any valid text data');
+      throw new Error('ConvertAPI did not return any valid text data. The PDF might be empty or corrupted.');
       
     } catch (error) {
       console.error('❌ ConvertAPI conversion failed:', error);
-      throw error;
+      const err = /** @type {Error} */ (error);
+      console.error('❌ Error details:', {
+        message: err.message,
+        name: err.name,
+        stack: err.stack
+      });
+      
+      // Provide more helpful error messages
+      if (err.message.includes('Failed to fetch')) {
+        throw new Error('Failed to connect to ConvertAPI. Please check your internet connection and try again.');
+      } else if (err.message.includes('401') || err.message.includes('Authentication')) {
+        throw new Error('ConvertAPI authentication failed. Please check your API key (VITE_CONVERTAPI_SECRET) in your .env file.');
+      } else if (err.message.includes('No valid text data')) {
+        throw new Error('PDF conversion succeeded but no text was extracted. The PDF might be image-based or empty. Please try a different PDF file.');
+      }
+      
+      throw err;
     }
   }
 
