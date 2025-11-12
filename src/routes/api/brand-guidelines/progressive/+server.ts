@@ -4,9 +4,7 @@ import { brandGuidelines } from '$lib/db/schema';
 import { generateProgressiveBrandGuidelines } from '$lib/services/gemini';
 import { 
 	extractColorsFromLogo, 
-	extractTypographyFromLogo,
-	convertExtractedColorsToProgressiveFormat,
-	convertExtractedTypographyToProgressiveFormat
+	convertExtractedColorsToProgressiveFormat
 } from '$lib/services/color-extraction';
 import {
 	GENERATION_STEPS,
@@ -247,59 +245,12 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 					}
 				}
 				
-				// For typography step, extract typography from logo
+				// Typography step: AI will generate fonts based on user requirements (brand domain, mood, description, audience)
+				// We do NOT extract fonts from logo - let AI generate appropriate fonts using Gemini API
 				if (step === 'typography') {
-					console.log('Attempting typography extraction for step:', step);
-					
-					// Check if we have base64 data or file path
-					if (logoFile.fileData) {
-						console.log('Using base64 data for typography extraction');
-						// Convert base64 data URL to File object
-						const base64Data = logoFile.fileData.split(',')[1];
-						const binaryData = Buffer.from(base64Data, 'base64');
-						const logoFileObj = new File([binaryData], logoFile.filename, { type: 'image/png' });
-						
-						const typographyResult = await extractTypographyFromLogo(logoFileObj, {
-							brandName: previousSteps.brand_name || 'Your Brand',
-							brandDomain: previousSteps.brand_domain || 'General Business',
-							shortDescription: previousSteps.short_description || '',
-							mood: (previousSteps as any).selectedMood || 'Professional',
-							audience: (previousSteps as any).selectedAudience || 'General audience'
-						});
-						
-						console.log('Typography extraction result:', { success: typographyResult.success, hasTypography: !!typographyResult.typography });
-						
-						if (typographyResult.success) {
-							extractedTypography = convertExtractedTypographyToProgressiveFormat(typographyResult.typography);
-							console.log('Extracted typography formatted for progressive generation');
-							console.log('Typography extraction details:', {
-								primaryFont: typographyResult.typography.primary_font?.name,
-								supportingFont: typographyResult.typography.supporting_font?.name,
-								extractedTypographyPreview: extractedTypography.substring(0, 300)
-							});
-						}
-					} else if (logoFile.filePath) {
-						console.log('Using file path for typography extraction');
-						// Try to fetch from file path (fallback)
-						const logoPath = `uploads/logos/${logoFile.filename}`;
-						const response = await fetch(`http://localhost:5173/${logoPath}`);
-						if (response.ok) {
-							const logoBlob = await response.blob();
-							const logoFileObj = new File([logoBlob], logoFile.filename, { type: logoBlob.type });
-							
-							const typographyResult = await extractTypographyFromLogo(logoFileObj, {
-								brandName: previousSteps.brand_name || 'Your Brand',
-								brandDomain: previousSteps.brand_domain || 'General Business',
-								shortDescription: previousSteps.short_description || '',
-								mood: (previousSteps as any).selectedMood || 'Professional',
-								audience: (previousSteps as any).selectedAudience || 'General audience'
-							});
-							
-							if (typographyResult.success) {
-								extractedTypography = convertExtractedTypographyToProgressiveFormat(typographyResult.typography);
-							}
-						}
-					}
+					console.log('Typography step: AI will generate fonts based on user requirements, not from logo');
+					// Intentionally skip typography extraction from logo
+					// extractedTypography will remain empty, allowing AI to generate fonts freely
 				}
 			} catch (error) {
 				console.error('Failed to extract colors/typography from logo:', error);
