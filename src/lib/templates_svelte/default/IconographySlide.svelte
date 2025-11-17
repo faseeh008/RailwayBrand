@@ -210,9 +210,20 @@
         zIndex: 2
       });
       
-      // Icon symbol text - for PDF generation, we'll use a text representation
-      // In the actual Svelte component, we'll use DynamicIcon
-      // For PDF, we'll use a simple representation based on the name
+      // Icon image - convert icon name to base64 image (same as UI uses DynamicIcon)
+      // Import the utility at the top of the script section
+      const iconImageSize = Math.round(iconCircleSizePx * 0.45); // Icon size within circle (45% of circle size)
+      const iconImagePadding = iconCircleSize * 0.15; // 15% padding around icon
+      const iconImageSizeIn = iconCircleSize - (iconImagePadding * 2);
+      
+      // For client-side, we'll need to generate the icon SVG and convert to base64
+      // This is a simplified version - in production, you might want to pre-generate these
+      // For now, we'll use a placeholder that will be replaced by the actual icon rendering
+      // The actual icon rendering happens in the UI via DynamicIcon component
+      // For PPTX export, the svelte-slide-generator.ts handles this conversion
+      
+      // Note: This is kept as text for backward compatibility, but the actual PPTX export
+      // should use image elements generated from iconNameToBase64Image utility
       const iconText = icon.name.substring(0, 2).toUpperCase();
       elements.push({
         id: `icon-symbol-${index}`,
@@ -441,8 +452,159 @@
   }
   
   // Always call createSlideData() to get the latest values (including edited content)
+  // Note: This is synchronous, but icon conversion happens in svelte-slide-generator.ts
+  // For the UI preview, we use DynamicIcon components which render actual icons
   export function getSlideData(): SlideData {
     return createSlideData();
+  }
+  
+  // Async version for icon conversion (used during export)
+  export async function getSlideDataWithIcons(): Promise<SlideData> {
+    const slideData = createSlideData();
+    
+    // Convert text icon elements to image elements
+    const { iconNameToBase64Image } = await import('$lib/utils/icon-to-image');
+    
+    // Helper functions (same as in createSlideData)
+    const pxToIn = (px: number) => (px / 1280) * 10;
+    const pyToIn = (py: number) => (py / 720) * 5.625;
+    const iconCircleSizePx = 70;
+    const iconCircleSize = pxToIn(iconCircleSizePx);
+    
+    // Process all icon elements
+    const elementsToRemove: number[] = [];
+    const elementsToAdd: SlideData['elements'] = [];
+    
+    for (let i = 0; i < slideData.elements.length; i++) {
+      const element = slideData.elements[i];
+      
+      // Convert icon text elements to image elements
+      if (element.id.startsWith('icon-symbol-') && element.type === 'text') {
+        const index = parseInt(element.id.replace('icon-symbol-', ''));
+        const icon = displayIcons[index];
+        if (icon) {
+          // Use the EXACT same icon name as the UI (DynamicIcon uses icon.name)
+          const iconName = icon.name || 'Icon';
+          const iconImageSize = Math.round(iconCircleSizePx * 0.45); // Icon size in pixels
+          
+          console.log(`🔄 [IconographySlide] Converting icon ${index} "${iconName}" (same as UI) (size: ${iconImageSize}px)...`);
+          
+          // Convert to PNG image using the same logic as DynamicIcon
+          const iconImageData = await iconNameToBase64Image(iconName, iconImageSize, '#FFFFFF', 2);
+          
+          if (!iconImageData) {
+            console.error(`❌ [IconographySlide] Failed to convert icon ${index} "${iconName}" - no image data returned`);
+            continue; // Skip this icon
+          }
+          
+          console.log(`📊 [IconographySlide] Icon ${index} "${iconName}" conversion result:`, {
+            hasData: !!iconImageData,
+            dataLength: iconImageData?.length,
+            isPNG: iconImageData?.startsWith('data:image/png'),
+            isSVG: iconImageData?.startsWith('data:image/svg'),
+            preview: iconImageData?.substring(0, 50)
+          });
+          
+          // Get circle element to calculate position
+          const iconCircleElement = slideData.elements.find(e => e.id === `icon-circle-${index}`);
+          if (iconCircleElement && iconImageData) {
+            const iconX = iconCircleElement.position.x;
+            const iconY = iconCircleElement.position.y;
+            const iconImagePadding = iconCircleSize * 0.15;
+            const iconImageSizeIn = iconCircleSize - (iconImagePadding * 2);
+            
+            // Mark text element for removal
+            elementsToRemove.push(i);
+            
+            // Add image element
+            elementsToAdd.push({
+              id: `icon-image-${index}`,
+              type: 'image' as const,
+              position: {
+                x: iconX + iconImagePadding,
+                y: iconY + iconImagePadding,
+                w: iconImageSizeIn,
+                h: iconImageSizeIn
+              },
+              imageData: iconImageData,
+              zIndex: 3
+            });
+            
+            console.log(`✅ Converted icon ${index} "${iconName}" to image (PNG: ${iconImageData.startsWith('data:image/png')})`);
+          } else {
+            if (!iconCircleElement) {
+              console.error(`❌ Could not convert icon ${index} "${iconName}": circle element not found`);
+            }
+            if (!iconImageData) {
+              console.error(`❌ Could not convert icon ${index} "${iconName}": image data is null/empty`);
+            }
+          }
+        }
+      }
+      
+      // Also handle demo icon
+      if (element.id === 'demo-icon-symbol' && element.type === 'text') {
+        const demoIconName = displayIcons.length > 0 ? displayIcons[0].name : 'Icon';
+        const demoIconSizePx = Math.round(50 * 0.6); // 50px * 0.6 = 30px
+        const demoIconData = await iconNameToBase64Image(demoIconName, demoIconSizePx, '#FFFFFF', 2);
+        
+        const demoIconBgElement = slideData.elements.find(e => e.id === 'demo-icon-bg');
+        if (demoIconBgElement && demoIconData) {
+          const demoX = demoIconBgElement.position.x;
+          const demoY = demoIconBgElement.position.y;
+          const demoSize = demoIconBgElement.position.w;
+          const demoPadding = demoSize * 0.15;
+          const demoImageSize = demoSize - (demoPadding * 2);
+          
+          // Mark text element for removal
+          elementsToRemove.push(i);
+          
+          // Add image element
+          elementsToAdd.push({
+            id: 'demo-icon-image',
+            type: 'image' as const,
+            position: {
+              x: demoX + demoPadding,
+              y: demoY + demoPadding,
+              w: demoImageSize,
+              h: demoImageSize
+            },
+            imageData: demoIconData,
+            zIndex: 3
+          });
+          
+          console.log(`✅ Converted demo icon "${demoIconName}" to image`);
+        }
+      }
+    }
+    
+    // Remove text elements (in reverse order to maintain indices)
+    elementsToRemove.sort((a, b) => b - a);
+    console.log(`🗑️ Removing ${elementsToRemove.length} text icon elements at indices:`, elementsToRemove);
+    for (const index of elementsToRemove) {
+      const removed = slideData.elements.splice(index, 1);
+      console.log(`   Removed element: ${removed[0]?.id} (type: ${removed[0]?.type})`);
+    }
+    
+    // Add image elements
+    console.log(`➕ Adding ${elementsToAdd.length} image icon elements`);
+    slideData.elements.push(...elementsToAdd);
+    
+    // Verify: count remaining text icon elements
+    const remainingTextIcons = slideData.elements.filter(e => 
+      e.id.startsWith('icon-symbol-') || e.id === 'demo-icon-symbol'
+    );
+    if (remainingTextIcons.length > 0) {
+      console.warn(`⚠️ WARNING: ${remainingTextIcons.length} text icon elements still remain:`, remainingTextIcons.map(e => e.id));
+    }
+    
+    // Verify: count image icon elements
+    const imageIcons = slideData.elements.filter(e => 
+      e.id.startsWith('icon-image-') || e.id === 'demo-icon-image'
+    );
+    console.log(`✅ Conversion complete: ${imageIcons.length} image icons, ${remainingTextIcons.length} text icons remaining`);
+    
+    return slideData;
   }
 </script>
 

@@ -94,6 +94,12 @@ async function addElementToSlide(element: SlideElement, slide: any): Promise<voi
   
   switch (type) {
     case 'text':
+      // Skip text icon elements - they should have been converted to images
+      if (element.id && (element.id.startsWith('icon-symbol-') || element.id === 'demo-icon-symbol')) {
+        console.warn(`⚠️ Skipping text icon element ${element.id} - should have been converted to image`);
+        return; // Skip this element entirely
+      }
+      
       if (element.text) {
         // Clean color format (remove #, ensure 6 hex digits)
         let textColor = '000000';
@@ -137,8 +143,22 @@ async function addElementToSlide(element: SlideElement, slide: any): Promise<voi
           
           // Ensure it's a proper data URL
           if (!imageData.startsWith('data:image/')) {
-            // If it's just base64, add the data URL prefix
-            imageData = `data:image/png;base64,${imageData}`;
+            // If it's just base64, determine if it's SVG or PNG
+            // SVG data URLs should be: data:image/svg+xml;base64,...
+            // PNG data URLs should be: data:image/png;base64,...
+            if (imageData.includes('svg') || imageData.includes('SVG')) {
+              imageData = `data:image/svg+xml;base64,${imageData.replace(/^data:image\/svg\+xml;base64,/, '')}`;
+            } else {
+              imageData = `data:image/png;base64,${imageData.replace(/^data:image\/png;base64,/, '')}`;
+            }
+          }
+          
+          // Log for debugging icon images
+          if (element.id && element.id.includes('icon')) {
+            console.log(`🖼️ Adding icon image: ${element.id}`);
+            console.log(`   Position: (${position.x.toFixed(2)}, ${position.y.toFixed(2)}) size ${position.w.toFixed(2)}x${position.h.toFixed(2)}`);
+            console.log(`   Data type: ${imageData.startsWith('data:image/png') ? 'PNG' : imageData.startsWith('data:image/svg') ? 'SVG' : 'Unknown'}`);
+            console.log(`   Data length: ${imageData.length} chars`);
           }
           
           // Add image to slide with proper sizing

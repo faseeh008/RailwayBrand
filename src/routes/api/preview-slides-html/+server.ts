@@ -83,7 +83,7 @@ export const POST: RequestHandler = async ({ request, locals }) => {
         // Also save Svelte slide data automatically (same way as HTML)
         try {
             const { buildFilledSvelteSlides } = await import('$lib/services/svelte-slide-generator');
-            const svelteSlides = buildFilledSvelteSlides(brandInput);
+            const svelteSlides = await buildFilledSvelteSlides(brandInput);
             await saveSvelteSlidesToDatabase(svelteSlides, userId, brandGuidelinesId || undefined, brandName);
             console.log('✅ Svelte slides saved successfully');
         } catch (error) {

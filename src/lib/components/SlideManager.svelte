@@ -1732,7 +1732,7 @@
   }
   
   // Function to collect all slide data
-  function collectAllSlideData(): SlideData[] {
+  async function collectAllSlideData(): Promise<SlideData[]> {
     const allSlideData: SlideData[] = [];
     
     // Collect data from all slide components in correct order
@@ -1754,7 +1754,36 @@
     for (const ref of slideRefs) {
       if (ref && typeof ref.getSlideData === 'function') {
         try {
-          const slideData = ref.getSlideData();
+          let slideData: SlideData;
+          
+          // Special handling for iconography slide - convert text icons to image icons
+          if (ref === iconographyRef && typeof (ref as any).getSlideDataWithIcons === 'function') {
+            try {
+              console.log('🔄 [SlideManager] Calling getSlideDataWithIcons() for iconography slide...');
+              slideData = await (ref as any).getSlideDataWithIcons();
+              console.log('✅ [SlideManager] Converted iconography icons to images');
+              
+              // Verify the conversion worked
+              const textIcons = slideData.elements.filter(e => 
+                e.id.startsWith('icon-symbol-') || e.id === 'demo-icon-symbol'
+              );
+              const imageIcons = slideData.elements.filter(e => 
+                e.id.startsWith('icon-image-') || e.id === 'demo-icon-image'
+              );
+              console.log(`📊 [SlideManager] Iconography slide: ${imageIcons.length} image icons, ${textIcons.length} text icons`);
+              
+              if (textIcons.length > 0) {
+                console.warn(`⚠️ [SlideManager] WARNING: ${textIcons.length} text icon elements still present!`);
+              }
+            } catch (iconError) {
+              console.error('❌ [SlideManager] Failed to convert icons to images:', iconError);
+              // Fallback to regular slideData with text icons
+              slideData = ref.getSlideData();
+            }
+          } else {
+            slideData = ref.getSlideData();
+          }
+          
           if (slideData && slideData.elements && slideData.elements.length > 0) {
             allSlideData.push(slideData);
           }
@@ -1777,7 +1806,7 @@
     try {
       console.log('🔄 Collecting slide data from all components...');
       
-      const allSlideData = collectAllSlideData();
+      const allSlideData = await collectAllSlideData();
       
       console.log(`📊 Collected ${allSlideData.length} slides, converting to PPTX...`);
       

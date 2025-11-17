@@ -1,10 +1,11 @@
 import type { SlideData } from '$lib/types/slide-data';
+import { iconNameToBase64Image } from '$lib/utils/icon-to-image';
 
 /**
  * Generate complete Svelte slide data from brand input
  * Matches the structure created by actual Svelte components
  */
-export function buildFilledSvelteSlides(brandInput: any): SlideData[] {
+export async function buildFilledSvelteSlides(brandInput: any): Promise<SlideData[]> {
 	const slides: SlideData[] = [];
 	
 	// Extract colors
@@ -1106,12 +1107,28 @@ export function buildFilledSvelteSlides(brandInput: any): SlideData[] {
 	const iconRowGap = pyToIn(15);
 	const iconColWidth = (iconGridWidth - (iconGridPadding * 2) - (iconGap * 3)) / 4;
 	
-	icons.slice(0, 8).forEach((icon: any, index: number) => {
+	// Generate icons asynchronously
+	await Promise.all(icons.slice(0, 8).map(async (icon: any, index: number) => {
 		const col = index % 4;
 		const row = Math.floor(index / 4);
 		const colStartX = iconGridX + iconGridPadding + col * (iconColWidth + iconGap);
 		const iconX = colStartX + (iconColWidth - iconCircleSize) / 2;
 		const iconY = iconsStartY + row * (iconItemHeight + iconRowGap);
+		
+		// Convert icon name to base64 image (same as UI uses DynamicIcon)
+		const iconName = icon.name || 'Icon';
+		const iconImageSize = Math.round(iconCircleSizePx * 0.45); // Icon size within circle (45% of circle size)
+		console.log(`🔄 Converting icon "${iconName}" to image (size: ${iconImageSize}px)...`);
+		const iconImageData = await iconNameToBase64Image(iconName, iconImageSize, '#FFFFFF', 2);
+		if (iconImageData) {
+			console.log(`✅ Successfully converted icon "${iconName}" to base64 image (length: ${iconImageData.length})`);
+		} else {
+			console.warn(`⚠️ Failed to convert icon "${iconName}" to image`);
+		}
+		
+		// Icon image position (centered in circle with padding)
+		const iconImagePadding = iconCircleSize * 0.15; // 15% padding around icon
+		const iconImageSizeIn = iconCircleSize - (iconImagePadding * 2);
 		
 		iconographyElements.push(
 			{
@@ -1123,23 +1140,22 @@ export function buildFilledSvelteSlides(brandInput: any): SlideData[] {
 				zIndex: 2
 			},
 			{
-				id: `icon-symbol-${index}`,
-				type: 'text' as const,
-				position: { x: iconX, y: iconY, w: iconCircleSize, h: iconCircleSize },
-				text: icon.symbol || '🎨',
-				fontSize: 24,
-				fontFace: 'Arial',
-				bold: true,
-				color: 'FFFFFF',
-				align: 'center' as const,
-				valign: 'middle' as const,
+				id: `icon-image-${index}`,
+				type: 'image' as const,
+				position: { 
+					x: iconX + iconImagePadding, 
+					y: iconY + iconImagePadding, 
+					w: iconImageSizeIn, 
+					h: iconImageSizeIn 
+				},
+				imageData: iconImageData,
 				zIndex: 3
 			},
 			{
 				id: `icon-label-${index}`,
 				type: 'text' as const,
 				position: { x: colStartX, y: iconY + iconCircleSize + iconLabelMargin, w: iconColWidth, h: iconLabelHeight },
-				text: icon.name || 'Icon',
+				text: iconName,
 				fontSize: 11,
 				fontFace: 'Arial',
 				color: '666666',
@@ -1148,7 +1164,7 @@ export function buildFilledSvelteSlides(brandInput: any): SlideData[] {
 				zIndex: 2
 			}
 		);
-	});
+	}));
 	
 	slides.push({
 		id: 'iconography',
