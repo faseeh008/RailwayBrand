@@ -1,9 +1,16 @@
 <script lang="ts">
   import type { SlideData } from '$lib/types/slide-data';
   
+  // Contact information props
+  export let contactName: string = '';
+  export let contactEmail: string = 'contact@example.com';
+  export let contactRole: string = '';
+  export let contactCompany: string = '';
   export let website: string = 'your-website.com';
-  export let email: string = 'contact@example.com';
   export let phone: string = '';
+  
+  // Legacy support - map email to contactEmail if not provided
+  $: email = contactEmail || 'contact@example.com';
   export let color1Hex: string = '#1E40AF'; // PRIMARY_COLOR
   export let color2Hex: string = '#3B82F6'; // COLOR_2_HEX
   export let color3Hex: string = '#60A5FA'; // COLOR_3_HEX
@@ -46,6 +53,26 @@
   export let subtitleText: string = 'Let\'s Create Something Amazing Together';
   
   $: slideData = createSlideData();
+  
+  // Helper function to build contact text
+  function buildContactText(): string {
+    const parts: string[] = [];
+    
+    // Build contact info line by line
+    if (contactName || contactRole || contactCompany) {
+      const nameParts: string[] = [];
+      if (contactName) nameParts.push(contactName);
+      if (contactRole) nameParts.push(contactRole);
+      if (contactCompany) nameParts.push(contactCompany);
+      if (nameParts.length > 0) parts.push(nameParts.join(', '));
+    }
+    
+    if (contactEmail) parts.push(contactEmail);
+    if (website && website !== 'your-website.com' && !website.includes('www.yourbrand.com')) parts.push(website);
+    if (phone) parts.push(phone);
+    
+    return parts.length > 0 ? parts.join('\n') : contactEmail || 'Contact information';
+  }
   
   function createSlideData(): SlideData {
     // Use the current background prop (which may have been edited)
@@ -129,7 +156,7 @@
           id: 'contact',
           type: 'text' as const,
           position: { x: 0.5, y: 4.3, w: 9, h: 0.6 },
-          text: `${website}\n${email}${phone ? '\n' + phone : ''}`,
+          text: buildContactText(),
           fontSize: 16,
           fontFace: 'Arial',
           color: 'FFFFFF',
@@ -163,17 +190,18 @@
     {/if}
     <div class="contact">
       {#if isEditable}
-        <input type="text" bind:value={website} class="contact-input" />
-        <input type="text" bind:value={email} class="contact-input" />
+        {#if contactName || contactRole || contactCompany}
+          <input type="text" bind:value={contactName} placeholder="Contact Name" class="contact-input" />
+          <input type="text" bind:value={contactRole} placeholder="Role" class="contact-input" />
+          <input type="text" bind:value={contactCompany} placeholder="Company" class="contact-input" />
+        {/if}
+        <input type="text" bind:value={contactEmail} placeholder="Email" class="contact-input" />
+        <input type="text" bind:value={website} placeholder="Website" class="contact-input" />
         {#if phone}
-          <input type="text" bind:value={phone} class="contact-input" />
+          <input type="text" bind:value={phone} placeholder="Phone" class="contact-input" />
         {/if}
       {:else}
-        {website}<br>
-        {email}
-        {#if phone}
-          <br>{phone}
-        {/if}
+        {@html buildContactText().split('\n').map(line => `<div>${line}</div>`).join('')}
       {/if}
     </div>
   </div>

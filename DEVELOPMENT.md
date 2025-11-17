@@ -181,7 +181,7 @@ src/
 │   │   ├── editable-slides/  # Editable slide components
 │   │   └── ui/              # shadcn-svelte components
 │   ├── services/            # Business logic
-│   │   ├── gemini.ts        # AI generation service
+│   │   ├──         # AI generation service
 │   │   ├── html-slide-generator.ts  # HTML slide generation
 │   │   ├── editable-pptx-generator.ts  # PPTX export
 │   │   └── ...
@@ -208,7 +208,7 @@ The Brand Builder uses a 7-step progressive generation system:
 **Key Components:**
 - `src/lib/components/ProgressiveGenerator.svelte` - Main component
 - `src/routes/api/brand-guidelines/progressive/+server.ts` - API endpoint
-- `src/lib/services/gemini.ts` - AI generation service
+- `src/lib/services/neration service
 
 ### 2. Editable Slides System
 

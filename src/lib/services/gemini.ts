@@ -832,8 +832,10 @@ function createProgressivePrompt(request: {
 Brand: ${previousSteps.brand_name || 'Your Brand'}
 Domain: ${previousSteps.brand_domain || 'General Business'}
 Description: ${previousSteps.short_description || 'Professional brand'}
-Mood: ${(previousSteps as any).selectedMood || (previousSteps as any).mood || 'Professional'}
-Target Audience: ${(previousSteps as any).selectedAudience || (previousSteps as any).audience || 'General audience'}
+Mood: ${previousSteps.selectedMood || (previousSteps as any).mood || 'Professional'}
+Target Audience: ${previousSteps.selectedAudience || (previousSteps as any).audience || 'General audience'}
+${previousSteps.brandValues ? `Brand Values & Mission: ${previousSteps.brandValues}` : ''}
+${previousSteps.customPrompt ? `Custom Requirements: ${previousSteps.customPrompt}` : ''}
 ${feedback ? `
 USER FEEDBACK FOR REGENERATION:
 The user has provided the following feedback about the previous version: "${feedback}"
@@ -878,7 +880,9 @@ FORMAT AS:
 
 IMPORTANT: 
 - Use **bold** formatting for ALL headings
-- Generate content based on user's brand name, description, mood, and audience
+- Generate content based on user's brand name, description, mood, audience, brand values, and custom requirements
+${previousSteps.brandValues ? `- Incorporate the user's brand values and mission statement: "${previousSteps.brandValues}"` : ''}
+${previousSteps.customPrompt ? `- Address the user's custom requirements: "${previousSteps.customPrompt}"` : ''}
 - Keep descriptions brief - maximum 1-2 lines each
 - Make content SPECIFICALLY appropriate for ${previousSteps.brand_domain || 'General Business'} industry
 
@@ -1017,8 +1021,10 @@ BRAND-SPECIFIC CONTEXT (USE THIS TO CREATE UNIQUE TYPOGRAPHY):
 - Brand Name: "${previousSteps.brand_name || 'Brand'}" - Analyze the name's characteristics, length, and personality
 - Industry/Domain: "${previousSteps.brand_domain || 'General Business'}"
 - Brand Description: "${previousSteps.short_description || 'Professional brand'}" - This is KEY for unique typography
-- Brand Mood: "${(previousSteps as any).selectedMood || (previousSteps as any).mood || 'Professional'}"
-- Target Audience: "${(previousSteps as any).selectedAudience || (previousSteps as any).audience || 'General audience'}"
+${previousSteps.brandValues ? `- Brand Values & Mission: "${previousSteps.brandValues}"` : ''}
+${previousSteps.customPrompt ? `- Custom Requirements: "${previousSteps.customPrompt}"` : ''}
+- Brand Mood: "${previousSteps.selectedMood || (previousSteps as any).mood || 'Professional'}"
+- Target Audience: "${previousSteps.selectedAudience || (previousSteps as any).audience || 'General audience'}"
 
 UNIQUENESS REQUIREMENTS:
 1. ✓ The typography MUST reflect the SPECIFIC personality of "${previousSteps.brand_name || 'Brand'}"
@@ -1030,8 +1036,8 @@ UNIQUENESS REQUIREMENTS:
 TYPOGRAPHY PERSONALITY ANALYSIS:
 - Brand Name Analysis: "${previousSteps.brand_name || 'Brand'}" suggests: [Analyze if name is short/long, modern/classic, bold/subtle, playful/serious]
 - Description Analysis: "${previousSteps.short_description || 'Professional brand'}" suggests: [Analyze the tone, values, and personality]
-- Mood Analysis: "${(previousSteps as any).selectedMood || 'Professional'}" suggests: [Analyze the emotional characteristics]
-- Audience Analysis: "${(previousSteps as any).selectedAudience || 'General audience'}" suggests: [Analyze readability and accessibility needs]
+- Mood Analysis: "${previousSteps.selectedMood || (previousSteps as any).mood || 'Professional'}" suggests: [Analyze the emotional characteristics]
+- Audience Analysis: "${previousSteps.selectedAudience || (previousSteps as any).audience || 'General audience'}" suggests: [Analyze readability and accessibility needs]
 
 ${feedback ? `
 🚨 CRITICAL USER FEEDBACK - HIGHEST PRIORITY 🚨
@@ -1075,7 +1081,7 @@ STEP 2: ANALYZE BRAND DESCRIPTION "${previousSteps.short_description || 'Profess
 - Example: If description says "premium luxury brand" → Use elegant, refined fonts (Playfair Display, Crimson Text)
 - CRITICAL: Avoid generic fonts for "${previousSteps.brand_domain || 'General Business'}" - find fonts that match the SPECIFIC description words
 
-STEP 3: CONSIDER BRAND MOOD "${(previousSteps as any).selectedMood || 'Professional'}" FOR TYPOGRAPHY PERSONALITY:
+STEP 3: CONSIDER BRAND MOOD "${previousSteps.selectedMood || (previousSteps as any).mood || 'Professional'}" FOR TYPOGRAPHY PERSONALITY:
 - Professional: Clean, authoritative fonts (Inter, Roboto, Helvetica, Source Sans Pro) - BUT choose based on "${previousSteps.brand_name || 'Brand'}" name
 - Modern: Geometric, contemporary fonts (Space Grotesk, DM Sans, Work Sans, IBM Plex Sans) - BUT choose based on "${previousSteps.brand_name || 'Brand'}" name
 - Creative: Distinctive, expressive fonts (Montserrat, Poppins, Playfair Display, Nunito) - BUT choose based on "${previousSteps.brand_name || 'Brand'}" name
@@ -1083,7 +1089,7 @@ STEP 3: CONSIDER BRAND MOOD "${(previousSteps as any).selectedMood || 'Professio
 - Friendly: Approachable, humanist fonts (Nunito, Lato, Open Sans, Rubik) - BUT choose based on "${previousSteps.brand_name || 'Brand'}" name
 - Bold: Strong, impactful fonts (Oswald, Bebas Neue, Montserrat, Poppins) - BUT choose based on "${previousSteps.brand_name || 'Brand'}" name
 
-STEP 4: CONSIDER TARGET AUDIENCE "${(previousSteps as any).selectedAudience || 'General audience'}" FOR READABILITY:
+STEP 4: CONSIDER TARGET AUDIENCE "${previousSteps.selectedAudience || (previousSteps as any).audience || 'General audience'}" FOR READABILITY:
 - Professional/B2B: Highly readable, professional fonts (Inter, Roboto, Helvetica, Source Sans Pro)
 - Consumers: Approachable, friendly fonts (Lato, Open Sans, Nunito, Rubik)
 - Tech-savvy: Modern, geometric fonts (Space Grotesk, DM Sans, Work Sans, IBM Plex Sans)
@@ -1093,7 +1099,7 @@ STEP 4: CONSIDER TARGET AUDIENCE "${(previousSteps as any).selectedAudience || '
 STEP 5: ENSURE UNIQUENESS - CRITICAL VALIDATION:
 - Ask: "Would another brand named '${previousSteps.brand_name || 'Brand'}' with description '${previousSteps.short_description || 'Professional brand'}' get the SAME fonts?" If YES, choose DIFFERENT fonts
 - Ask: "Are these fonts SPECIFIC to "${previousSteps.brand_name || 'Brand'}" or could they apply to ANY brand in "${previousSteps.brand_domain || 'General Business'}"?" If they could apply to ANY brand, choose MORE SPECIFIC fonts
-- Consider the UNIQUE combination: Brand name "${previousSteps.brand_name || 'Brand'}" + Description "${previousSteps.short_description || 'Professional brand'}" + Mood "${(previousSteps as any).selectedMood || 'Professional'}" + Audience "${(previousSteps as any).selectedAudience || 'General audience'}"
+- Consider the UNIQUE combination: Brand name "${previousSteps.brand_name || 'Brand'}" + Description "${previousSteps.short_description || 'Professional brand'}"${previousSteps.brandValues ? ` + Values "${previousSteps.brandValues}"` : ''}${previousSteps.customPrompt ? ` + Requirements "${previousSteps.customPrompt}"` : ''} + Mood "${previousSteps.selectedMood || (previousSteps as any).mood || 'Professional'}" + Audience "${previousSteps.selectedAudience || (previousSteps as any).audience || 'General audience'}"
 - Select fonts that reflect THIS SPECIFIC combination, not generic domain fonts
 - If you've seen similar combinations before, intentionally choose DIFFERENT fonts to ensure uniqueness
 
@@ -1119,7 +1125,7 @@ FORMAT AS (EXACT STRUCTURE):
 CRITICAL FORMAT REQUIREMENTS:
 - Font name MUST come IMMEDIATELY after "**Primary Font**:" or "**Supporting Font**:"
 - Use EXACT font names from the list above
-- Correct: **Primary Font**: Montserrat - Bold, modern sans-serif that matches "${previousSteps.brand_name || 'Brand'}"'s ${(previousSteps as any).selectedMood || 'Professional'} personality
+- Correct: **Primary Font**: Montserrat - Bold, modern sans-serif that matches "${previousSteps.brand_name || 'Brand'}"'s ${previousSteps.selectedMood || (previousSteps as any).mood || 'Professional'} personality
 - WRONG: **Primary Font**: A modern font like Montserrat (this won't work!)
 - WRONG: **Primary Font**: Montserrat - Good for ${previousSteps.brand_domain || 'General Business'} (too generic!)
 
@@ -1170,8 +1176,10 @@ IMPORTANT:
 - DO NOT use generic fonts that would work for any brand in "${previousSteps.brand_domain || 'General Business'}"
 - Consider the brand name's characteristics, length, and personality
 - Analyze the description "${previousSteps.short_description || 'Professional brand'}" for specific typography needs
-- Match typography to brand mood: ${(previousSteps as any).selectedMood || 'Professional'}
-- Consider target audience: ${(previousSteps as any).selectedAudience || 'General audience'}
+- Match typography to brand mood: ${previousSteps.selectedMood || (previousSteps as any).mood || 'Professional'}
+- Consider target audience: ${previousSteps.selectedAudience || (previousSteps as any).audience || 'General audience'}
+${previousSteps.brandValues ? `- Incorporate brand values: "${previousSteps.brandValues}"` : ''}
+${previousSteps.customPrompt ? `- Address custom requirements: "${previousSteps.customPrompt}"` : ''}
 - Keep descriptions brief - maximum 1-2 lines each
 - Always specify exact font names as the FIRST word(s) after the colon
 - DO NOT extract or reference fonts from the logo - generate fonts based on brand requirements
@@ -1188,8 +1196,10 @@ BRAND CONTEXT (USE THIS TO VALIDATE EVERY ICON):
 - Brand Name: "${previousSteps.brand_name || 'Brand'}"
 - Industry/Domain: "${previousSteps.brand_domain || 'General Business'}"
 - Description: "${previousSteps.short_description || 'Professional brand'}"
-- Brand Mood: "${(previousSteps as any).selectedMood || (previousSteps as any).mood || 'Professional'}"
-- Target Audience: "${(previousSteps as any).selectedAudience || (previousSteps as any).audience || 'General audience'}"
+${previousSteps.brandValues ? `- Brand Values & Mission: "${previousSteps.brandValues}"` : ''}
+${previousSteps.customPrompt ? `- Custom Requirements: "${previousSteps.customPrompt}"` : ''}
+- Brand Mood: "${previousSteps.selectedMood || (previousSteps as any).mood || 'Professional'}"
+- Target Audience: "${previousSteps.selectedAudience || (previousSteps as any).audience || 'General audience'}"
 
 ${feedback ? `
 🚨 CRITICAL USER FEEDBACK - HIGHEST PRIORITY 🚨
@@ -1208,7 +1218,7 @@ ULTRA-STRICT VALIDATION - EVERY ICON MUST PASS ALL 5 CHECKS:
 1. ✓ Is this icon directly and specifically used in "${previousSteps.brand_domain || 'General Business'}" industry? (MUST be YES - NO GENERICS)
 2. ✓ Would "${previousSteps.brand_name || 'Brand'}" ACTUALLY use this icon in their products/services? (MUST be YES)
 3. ✓ Does this icon DIRECTLY relate to: "${previousSteps.short_description || 'Professional brand'}"? (MUST be YES)
-4. ✓ Is this icon SPECIFICALLY relevant for: "${(previousSteps as any).selectedAudience || 'General audience'}"? (MUST be YES)
+4. ✓ Is this icon SPECIFICALLY relevant for: "${previousSteps.selectedAudience || (previousSteps as any).audience || 'General audience'}"? (MUST be YES)
 5. ✓ Can you explain EXACTLY why this icon is needed for this brand? (MUST have clear reason)
 
 If ANY answer is NO or UNCERTAIN, DO NOT include that icon - find a more relevant one or skip it.
@@ -1278,7 +1288,9 @@ IMPORTANT:
 - ALL icons must pass the 4-question validation above
 - QUALITY over quantity - better to have 4 relevant icons than 8 generic ones
 - If you can't find enough relevant icons, generate fewer (minimum 4)
-- Match icon selection to brand mood: ${(previousSteps as any).selectedMood || 'Professional'}
+- Match icon selection to brand mood: ${previousSteps.selectedMood || (previousSteps as any).mood || 'Professional'}
+${previousSteps.brandValues ? `- Consider brand values: "${previousSteps.brandValues}"` : ''}
+${previousSteps.customPrompt ? `- Address custom requirements: "${previousSteps.customPrompt}"` : ''}
 
 Return ONLY the bullet list above with 4-8 STRICTLY RELEVANT icon names that exist in standard icon libraries for "${previousSteps.brand_name || 'Brand'}" in "${previousSteps.brand_domain || 'General Business'}" industry.`;
 

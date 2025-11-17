@@ -68,6 +68,11 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 					brand_name: input.brand_name,
 					brand_domain: input.brand_domain,
 					short_description: input.short_description,
+					// Include all builder form inputs in structured data
+					selectedMood: input.selectedMood,
+					selectedAudience: input.selectedAudience,
+					brandValues: input.brandValues,
+					customPrompt: input.customPrompt,
 					logo_files: input.logo_files,
 					contact: input.contact
 				};
@@ -84,19 +89,40 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 				contentToSave = JSON.stringify(brandGuidelinesSpec);
 			}
 
-			// Save to database
+			// Extract all builder form inputs from the request
+			const selectedMood = jsonData.selectedMood || jsonData.mood || null;
+			const selectedAudience = jsonData.selectedAudience || jsonData.audience || null;
+			const brandValues = jsonData.brandValues || null;
+			const customPrompt = jsonData.customPrompt || null;
+			
+			// Build complete contact info object
+			const contactInfo = {
+				name: input.contact?.name || jsonData.contactName || '',
+				email: input.contact?.email || jsonData.contactEmail || '',
+				role: input.contact?.role || jsonData.contactRole || '',
+				company: input.contact?.company || jsonData.contactCompany || input.brand_name || '',
+				
+			};
+			
+			// Save to database with all builder inputs
 			const valuesToInsert = {
 				userId: session.user.id,
 				brandName: input.brand_name,
 				content: contentToSave,
+				// Builder form inputs
 				brandDomain: input.brand_domain,
 				shortDescription: input.short_description,
+				brandValues: brandValues,
+				mood: selectedMood,
+				audience: selectedAudience,
+				customPrompt: customPrompt,
+				// Structured data
 				structuredData: JSON.stringify(structuredDataToSave),
 				logoFiles: JSON.stringify(input.logo_files),
-				logoData: input.logo_files && input.logo_files.length > 0 ? input.logo_files[0].fileData || input.logo_files[0].file_data : null,
+				logoData: input.logo_files && input.logo_files.length > 0 ? (input.logo_files[0].file_data || (input.logo_files[0] as any).fileData) : null,
 				colors: JSON.stringify(input.colors || []),
 				typography: JSON.stringify(input.typography || {}),
-				contactInfo: JSON.stringify(input.contact),
+				contactInfo: JSON.stringify(contactInfo),
 				exportFiles: JSON.stringify([]) // Progressive doesn't generate export files initially
 			};
 			
@@ -144,14 +170,16 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 		const brandName = formData.get('brandName') as string;
 		const brandDomain = formData.get('brandDomain') as string;
 		const shortDescription = formData.get('shortDescription') as string;
-		const brandValues = formData.get('brandValues') as string;
-		const mood = formData.get('mood') as string;
-		const audience = formData.get('audience') as string;
-		const customPrompt = formData.get('customPrompt') as string;
+		const brandValuesForm = formData.get('brandValues') as string;
+		const moodForm = formData.get('mood') as string;
+		const audienceForm = formData.get('audience') as string;
+		const customPromptForm = formData.get('customPrompt') as string;
 		const contactName = formData.get('contactName') as string;
 		const contactEmail = formData.get('contactEmail') as string;
 		const contactRole = formData.get('contactRole') as string;
 		const contactCompany = formData.get('contactCompany') as string;
+		const website = formData.get('website') as string || '';
+		const phone = formData.get('phone') as string || '';
 
 		// Validate required fields
 		if (!brandName || !brandDomain || !shortDescription) {
@@ -215,11 +243,22 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 			}
 		}
 
+		// Extract all builder form inputs from formData (use form values or fallback to null)
+		const selectedMood = moodForm || formData.get('selectedMood') as string || null;
+		const selectedAudience = audienceForm || formData.get('selectedAudience') as string || null;
+		const brandValues = brandValuesForm || null;
+		const customPrompt = customPromptForm || null;
+		
 		// Create input object
 		const input: BrandGuidelinesInput = {
 			brand_name: brandName,
 			brand_domain: brandDomain,
 			short_description: shortDescription,
+			// Include all builder form inputs
+			selectedMood: selectedMood || undefined,
+			selectedAudience: selectedAudience || undefined,
+			brandValues: brandValues || undefined,
+			customPrompt: customPrompt || undefined,
 			logo_files: logoFiles.map((logo) => ({
 				filename: logo.filename,
 				usage_tag: logo.usageTag as 'primary' | 'icon' | 'lockup',
@@ -231,7 +270,7 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 			contact: {
 				name: contactName || '',
 				email: contactEmail || '',
-				role: contactRole,
+				role: contactRole || '',
 				company: contactCompany || brandName
 			}
 		};
@@ -239,18 +278,29 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 		// Generate comprehensive brand guidelines
 		const brandGuidelinesSpec = await generateComprehensiveBrandGuidelines(input);
 
-		// Save to database
+		// Build complete contact info object
+		const contactInfo = {
+			name: input.contact?.name || contactName || '',
+			email: input.contact?.email || contactEmail || '',
+			role: input.contact?.role || contactRole || '',
+			company: input.contact?.company || contactCompany || brandName,
+			website: website,
+			phone: phone
+		};
+		
+		// Save to database with all builder inputs
 		const savedGuidelines = await db
 			.insert(brandGuidelines)
 			.values({
 				userId: session.user.id,
 				brandName: brandName,
 				content: JSON.stringify(brandGuidelinesSpec), // Store as JSON string for backward compatibility
-				brandValues: brandValues,
+				// All builder form inputs
+				brandValues: brandValues || null,
 				industry: brandDomain, // Use brandDomain as industry for legacy compatibility
-				mood: mood,
-				audience: audience,
-				customPrompt: customPrompt,
+				mood: selectedMood || null,
+				audience: selectedAudience || null,
+				customPrompt: customPrompt || null,
 				logoData: logoData,
 				// New structured fields
 				brandDomain: brandDomain,
@@ -259,7 +309,7 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 				logoFiles: JSON.stringify(logoFiles),
 				colors: JSON.stringify(colors),
 				typography: JSON.stringify(typography),
-				contactInfo: JSON.stringify(input.contact),
+				contactInfo: JSON.stringify(contactInfo),
 				exportFiles: JSON.stringify(brandGuidelinesSpec.export_files)
 			})
 			.returning();

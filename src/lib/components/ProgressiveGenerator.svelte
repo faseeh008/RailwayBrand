@@ -163,6 +163,11 @@
 					step: nextStepDef.id,
 					previousSteps: {
 						...brandInput,
+						// Ensure all fields are included
+						selectedMood: brandInput.selectedMood,
+						selectedAudience: brandInput.selectedAudience,
+						brandValues: brandInput.brandValues,
+						customPrompt: brandInput.customPrompt,
 						logo_files: logoFiles.map((logo) => ({
 							filename: logo.filename,
 							usage_tag: logo.usageTag,
@@ -251,6 +256,11 @@
 					step: step.stepId,
 					previousSteps: {
 						...brandInput,
+						// Ensure all fields are included
+						selectedMood: brandInput.selectedMood,
+						selectedAudience: brandInput.selectedAudience,
+						brandValues: brandInput.brandValues,
+						customPrompt: brandInput.customPrompt,
 						logo_files: logoFiles.map((logo) => ({
 							filename: logo.filename,
 							usage_tag: logo.usageTag,

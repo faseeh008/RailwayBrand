@@ -151,6 +151,11 @@ export interface BrandGuidelinesInput {
 	brand_name: string;
 	brand_domain: string;
 	short_description: string;
+	// Brand positioning fields from builder form
+	selectedMood?: string;
+	selectedAudience?: string;
+	brandValues?: string; // Brand values & mission statement (text)
+	customPrompt?: string; // Custom brand description & requirements
 	positioning_statement?: string;
 	vision?: string;
 	mission?: string;

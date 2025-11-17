@@ -621,6 +621,12 @@ export function adaptBrandDataForSlides(frontendData: any): any {
 		values: positioning.values?.length > 0 ? positioning.values.join(', ') : 'Innovation, Excellence',
 		personality: positioning.personality || frontendData.shortDescription || 'Our brand personality',
 		
+		// Brand positioning fields from builder form (for use in slides)
+		selectedMood: frontendData.selectedMood || frontendData.mood,
+		selectedAudience: frontendData.selectedAudience || frontendData.audience,
+		brandValues: frontendData.brandValues || frontendData.brandValues,
+		customPrompt: frontendData.customPrompt || frontendData.customPrompt,
+		
 		// Slide 3: Logo Guidelines
 		logo: {
 			primaryLogoUrl: frontendData.logoFiles?.[0]?.fileData || 
@@ -666,8 +672,11 @@ export function adaptBrandDataForSlides(frontendData: any): any {
 		
 		// Slide 9: Contact
         contact: {
-			website: frontendData.brandDomain || frontendData.contact?.website || 'www.yourbrand.com',
+			name: frontendData.contactName || frontendData.contact?.name || '',
 			email: frontendData.contactEmail || frontendData.contact?.email || 'hello@yourbrand.com',
+			role: frontendData.contactRole || frontendData.contact?.role || '',
+			company: frontendData.contactCompany || frontendData.contact?.company || frontendData.brandName || '',
+			website: frontendData.brandDomain || frontendData.contact?.website || 'www.yourbrand.com',
 			phone: frontendData.contactPhone || frontendData.contact?.phone || null
         },
 

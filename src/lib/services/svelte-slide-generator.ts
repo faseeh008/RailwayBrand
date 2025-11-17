@@ -74,16 +74,31 @@ export async function buildFilledSvelteSlides(brandInput: any): Promise<SlideDat
 	const positioningStatement = brandInput.positioningStatement || 'Our brand positioning statement';
 	const mission = brandInput.mission || 'Our mission statement';
 	const vision = brandInput.vision || 'Our vision statement';
-	const values = Array.isArray(brandInput.values) 
+	
+	// Use brandValues if provided, otherwise use parsed values
+	const brandValuesText = brandInput.brandValues || '';
+	const parsedValues = Array.isArray(brandInput.values) 
 		? brandInput.values.join(' • ') 
 		: brandInput.values || 'Innovation • Excellence';
-	const personality = brandInput.personality || 'Our brand personality';
+	const values = brandValuesText ? brandValuesText.substring(0, 200) : parsedValues; // Limit length for slide
+	
+	// Use selectedAudience if provided, otherwise use personality
+	const selectedAudience = brandInput.selectedAudience || '';
+	const personality = selectedAudience || brandInput.personality || 'Our brand personality';
+	
+	// Extract mood and custom prompt for potential use
+	const selectedMood = brandInput.selectedMood || '';
+	const customPrompt = brandInput.customPrompt || '';
 	const primaryFont = brandInput.typography?.primary || brandInput.primaryFont || 'Arial';
 	const secondaryFont = brandInput.typography?.secondary || brandInput.secondaryFont || 'Arial';
 	const logoData = brandInput.logo?.primaryLogoUrl || brandInput.logoData || '';
 	const logoUrl = brandInput.logo?.primaryLogoUrl || brandInput.logoUrl || '';
+	// Extract contact information
+	const contactName = brandInput.contact?.name || '';
+	const contactEmail = brandInput.contact?.email || brandInput.email || 'contact@example.com';
+	const contactRole = brandInput.contact?.role || '';
+	const contactCompany = brandInput.contact?.company || brandInput.brandName || '';
 	const website = brandInput.contact?.website || brandInput.website || 'your-website.com';
-	const email = brandInput.contact?.email || brandInput.email || 'contact@example.com';
 	const phone = brandInput.contact?.phone || brandInput.phone || '';
 	const thankYouText = brandInput.thankYouText || 'Thank You';
 	const subtitleText = brandInput.subtitleText || 'Let\'s Create Something Amazing Together';
@@ -417,6 +432,65 @@ export async function buildFilledSvelteSlides(brandInput: any): Promise<SlideDat
 			}
 		]
 	});
+	
+	// Add mood section if available (insert before audience section)
+	if (selectedMood) {
+		const moodIndex = slides[slides.length - 1].elements.findIndex((e: any) => e.id === 'audience-card');
+		if (moodIndex !== -1) {
+			const moodCard = {
+				id: 'mood-card',
+				type: 'shape' as const,
+				position: { x: 0.47, y: 3.31, w: 4.4, h: 0.6 },
+				shapeType: 'rect',
+				fillColor: color4Lighter,
+				lineColor: color4Hex,
+				lineWidth: 2,
+				zIndex: 1
+			};
+			const moodTitle = {
+				id: 'mood-title',
+				type: 'text' as const,
+				position: { x: 0.57, y: 3.36, w: 4.2, h: 0.2 },
+				text: 'BRAND MOOD',
+				fontSize: 14,
+				fontFace: 'Arial',
+				bold: true,
+				color: color4Hex,
+				align: 'left' as const,
+				valign: 'top' as const,
+				zIndex: 2
+			};
+			const moodContent = {
+				id: 'mood-content',
+				type: 'text' as const,
+				position: { x: 0.57, y: 3.56, w: 4.2, h: 0.3 },
+				text: selectedMood,
+				fontSize: 11,
+				fontFace: 'Arial',
+				color: '2C2C2C',
+				align: 'left' as const,
+				valign: 'top' as const,
+				zIndex: 2
+			};
+			
+			// Adjust audience card position down
+			const audienceCard = slides[slides.length - 1].elements.find((e: any) => e.id === 'audience-card');
+			if (audienceCard) {
+				audienceCard.position.y = 4.21; // Move down by 0.2
+			}
+			const audienceTitle = slides[slides.length - 1].elements.find((e: any) => e.id === 'audience-title');
+			if (audienceTitle) {
+				audienceTitle.position.y = 4.31;
+			}
+			const audienceContent = slides[slides.length - 1].elements.find((e: any) => e.id === 'audience-content');
+			if (audienceContent) {
+				audienceContent.position.y = 4.56;
+			}
+			
+			// Insert mood elements before audience
+			slides[slides.length - 1].elements.splice(moodIndex, 0, moodCard, moodTitle, moodContent);
+		}
+	}
 	
 	// Slide 4: Logo Guidelines
 	const logoGuidelinesElements: SlideData['elements'] = [
@@ -1436,7 +1510,7 @@ export async function buildFilledSvelteSlides(brandInput: any): Promise<SlideDat
 				id: 'contact',
 				type: 'text' as const,
 				position: { x: 0.5, y: 4.3, w: 9, h: 0.6 },
-				text: `${website}\n${email}${phone ? '\n' + phone : ''}`,
+				text: buildContactText(contactName, contactEmail, contactRole, contactCompany, website, phone),
 				fontSize: 16,
 				fontFace: 'Arial',
 				color: 'FFFFFF',
@@ -1446,6 +1520,26 @@ export async function buildFilledSvelteSlides(brandInput: any): Promise<SlideDat
 			}
 		]
 	});
+	
+	// Helper function to build contact text
+	function buildContactText(name: string, email: string, role: string, company: string, website: string, phone: string): string {
+		const parts: string[] = [];
+		
+		// Build contact info line by line
+		if (name || role || company) {
+			const nameParts: string[] = [];
+			if (name) nameParts.push(name);
+			if (role) nameParts.push(role);
+			if (company) nameParts.push(company);
+			if (nameParts.length > 0) parts.push(nameParts.join(', '));
+		}
+		
+		if (email) parts.push(email);
+		if (website && website !== 'your-website.com' && !website.includes('www.yourbrand.com')) parts.push(website);
+		if (phone) parts.push(phone);
+		
+		return parts.length > 0 ? parts.join('\n') : email || 'Contact information';
+	}
 	
 	return slides;
 }

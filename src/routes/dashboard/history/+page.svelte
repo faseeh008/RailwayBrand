@@ -169,11 +169,38 @@
 						? JSON.parse(guideline.structuredData) 
 						: guideline.structuredData;
 					
+					// Parse contactInfo from database
+					let contactInfo = null;
+					if (guideline.contactInfo) {
+						try {
+							contactInfo = typeof guideline.contactInfo === 'string' 
+								? JSON.parse(guideline.contactInfo) 
+								: guideline.contactInfo;
+						} catch (e) {
+							console.warn('Failed to parse contactInfo:', e);
+						}
+					}
+					
 					brandData = {
 						brandName: guideline.brandName,
-						brand_domain: structuredData?.brand_domain || guideline.industry || '',
+						brand_domain: guideline.brandDomain || structuredData?.brand_domain || guideline.industry || '',
+						short_description: guideline.shortDescription || structuredData?.short_description || '',
+						// Include all builder form inputs from database
+						selectedMood: guideline.mood || structuredData?.selectedMood || null,
+						selectedAudience: guideline.audience || structuredData?.selectedAudience || null,
+						brandValues: guideline.brandValues || structuredData?.brandValues || null,
+						customPrompt: guideline.customPrompt || structuredData?.customPrompt || null,
 						stepHistory: structuredData?.stepHistory || [],
 						logoFiles: guideline.logoFiles ? (typeof guideline.logoFiles === 'string' ? JSON.parse(guideline.logoFiles) : guideline.logoFiles) : [],
+						// Include contact information
+						contact: contactInfo || structuredData?.contact || {
+							name: contactInfo?.name || '',
+							email: contactInfo?.email || '',
+							role: contactInfo?.role || '',
+							company: contactInfo?.company || guideline.brandName,
+							website: contactInfo?.website || '',
+							phone: contactInfo?.phone || ''
+						},
 						id: guideline.id,
 						guidelineId: guideline.id
 					};

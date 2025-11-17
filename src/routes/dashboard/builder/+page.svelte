@@ -1357,6 +1357,11 @@ ${customPrompt}`;
 						brand_name: brandName,
 						brand_domain: brandDomain,
 						short_description: shortDescription,
+						// Include all brand positioning fields
+						selectedMood: selectedMood || undefined,
+						selectedAudience: selectedAudience || undefined,
+						brandValues: brandValues || undefined,
+						customPrompt: customPrompt || undefined,
 						logo_files: logoFiles.map((logo) => ({
 							filename: logo.filename,
 							usage_tag: logo.usageTag as 'primary' | 'icon' | 'lockup',
@@ -1367,7 +1372,7 @@ ${customPrompt}`;
 						contact: {
 							name: contactName || '',
 							email: contactEmail || '',
-							role: contactRole,
+							role: contactRole || '',
 							company: contactCompany || brandName
 						}
 					}}

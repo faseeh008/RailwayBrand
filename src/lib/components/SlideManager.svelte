@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { onMount, tick } from 'svelte';
+  import { onMount, onDestroy, tick } from 'svelte';
   import CoverSlide from '$lib/templates_svelte/default/CoverSlide.svelte';
   import BrandIntroductionSlide from '$lib/templates_svelte/default/BrandIntroductionSlide.svelte';
   import BrandPositioningSlide from '$lib/templates_svelte/default/BrandPositioningSlide.svelte';
@@ -394,9 +394,16 @@
   let secondaryWeights = 'Regular, Medium';
   let icons: Array<{ symbol: string; name: string }> = [];
   let applications: Array<{ icon: string; name: string; description: string }> = [];
+  // Contact information
+  let contactName = '';
+  let contactEmail = 'contact@example.com';
+  let contactRole = '';
+  let contactCompany = '';
   let website = 'your-website.com';
-  let email = 'contact@example.com';
   let phone = '';
+  
+  // Legacy support - map email to contactEmail
+  $: email = contactEmail || 'contact@example.com';
   
   // Editable content for ThankYouSlide
   let thankYouText = 'Thank You';
@@ -472,8 +479,12 @@
     secondaryWeights = extractFontWeights(brandData, 'secondary') || 'Regular, Medium';
     icons = extractIcons(brandData);
     applications = extractApplications(brandData);
-    website = brandData?.contact?.website || brandData?.legal_contact?.website || 'your-website.com';
-    email = brandData?.contact?.email || brandData?.legal_contact?.email || 'contact@example.com';
+    // Extract contact information
+    contactName = brandData?.contact?.name || brandData?.legal_contact?.contact_name || '';
+    contactEmail = brandData?.contact?.email || brandData?.legal_contact?.email || 'contact@example.com';
+    contactRole = brandData?.contact?.role || brandData?.legal_contact?.title || '';
+    contactCompany = brandData?.contact?.company || brandData?.legal_contact?.company || brandData?.brandName || '';
+    website = brandData?.contact?.website || brandData?.legal_contact?.website || brandData?.brandDomain || 'your-website.com';
     phone = brandData?.contact?.phone || brandData?.legal_contact?.phone || '';
   }
   
@@ -1799,10 +1810,15 @@
   // Note: Svelte slides are automatically saved server-side when HTML slides are generated
   // via the /api/preview-slides-html endpoint. No client-side saving is needed.
   
+  // Export dropdown state
+  let showExportDropdown = false;
+  let exportDropdownRef: HTMLDivElement;
+  
   async function downloadAllSlidesPPTX() {
     if (isDownloading) return;
     
     isDownloading = true;
+    showExportDropdown = false; // Close dropdown
     try {
       console.log('🔄 Collecting slide data from all components...');
       
@@ -1841,6 +1857,96 @@
       downloadProgress = { current: 0, total: 0 };
     }
   }
+  
+  async function downloadAllSlidesPDF() {
+    if (isDownloading) return;
+    
+    isDownloading = true;
+    showExportDropdown = false; // Close dropdown
+    try {
+      console.log('🔄 Generating PDF from Svelte slides...');
+      
+      // Convert Svelte slide data to HTML slides for PDF generation
+      // We'll use the brand data to generate HTML slides via the API
+      const allSlideData = await collectAllSlideData();
+      
+      if (allSlideData.length === 0) {
+        throw new Error('No slide data available to export');
+      }
+      
+      // Convert SlideData to HTML format for PDF generation
+      // The PDF API expects HTML slides, so we need to convert SlideData to HTML
+      // For now, we'll use the brand data to regenerate HTML slides
+      const response = await fetch('/api/generate-pdf', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          brandName: brandName,
+          brandDomain: brandData?.brand_domain || brandData?.brandDomain || '',
+          shortDescription: brandData?.short_description || brandData?.shortDescription || '',
+          contact: brandData?.contact || {},
+          stepHistory: brandData?.stepHistory || [],
+          logoFiles: brandData?.logoFiles || [],
+          logoUrl: brandData?.logoUrl,
+          logo: brandData?.logo,
+          // Pass brand data for HTML slide generation
+          selectedMood: brandData?.selectedMood,
+          selectedAudience: brandData?.selectedAudience,
+          brandValues: brandData?.brandValues,
+          customPrompt: brandData?.customPrompt
+        })
+      });
+      
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(errorText || 'Failed to generate PDF');
+      }
+      
+      // Download the PDF file
+      const blob = await response.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${brandName.replace(/[^a-zA-Z0-9]/g, '-')}-Brand-Guidelines.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      
+      console.log('✅ PDF downloaded successfully');
+    } catch (error) {
+      console.error('❌ Error generating PDF:', error);
+      alert('Failed to generate PDF file. Please try again.');
+    } finally {
+      isDownloading = false;
+      downloadProgress = { current: 0, total: 0 };
+    }
+  }
+  
+  // Handle clicks outside dropdown to close it
+  let clickOutsideHandler: ((e: MouseEvent) => void) | null = null;
+  
+  $: if (showExportDropdown && typeof document !== 'undefined') {
+    if (!clickOutsideHandler) {
+      clickOutsideHandler = (e: MouseEvent) => {
+        if (exportDropdownRef && !exportDropdownRef.contains(e.target as Node)) {
+          showExportDropdown = false;
+        }
+      };
+      document.addEventListener('click', clickOutsideHandler);
+    }
+  } else {
+    if (clickOutsideHandler) {
+      document.removeEventListener('click', clickOutsideHandler);
+      clickOutsideHandler = null;
+    }
+  }
+  
+  onDestroy(() => {
+    if (clickOutsideHandler && typeof document !== 'undefined') {
+      document.removeEventListener('click', clickOutsideHandler);
+    }
+  });
 </script>
 
 <div class="slide-manager">
@@ -1873,17 +1979,40 @@
         </button>
       {/if}
       
-      <button
-        onclick={downloadAllSlidesPPTX}
-        disabled={isDownloading}
-        class="btn btn-primary"
-      >
-        {#if isDownloading}
-          ⏳ Generating PPTX... ({downloadProgress.current}/{downloadProgress.total})
-        {:else}
-          📥 Download All Slides as PPTX
+      <!-- Export Dropdown -->
+      <div class="relative inline-block" bind:this={exportDropdownRef}>
+        <button
+          onclick={() => showExportDropdown = !showExportDropdown}
+          disabled={isDownloading}
+          class="btn btn-primary flex items-center gap-2"
+        >
+          {#if isDownloading}
+            ⏳ Generating... ({downloadProgress.current}/{downloadProgress.total})
+          {:else}
+            📥 Export As
+            <span class="text-xs">▼</span>
+          {/if}
+        </button>
+        
+        {#if showExportDropdown}
+          <div class="absolute left-0 mt-1 w-56 bg-white rounded-lg shadow-lg border border-gray-200 z-50">
+            <button
+              class="w-full text-left px-4 py-2 hover:bg-gray-100 rounded-t-lg flex items-center gap-2 text-sm border-b border-gray-200"
+              onclick={downloadAllSlidesPPTX}
+              disabled={isDownloading}
+            >
+              📄 PPTX (Editable)
+            </button>
+            <button
+              class="w-full text-left px-4 py-2 hover:bg-gray-100 rounded-b-lg flex items-center gap-2 text-sm"
+              onclick={downloadAllSlidesPDF}
+              disabled={isDownloading}
+            >
+              📄 PDF
+            </button>
+          </div>
         {/if}
-      </button>
+      </div>
     </div>
     
     <div class="controls-right">
@@ -2122,8 +2251,11 @@
           bind:brandName
           bind:thankYouText
           bind:subtitleText
+          bind:contactName
+          bind:contactEmail
+          bind:contactRole
+          bind:contactCompany
           bind:website
-          bind:email
           bind:phone
           color1Hex={color1Hex}
           color2Hex={color2Hex}

@@ -82,26 +82,72 @@
         sessionStorage.setItem('current_guideline_id', guidelineId);
         console.log('✅ Stored guideline ID for database sync:', guidelineId);
         
-        // Fetch logo files from database if not already in brandData
-        if (!brandData.logoFiles || brandData.logoFiles.length === 0) {
-          console.log('🔍 Fetching logo files from database using guidelineId...');
-          try {
-            const response = await fetch(`/api/brand-guidelines/${guidelineId}`);
-            if (response.ok) {
-              const result = await response.json();
-              if (result.success && result.guideline?.logoFiles) {
+        // Fetch all brand data from database (logo files, contact info, builder inputs)
+        console.log('🔍 Fetching complete brand data from database using guidelineId...');
+        try {
+          const response = await fetch(`/api/brand-guidelines/${guidelineId}`);
+          if (response.ok) {
+            const result = await response.json();
+            if (result.success && result.guideline) {
+              const guideline = result.guideline;
+              
+              // Load logo files
+              if (guideline.logoFiles && (!brandData.logoFiles || brandData.logoFiles.length === 0)) {
                 try {
-                  const logoFiles = JSON.parse(result.guideline.logoFiles);
+                  const logoFiles = typeof guideline.logoFiles === 'string' 
+                    ? JSON.parse(guideline.logoFiles) 
+                    : guideline.logoFiles;
                   brandData.logoFiles = logoFiles;
                   console.log('✅ Loaded logo files from database:', logoFiles.length);
                 } catch (parseError) {
                   console.warn('⚠️ Failed to parse logo files from database:', parseError);
                 }
               }
+              
+              // Load all builder form inputs from database
+              if (guideline.brandDomain) brandData.brand_domain = guideline.brandDomain;
+              if (guideline.shortDescription) brandData.short_description = guideline.shortDescription;
+              if (guideline.mood) brandData.selectedMood = guideline.mood;
+              if (guideline.audience) brandData.selectedAudience = guideline.audience;
+              if (guideline.brandValues) brandData.brandValues = guideline.brandValues;
+              if (guideline.customPrompt) brandData.customPrompt = guideline.customPrompt;
+              
+              // Load contact information
+              if (guideline.contactInfo) {
+                try {
+                  const contactInfo = typeof guideline.contactInfo === 'string' 
+                    ? JSON.parse(guideline.contactInfo) 
+                    : guideline.contactInfo;
+                  brandData.contact = contactInfo;
+                  console.log('✅ Loaded contact info from database:', contactInfo);
+                } catch (parseError) {
+                  console.warn('⚠️ Failed to parse contactInfo from database:', parseError);
+                }
+              }
+              
+              // Also check structuredData for additional fields
+              if (guideline.structuredData) {
+                try {
+                  const structuredData = typeof guideline.structuredData === 'string' 
+                    ? JSON.parse(guideline.structuredData) 
+                    : guideline.structuredData;
+                  
+                  // Merge structured data fields if not already set
+                  if (structuredData.selectedMood && !brandData.selectedMood) brandData.selectedMood = structuredData.selectedMood;
+                  if (structuredData.selectedAudience && !brandData.selectedAudience) brandData.selectedAudience = structuredData.selectedAudience;
+                  if (structuredData.brandValues && !brandData.brandValues) brandData.brandValues = structuredData.brandValues;
+                  if (structuredData.customPrompt && !brandData.customPrompt) brandData.customPrompt = structuredData.customPrompt;
+                  if (structuredData.contact && !brandData.contact) brandData.contact = structuredData.contact;
+                } catch (parseError) {
+                  console.warn('⚠️ Failed to parse structuredData from database:', parseError);
+                }
+              }
+              
+              console.log('✅ Loaded all builder inputs from database');
             }
-          } catch (error) {
-            console.warn('⚠️ Failed to fetch logo files from database:', error);
           }
+        } catch (error) {
+          console.warn('⚠️ Failed to fetch brand data from database:', error);
         }
       } else {
         console.warn('⚠️ No guideline ID found in brandData or database:', {
