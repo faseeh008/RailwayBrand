@@ -1,5 +1,8 @@
 import { json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
+import { writeFile, mkdir } from 'fs/promises';
+import { join } from 'path';
+import { existsSync } from 'fs';
 
 export const POST: RequestHandler = async ({ request }) => {
 	try {
@@ -11,7 +14,7 @@ export const POST: RequestHandler = async ({ request }) => {
 		}
 
 		// Validate file type
-		if (!file.type.startsWith('image/')) {
+		if (!file.type.startsWith('image/') && !file.name.endsWith('.svg')) {
 			return json({ error: 'File must be an image' }, { status: 400 });
 		}
 
@@ -20,18 +23,37 @@ export const POST: RequestHandler = async ({ request }) => {
 			return json({ error: 'File size must be less than 5MB' }, { status: 400 });
 		}
 
-		// Convert file to base64
+		// Save file to filesystem
+		const uploadsDir = join(process.cwd(), 'static', 'uploads', 'logos');
+		
+		// Create directory if it doesn't exist
+		if (!existsSync(uploadsDir)) {
+			await mkdir(uploadsDir, { recursive: true });
+		}
+
+		// Generate unique filename
+		const timestamp = Date.now();
+		const sanitizedOriginalName = file.name.replace(/[^a-zA-Z0-9.-]/g, '_');
+		const filename = `${timestamp}-${sanitizedOriginalName}`;
+		const filePath = join(uploadsDir, filename);
+
+		// Write file to disk
 		const arrayBuffer = await file.arrayBuffer();
 		const buffer = Buffer.from(arrayBuffer);
+		await writeFile(filePath, buffer);
+
+		// Convert file to base64 for data URL
 		const base64Data = buffer.toString('base64');
-		const mimeType = file.type;
+		const mimeType = file.type || (file.name.endsWith('.svg') ? 'image/svg+xml' : 'image/png');
 		
 		// Create data URL format
 		const dataUrl = `data:${mimeType};base64,${base64Data}`;
 
+		// Return both file path and base64 data
 		return json({
 			success: true,
-			filename: file.name,
+			filename: filename,
+			filePath: `/uploads/logos/${filename}`,
 			fileData: dataUrl,
 			fileSize: file.size,
 			mimeType: mimeType,

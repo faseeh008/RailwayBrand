@@ -546,14 +546,26 @@ ${customPrompt}`;
 			if (data.logoData) {
 				// Check if it's an uploaded logo or AI-generated
 				if (data.logoData.type === 'ai-generated') {
-					// AI-generated logo - pass the flag to backend
-					logoFiles = [{
-						filename: 'ai-generated-logo.png',
-						filePath: '',
-						fileData: '',
-						usageTag: 'primary',
-						aiGenerated: true
-					}];
+					// AI-generated logo - use the fileData from generation
+					if (data.logoData.fileData) {
+						logoPreview = data.logoData.fileData;
+						logoFiles = [{
+							filename: data.logoData.filename || 'ai-generated-logo.svg',
+							filePath: '',
+							fileData: data.logoData.fileData,
+							usageTag: 'primary',
+							aiGenerated: true
+						}];
+					} else {
+						// Fallback if fileData is missing
+						logoFiles = [{
+							filename: 'ai-generated-logo.svg',
+							filePath: '',
+							fileData: '',
+							usageTag: 'primary',
+							aiGenerated: true
+						}];
+					}
 				} else {
 					// Uploaded logo
 					logoPreview = data.logoData.fileData;

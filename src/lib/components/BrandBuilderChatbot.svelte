@@ -32,6 +32,7 @@
 		isLogo?: boolean;
 		questionIndex?: number; // Track which question this answer belongs to
 		edited?: boolean; // Track if message was edited
+		logoData?: string; // Base64 data URL for generated/uploaded logo
 		// Step-specific fields
 		stepData?: {
 			stepId: string;
@@ -43,6 +44,9 @@
 			isApproved: boolean;
 		};
 		waitingForFeedback?: boolean; // If true, user can type feedback for regeneration
+		waitingForLogoAcceptance?: boolean; // If true, waiting for user to accept/reject logo
+		logoRegenerationPrompt?: string; // User's prompt for logo enhancement
+		logoAccepted?: boolean; // Track if logo was accepted
 	}
 
 	// State
@@ -71,6 +75,8 @@
 	let autoApproveTimeouts: Map<number, ReturnType<typeof setTimeout>> = new Map(); // Auto-approve timeouts for steps
 	const AUTO_APPROVE_DELAY = 10000; // Auto-approve after 10 seconds if no feedback
 	let generationAbortController: AbortController | null = null; // For aborting fetch requests
+	let waitingForLogoAcceptance = false; // Track if we're waiting for user to accept/reject logo
+	let currentLogoMessageId: string | null = null; // Track which message contains the logo
 	
 	// New state for enhanced flow
 	let waitingForInitialPrompt = true; // NEW: Wait for user's initial prompt
@@ -166,6 +172,8 @@ let hasAnnouncedGrounding = false;
 				groundingData = parsedState.groundingData ?? null;
 				groundingIndustry = parsedState.groundingIndustry ?? null;
 				hasAnnouncedGrounding = parsedState.hasAnnouncedGrounding ?? false;
+				waitingForLogoAcceptance = parsedState.waitingForLogoAcceptance ?? false;
+				currentLogoMessageId = parsedState.currentLogoMessageId ?? null;
 				
 				// Determine if we should wait for initial prompt
 				// If no user messages, we're waiting for initial prompt
@@ -221,6 +229,8 @@ let hasAnnouncedGrounding = false;
 				groundingIndustry = null;
 				hasAnnouncedGrounding = false;
 				isFetchingGroundingData = false;
+				waitingForLogoAcceptance = false;
+				currentLogoMessageId = null;
 				// Fall through to send initial message
 			}
 		}
@@ -258,7 +268,9 @@ let hasAnnouncedGrounding = false;
 						currentRegeneratingStepIndex,
 						groundingData,
 						groundingIndustry,
-						hasAnnouncedGrounding
+						hasAnnouncedGrounding,
+						waitingForLogoAcceptance,
+						currentLogoMessageId
 					}));
 				}
 			} catch (error) {
@@ -342,8 +354,9 @@ async function ensureGroundingDataForIndustry(industry?: string) {
 		content: string,
 		questionId?: string,
 		suggestions?: string[],
-		inputType?: string
-	) {
+		inputType?: string,
+		logoData?: string
+	): Promise<ChatMessage> {
 		isTyping = true;
 		await scrollToBottom();
 		await delay(800);
@@ -356,7 +369,8 @@ async function ensureGroundingDataForIndustry(industry?: string) {
 			questionId,
 			suggestions,
 			inputType,
-			isLogo: inputType === 'logo'
+			isLogo: inputType === 'logo',
+			logoData: logoData
 		};
 
 		messages = [...messages, message];
@@ -375,6 +389,7 @@ async function ensureGroundingDataForIndustry(industry?: string) {
 		isMultiline = inputType === 'textarea';
 
 		await scrollToBottom();
+		return message;
 	}
 
 	// Send user message
@@ -706,10 +721,33 @@ async function ensureGroundingDataForIndustry(industry?: string) {
 
 	// Ask next question
 	async function askNextQuestion() {
-		currentQuestionIndex++;
-
-		// Use allQuestions if available, otherwise fall back to questions prop
+		// Don't proceed if waiting for logo acceptance
+		if (waitingForLogoAcceptance) {
+			console.log('[askNextQuestion] Blocked: waiting for logo acceptance');
+			return;
+		}
+		
+		// Check if current question is logo and logo is not accepted
 		const questionsToUse = allQuestions.length > 0 ? allQuestions : questions;
+		if (currentQuestionIndex >= 0 && currentQuestionIndex < questionsToUse.length) {
+			const currentQuestion = questionsToUse[currentQuestionIndex];
+			if (currentQuestion && currentQuestion.type === 'logo') {
+				// Check if logo is accepted
+				const logoAnswer = answers['logo'];
+				if (!logoAnswer || (logoAnswer.status !== 'accepted' && logoAnswer.status !== 'generated' && logoAnswer.type !== 'ai-generated')) {
+					// Logo not accepted yet - don't proceed
+					console.log('[askNextQuestion] Blocked: logo question and logo not accepted');
+					return;
+				}
+				// If logo is uploaded (not AI-generated), it's automatically accepted
+				if (logoAnswer && !logoAnswer.type && logoAnswer.fileData) {
+					// Uploaded logo - consider it accepted
+					logoAnswer.status = 'accepted';
+				}
+			}
+		}
+		
+		currentQuestionIndex++;
 
 		// Check if we've reached the end of questions
 		if (currentQuestionIndex >= questionsToUse.length) {
@@ -751,13 +789,138 @@ async function ensureGroundingDataForIndustry(industry?: string) {
 		);
 	}
 
+	// Handle logo acceptance
+	async function handleAcceptLogo(messageId: string) {
+		// Mark logo as accepted
+		messages = messages.map(m => 
+			m.id === messageId 
+				? { ...m, logoAccepted: true, waitingForLogoAcceptance: false }
+				: m
+		);
+		
+		// Update answers to mark logo as accepted
+		if (answers['logo']) {
+			answers['logo'].status = 'accepted';
+		}
+		
+		waitingForLogoAcceptance = false;
+		currentLogoMessageId = null;
+		
+		await sendBotMessage("✅ Great! I've saved your logo. It will be used in your brand guidelines.");
+		await delay(500);
+		await askNextQuestion();
+	}
+	
+	// Handle logo rejection/regeneration request
+	async function handleRegenerateLogo(messageId: string, enhancementPrompt?: string) {
+		waitingForLogoAcceptance = false;
+		
+		if (enhancementPrompt) {
+			await sendUserMessage(`🔄 ${enhancementPrompt}`);
+		} else {
+			await sendUserMessage("🔄 Please regenerate the logo with improvements");
+		}
+		
+		await delay(500);
+		await sendBotMessage("🔄 I'll regenerate the logo with your requested changes. This will take a moment...");
+		
+		// Collect all available information
+		const brandName = collectedInfo.brandName || answers['brandName'] || '';
+		const industry = collectedInfo.industry || answers['industry'] || '';
+		const style = collectedInfo.style || answers['style'] || '';
+		const audience = collectedInfo.audience || answers['audience'] || '';
+		const description = collectedInfo.description || answers['shortDescription'] || '';
+		const values = collectedInfo.values || answers['brandValues'] || '';
+		
+		try {
+			isTyping = true;
+			await scrollToBottom();
+			
+			// Call the logo generation API with enhancement prompt
+			const response = await fetch('/api/generate-logo', {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({
+					brandName,
+					industry,
+					style,
+					description,
+					values,
+					audience,
+					enhancementPrompt: enhancementPrompt || 'Please improve the logo design',
+					// Include any industry-specific info from answers
+					...Object.fromEntries(
+						Object.entries(answers).filter(([key]) => 
+							!['logo', 'brandName', 'industry', 'style', 'audience', 'shortDescription', 'brandValues'].includes(key)
+						)
+					)
+				})
+			});
+
+			if (!response.ok) {
+				const error = await response.json();
+				throw new Error(error.error || 'Failed to regenerate logo');
+			}
+
+			const result = await response.json();
+			
+			if (result.success && result.logoData) {
+				// Update the logo
+				answers['logo'] = {
+					type: 'ai-generated',
+					fileData: result.logoData,
+					filename: result.filename || `${brandName.toLowerCase().replace(/\s+/g, '-')}-logo.svg`,
+					status: 'pending-acceptance'
+				};
+				
+				logoPreview = result.logoData;
+				
+				// Send bot message with the regenerated logo
+				const logoMessage = await sendBotMessage("✨ I've regenerated the logo with your requested changes. Please review it and let me know if you'd like to accept it or make further adjustments.", undefined, undefined, undefined, result.logoData);
+				
+				if (logoMessage && logoMessage.id) {
+					currentLogoMessageId = logoMessage.id;
+					waitingForLogoAcceptance = true;
+					
+					// Update the message to mark it as waiting for acceptance
+					messages = messages.map(m => 
+						m.id === logoMessage.id 
+							? { ...m, waitingForLogoAcceptance: true, logoAccepted: false }
+							: m
+					);
+				} else {
+					console.error('[handleRegenerateLogo] Logo message not returned properly');
+					throw new Error('Failed to create logo message');
+				}
+			} else {
+				throw new Error(result.error || 'Failed to regenerate logo');
+			}
+		} catch (error: any) {
+			console.error('Logo regeneration error:', error);
+			await sendBotMessage(`⚠️ I encountered an issue regenerating your logo: ${error.message || 'Unknown error'}. Please try again or describe what changes you'd like.`);
+		} finally {
+			isTyping = false;
+		}
+	}
+
 	// Handle user input submission
 	async function handleSubmit() {
 		const input = userInput.trim().toLowerCase();
 		const userMessage = userInput.trim();
 		
+		// Check if we're waiting for logo acceptance and user is providing feedback
+		if (typeof waitingForLogoAcceptance !== 'undefined' && waitingForLogoAcceptance && currentLogoMessageId && userMessage) {
+			// User is providing feedback for logo regeneration
+			await handleRegenerateLogo(currentLogoMessageId, userMessage);
+			userInput = '';
+			return;
+		}
+		
 		// Cancel all auto-approvals when user types (they're actively engaging)
-		if (userMessage && isGeneratingGuidelines) {
+		// Skip generation handling if we're waiting for initial prompt
+		if (waitingForInitialPrompt) {
+			// This will be handled by the waitingForInitialPrompt block below
+		} else if (userMessage && isGeneratingGuidelines) {
 			// Cancel auto-approval for all unapproved steps
 			messages.forEach(m => {
 				if (m.type === 'step' && m.stepData && !m.stepData.isApproved && !m.stepData.isGenerating) {
@@ -766,8 +929,9 @@ async function ensureGroundingDataForIndustry(industry?: string) {
 			});
 		}
 		
-			// Check if we're in generation phase and user is providing step-related feedback
-		if (isGeneratingGuidelines && userMessage) {
+		// Check if we're in generation phase and user is providing step-related feedback
+		// Skip this if we're waiting for initial prompt (user hasn't started yet)
+		if (isGeneratingGuidelines && userMessage && !waitingForInitialPrompt) {
 			const command = parseStepCommand(userMessage);
 			
 			if (command.action && command.stepIndex !== null) {
@@ -873,6 +1037,7 @@ async function ensureGroundingDataForIndustry(industry?: string) {
 						}
 					} catch (error) {
 						console.error('Error analyzing prompt during generation:', error);
+						await sendBotMessage("I encountered an error analyzing your request. Please try again or provide more specific instructions.");
 					}
 				}
 				return;
@@ -931,6 +1096,26 @@ async function ensureGroundingDataForIndustry(industry?: string) {
 		// Handle regular question answers
 		const questionsToUse = allQuestions.length > 0 ? allQuestions : questions;
 		
+		// Check if we're on the logo question and waiting for acceptance
+		if (currentQuestionIndex >= 0 && currentQuestionIndex < questionsToUse.length) {
+			const currentQuestion = questionsToUse[currentQuestionIndex];
+			if (currentQuestion && currentQuestion.type === 'logo' && waitingForLogoAcceptance) {
+				// User is on logo question and logo is pending acceptance
+				// Check if user is providing feedback for regeneration
+				if (userMessage && userMessage.trim()) {
+					// User is providing feedback - handle regeneration
+					if (currentLogoMessageId) {
+						await handleRegenerateLogo(currentLogoMessageId, userMessage);
+						userInput = '';
+						return;
+					}
+				} else {
+					await sendBotMessage("⚠️ Please accept the generated logo or provide feedback to regenerate it. Use the buttons above the logo or type your feedback.");
+					return;
+				}
+			}
+		}
+		
 		// Safety check: if we're in question mode, ensure currentQuestion exists
 		if (currentQuestionIndex >= 0 && currentQuestionIndex < questionsToUse.length) {
 			if (!userInput.trim()) {
@@ -945,6 +1130,13 @@ async function ensureGroundingDataForIndustry(industry?: string) {
 				const currentQuestion = questionsToUse[currentQuestionIndex];
 				if (!currentQuestion) {
 					console.error('Current question is undefined at index:', currentQuestionIndex);
+					return;
+				}
+				
+				// Don't allow text input for logo question if waiting for acceptance
+				if (currentQuestion.type === 'logo' && waitingForLogoAcceptance) {
+					await sendBotMessage("⚠️ Please accept the generated logo or provide feedback to regenerate it. Use the buttons above the logo or type your feedback.");
+					userInput = '';
 					return;
 				}
 				
@@ -1172,6 +1364,12 @@ async function ensureGroundingDataForIndustry(industry?: string) {
 
 					await sendUserMessage(`📎 Uploaded: ${file.name}`);
 					await delay(500);
+					// Logo uploaded - mark as accepted and proceed
+					if (answers['logo']) {
+						answers['logo'].status = 'accepted';
+					}
+					waitingForLogoAcceptance = false;
+					currentLogoMessageId = null;
 					await askNextQuestion();
 				} else {
 					const error = await response.json();
@@ -1191,17 +1389,94 @@ async function ensureGroundingDataForIndustry(industry?: string) {
 
 	// Handle AI logo generation
 	async function handleGenerateLogo() {
-		// Mark that user chose AI generation
-		answers['logo'] = {
-			type: 'ai-generated',
-			status: 'pending'
-		};
-
 		await sendUserMessage('🎨 Generate logo with AI', currentQuestionIndex);
 		await delay(500);
-		await sendBotMessage("Great! I'll generate a logo for you based on your brand details. We'll create it during the brand guidelines generation process. ✨");
-		await delay(800);
-		await askNextQuestion();
+		await sendBotMessage("🎨 Great! I'm generating a professional logo for you based on all your brand details. This will take a moment...");
+		
+		// Collect all available information
+		const brandName = collectedInfo.brandName || answers['brandName'] || '';
+		const industry = collectedInfo.industry || answers['industry'] || '';
+		const style = collectedInfo.style || answers['style'] || '';
+		const audience = collectedInfo.audience || answers['audience'] || '';
+		const description = collectedInfo.description || answers['shortDescription'] || '';
+		const values = collectedInfo.values || answers['brandValues'] || '';
+		
+		if (!brandName) {
+			await sendBotMessage("⚠️ I need at least a brand name to generate your logo. Please provide your brand name first.");
+			return;
+		}
+
+		try {
+			isTyping = true;
+			await scrollToBottom();
+			
+			// Call the logo generation API with all collected information
+			const response = await fetch('/api/generate-logo', {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({
+					brandName,
+					industry,
+					style,
+					description,
+					values,
+					audience,
+					// Include any industry-specific info from answers
+					...Object.fromEntries(
+						Object.entries(answers).filter(([key]) => 
+							!['logo', 'brandName', 'industry', 'style', 'audience', 'shortDescription', 'brandValues'].includes(key)
+						)
+					)
+				})
+			});
+
+			if (!response.ok) {
+				const error = await response.json();
+				throw new Error(error.error || 'Failed to generate logo');
+			}
+
+			const result = await response.json();
+			
+			if (result.success && result.logoData) {
+				// Store the generated logo (but don't mark as accepted yet)
+				answers['logo'] = {
+					type: 'ai-generated',
+					fileData: result.logoData,
+					filename: result.filename || `${brandName.toLowerCase().replace(/\s+/g, '-')}-logo.svg`,
+					status: 'pending-acceptance'
+				};
+				
+				logoPreview = result.logoData;
+				
+				// Send bot message with the logo image displayed and waiting for acceptance
+				const logoMessage = await sendBotMessage("✨ Perfect! I've generated a professional logo for your brand. Please review it below and let me know if you'd like to accept it or make any changes.", undefined, undefined, undefined, result.logoData);
+				currentLogoMessageId = logoMessage.id;
+				waitingForLogoAcceptance = true;
+				
+				// Update the message to mark it as waiting for acceptance
+				messages = messages.map(m => 
+					m.id === logoMessage.id 
+						? { ...m, waitingForLogoAcceptance: true, logoAccepted: false }
+						: m
+				);
+				
+				// Don't proceed to next question until logo is accepted
+			} else {
+				throw new Error(result.error || 'Failed to generate logo');
+			}
+		} catch (error: any) {
+			console.error('Logo generation error:', error);
+			await sendBotMessage(`⚠️ I encountered an issue generating your logo: ${error.message || 'Unknown error'}. You can still upload your own logo or we'll generate it during the brand guidelines creation process.`);
+			// Mark as pending so it can be generated later
+			answers['logo'] = {
+				type: 'ai-generated',
+				status: 'pending'
+			};
+			// Don't proceed to next question - let user try again or upload logo
+			waitingForLogoAcceptance = false;
+		} finally {
+			isTyping = false;
+		}
 	}
 
 	// Finish conversation and show summary
@@ -1288,6 +1563,18 @@ async function ensureGroundingDataForIndustry(industry?: string) {
 				: `${brandName || 'A brand'} in the ${industry || 'business'} industry`;
 		}
 		
+		// Format logo data properly
+		let logoData = answers['logo'];
+		if (logoData && logoData.type === 'ai-generated' && logoData.fileData) {
+			// Ensure AI-generated logo has proper format
+			logoData = {
+				type: 'ai-generated',
+				fileData: logoData.fileData,
+				filename: logoData.filename || `${brandName.toLowerCase().replace(/\s+/g, '-')}-logo.svg`,
+				status: 'generated'
+			};
+		}
+		
 		// Map answers back to the expected format
 		const formData = {
 			brandName: brandName,
@@ -1301,7 +1588,7 @@ async function ensureGroundingDataForIndustry(industry?: string) {
 			contactRole: answers['contactRole'] || '',
 			contactCompany: answers['contactCompany'] || '',
 			customPrompt: answers['customPrompt'] || collectedInfo.description || '',
-			logoData: answers['logo'], // Already in correct format from server upload
+			logoData: logoData, // Properly formatted logo data
 			groundingData: groundingData,
 			// Include industry-specific info so progressive generator can use it
 			industrySpecificInfo: industrySpecificInfo
@@ -1353,6 +1640,8 @@ async function ensureGroundingDataForIndustry(industry?: string) {
 		groundingIndustry = null;
 		isFetchingGroundingData = false;
 		hasAnnouncedGrounding = false;
+		waitingForLogoAcceptance = false;
+		currentLogoMessageId = null;
 		
 		// Clear input element references
 		textInput = null;
@@ -1914,6 +2203,10 @@ Now make ONLY the specific change requested by the user: "${feedback}"`;
 							if (message.questionIndex !== undefined && message.questionIndex >= 0) {
 								handleEditAnswer(message.questionIndex);
 							}
+						}}
+						onAcceptLogo={(messageId) => handleAcceptLogo(messageId)}
+						onRegenerateLogo={(messageId, feedback) => {
+							handleRegenerateLogo(messageId, feedback);
 						}}
 					/>
 				{/if}

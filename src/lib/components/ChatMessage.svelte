@@ -9,9 +9,16 @@
 		timestamp: Date;
 		questionId?: string;
 		edited?: boolean;
+		logoData?: string; // Base64 data URL for logo image
+		waitingForLogoAcceptance?: boolean;
+		logoAccepted?: boolean;
 	};
 	export let onEdit: (() => void) | undefined = undefined;
 	export let canEdit: boolean = false;
+	export let onAcceptLogo: ((messageId: string) => void) | undefined = undefined;
+	export let onRegenerateLogo: ((messageId: string, feedback?: string) => void) | undefined = undefined;
+	
+	let showLogoModal = false;
 
 	// Format timestamp
 	function formatTime(date: Date): string {
@@ -43,6 +50,47 @@
 				<div class="text-sm text-foreground leading-relaxed">
 					{@html parseContent(message.content)}
 				</div>
+				{#if message.logoData}
+					<div class="mt-3 pt-3 border-t border-border/50">
+						<div class="text-xs text-muted-foreground mb-2">Generated Logo:</div>
+						<div class="bg-white rounded-lg p-3 flex items-center justify-center border border-border/30 cursor-pointer hover:border-orange-500 transition-colors" 
+							 onclick={() => showLogoModal = true}>
+							<img 
+								src={message.logoData} 
+								alt="Generated Logo" 
+								class="max-w-full max-h-48 object-contain"
+							/>
+						</div>
+						{#if message.waitingForLogoAcceptance && !message.logoAccepted}
+							<div class="mt-3 flex gap-2">
+								<button
+									onclick={() => onAcceptLogo?.(message.id)}
+									class="px-4 py-2 bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white rounded-lg text-sm font-medium transition-all shadow-lg shadow-green-500/20"
+								>
+									✓ Accept Logo
+								</button>
+								<button
+									onclick={() => {
+										const feedback = prompt('What changes would you like to make to the logo? (e.g., "Make it more modern", "Change colors to blue", "Add a symbol")');
+										if (feedback && onRegenerateLogo) {
+											onRegenerateLogo(message.id, feedback);
+										}
+									}}
+									class="px-4 py-2 bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white rounded-lg text-sm font-medium transition-all shadow-lg shadow-orange-500/20"
+								>
+									🔄 Regenerate
+								</button>
+							</div>
+							<div class="mt-2 text-xs text-muted-foreground">
+								Or type your feedback in the input below to request changes
+							</div>
+						{:else if message.logoAccepted}
+							<div class="mt-2 text-xs text-green-600 flex items-center gap-1">
+								✓ Logo accepted
+							</div>
+						{/if}
+					</div>
+				{/if}
 			</div>
 			<div class="text-xs text-muted-foreground mt-1 ml-2">
 				{formatTime(message.timestamp)}
@@ -77,6 +125,29 @@
 		<!-- User Avatar -->
 		<div class="flex-shrink-0 p-2 rounded-lg bg-card border border-border">
 			<User class="h-5 w-5 text-muted-foreground" />
+		</div>
+	</div>
+{/if}
+
+<!-- Logo Modal -->
+{#if showLogoModal && message.logoData}
+	<div class="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm" 
+		 onclick={() => showLogoModal = false}>
+		<div class="relative bg-white rounded-2xl p-8 max-w-4xl max-h-[90vh] overflow-auto" 
+			 onclick={(e) => e.stopPropagation()}>
+			<button
+				onclick={() => showLogoModal = false}
+				class="absolute top-4 right-4 text-gray-500 hover:text-gray-700 text-2xl font-bold"
+			>
+				×
+			</button>
+			<div class="flex items-center justify-center min-h-[400px]">
+				<img 
+					src={message.logoData} 
+					alt="Generated Logo - Full Size" 
+					class="max-w-full max-h-[70vh] object-contain"
+				/>
+			</div>
 		</div>
 	</div>
 {/if}

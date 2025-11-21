@@ -19,6 +19,10 @@ import {
 } from '$lib/utils/progressive-generation';
 import type { RequestHandler } from './$types';
 import type { BrandGuidelinesInput } from '$lib/types/brand-guidelines';
+import { writeFile, mkdir } from 'fs/promises';
+import { join } from 'path';
+import { existsSync } from 'fs';
+import { readFileSync } from 'fs';
 
 export const POST: RequestHandler = async ({ request, locals, fetch }) => {
 	try {
@@ -94,58 +98,94 @@ export const POST: RequestHandler = async ({ request, locals, fetch }) => {
 				if (step === 'color-palette') {
 					console.log('Attempting color extraction for step:', step);
 					
-					// Check if we have base64 data or file path
-					if (logoFile.fileData) {
-						console.log('Using base64 data for color extraction');
-						// Convert base64 data URL to File object
-						const base64Data = logoFile.fileData.split(',')[1];
-						const binaryData = Buffer.from(base64Data, 'base64');
-						const logoFileObj = new File([binaryData], logoFile.filename, { type: 'image/png' });
+					let logoFileObj: File;
+					let savedFilePath: string | null = null;
+					
+					// If we have base64 data but no file path, save it to filesystem first
+					if (logoFile.fileData && !logoFile.filePath) {
+						console.log('Saving logo to filesystem first for color extraction');
 						
-						const colorResult = await extractColorsFromLogo(logoFileObj);
-						console.log('Color extraction result:', { success: colorResult.success, hasColors: !!colorResult.brand_color_system });
-						
-						if (colorResult.success) {
-							extractedColors = convertExtractedColorsToProgressiveFormat(colorResult.brand_color_system);
-							console.log('Extracted colors formatted for progressive generation');
-						} else {
-							console.error('Color extraction failed - no fallback available');
-							return json({
-								error: 'Color extraction failed. Please ensure your logo file is valid and try again.',
-								details: 'The color extraction microservice could not process your logo file.'
-							}, { status: 400 });
+						try {
+							// Create uploads directory if it doesn't exist
+							const uploadsDir = join(process.cwd(), 'static', 'uploads', 'logos');
+							if (!existsSync(uploadsDir)) {
+								await mkdir(uploadsDir, { recursive: true });
+							}
+							
+							// Determine file extension and MIME type
+							const isSvg = logoFile.fileData.includes('data:image/svg+xml') || logoFile.filename.endsWith('.svg');
+							const mimeType = isSvg ? 'image/svg+xml' : (logoFile.fileData.match(/data:([^;]+)/)?.[1] || 'image/png');
+							const extension = isSvg ? '.svg' : (logoFile.filename.match(/\.\w+$/) || ['.png'])[0];
+							
+							// Generate unique filename
+							const timestamp = Date.now();
+							const sanitizedName = logoFile.filename.replace(/[^a-zA-Z0-9.-]/g, '_').replace(/\.[^.]+$/, '');
+							const filename = `${timestamp}-${sanitizedName}${extension}`;
+							savedFilePath = join(uploadsDir, filename);
+							
+							// Extract base64 data
+							const base64Data = logoFile.fileData.includes(',') 
+								? logoFile.fileData.split(',')[1] 
+								: logoFile.fileData;
+							
+							// Decode and save to file
+							const binaryData = Buffer.from(base64Data, 'base64');
+							await writeFile(savedFilePath, binaryData);
+							
+							console.log('Logo saved to:', savedFilePath);
+							
+							// Read the saved file and create File object
+							const fileBuffer = readFileSync(savedFilePath);
+							logoFileObj = new File([fileBuffer], filename, { type: mimeType });
+							
+							// Update logoFile to include the saved path
+							logoFile.filePath = `/uploads/logos/${filename}`;
+						} catch (saveError) {
+							console.error('Failed to save logo to filesystem:', saveError);
+							// Fall back to creating File from base64
+							const base64Data = logoFile.fileData.includes(',') 
+								? logoFile.fileData.split(',')[1] 
+								: logoFile.fileData;
+							const binaryData = Buffer.from(base64Data, 'base64');
+							const mimeType = logoFile.fileData.match(/data:([^;]+)/)?.[1] || 'image/png';
+							logoFileObj = new File([binaryData], logoFile.filename, { type: mimeType });
 						}
 					} else if (logoFile.filePath) {
-						console.log('Using file path for color extraction');
-						// Try to fetch from file path
-						const logoPath = `uploads/logos/${logoFile.filename}`;
-						const response = await fetch(`http://localhost:5173/${logoPath}`);
-						if (response.ok) {
-							const logoBlob = await response.blob();
-							const logoFileObj = new File([logoBlob], logoFile.filename, { type: logoBlob.type });
-							
-							const colorResult = await extractColorsFromLogo(logoFileObj);
-							if (colorResult.success) {
-								extractedColors = convertExtractedColorsToProgressiveFormat(colorResult.brand_color_system);
-							} else {
-								console.error('Color extraction failed - no fallback available');
-								return json({
-									error: 'Color extraction failed. Please ensure your logo file is valid and try again.',
-									details: 'The color extraction microservice could not process your logo file.'
-								}, { status: 400 });
-							}
+						console.log('Using existing file path for color extraction');
+						// Read from filesystem
+						const logoPath = join(process.cwd(), 'static', logoFile.filePath);
+						
+						if (existsSync(logoPath)) {
+							const fileBuffer = readFileSync(logoPath);
+							const mimeType = logoFile.filename.endsWith('.svg') ? 'image/svg+xml' : 'image/png';
+							logoFileObj = new File([fileBuffer], logoFile.filename, { type: mimeType });
 						} else {
-							console.error('Could not fetch logo file from path');
-							return json({
-								error: 'Logo file not found. Please upload your logo again.',
-								details: 'The logo file could not be located for color extraction.'
-							}, { status: 400 });
+							// Try to fetch from URL
+							const response = await fetch(`http://localhost:5173${logoFile.filePath}`);
+							if (response.ok) {
+								const logoBlob = await response.blob();
+								logoFileObj = new File([logoBlob], logoFile.filename, { type: logoBlob.type });
+							} else {
+								throw new Error('Logo file not found at path: ' + logoFile.filePath);
+							}
 						}
 					} else {
-						console.error('No logo file data available for color extraction');
+						throw new Error('No logo file data available for color extraction');
+					}
+					
+					// Now extract colors using the File object
+					console.log('Extracting colors from logo file:', { filename: logoFileObj.name, type: logoFileObj.type, size: logoFileObj.size });
+					const colorResult = await extractColorsFromLogo(logoFileObj);
+					console.log('Color extraction result:', { success: colorResult.success, hasColors: !!colorResult.brand_color_system });
+					
+					if (colorResult.success) {
+						extractedColors = convertExtractedColorsToProgressiveFormat(colorResult.brand_color_system);
+						console.log('Extracted colors formatted for progressive generation');
+					} else {
+						console.error('Color extraction failed - no fallback available');
 						return json({
-							error: 'No logo file available for color extraction. Please upload your logo first.',
-							details: 'Logo file data is required for color palette generation.'
+							error: 'Color extraction failed. Please ensure your logo file is valid and try again.',
+							details: 'The color extraction microservice could not process your logo file.'
 						}, { status: 400 });
 					}
 				}
