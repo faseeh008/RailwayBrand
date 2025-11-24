@@ -293,15 +293,8 @@ export function getEssentialQuestions(analysis: {
 		suggestions: styleOptions
 	});
 
-	// Logo question (always asked after style)
-	questions.push({
-		id: 'logo',
-		question: 'Do you have a logo, or would you like us to generate one with AI?',
-		type: 'logo',
-		required: true,
-		icon: '🖼️',
-		helper: 'Upload your existing logo or let AI create one based on your brand details'
-	});
+	// NOTE: Logo question is NOT added here - it will be added at the END after all industry questions
+	// This ensures we have all information (industry, vibe, audience, etc.) before generating the logo
 
 	return questions;
 }

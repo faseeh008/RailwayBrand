@@ -78,12 +78,40 @@ export const POST: RequestHandler = async ({ request }) => {
 		// Check if user provided enhancement feedback
 		const enhancementPrompt = body.enhancementPrompt || body.feedback || '';
 		
+		// Build color guidance based on industry and style
+		let colorGuidance = '';
+		if (industry && style) {
+			colorGuidance = `\n\nCOLOR REQUIREMENTS (CRITICAL - MUST FOLLOW EXACTLY):\n`;
+			colorGuidance += `- Industry: ${industry} - Use colors appropriate for this industry (e.g., healthcare: blues/teals for trust; tech: modern blues/purples; finance: deep blues/greens; fashion: bold/vibrant colors; food: warm/orange tones)\n`;
+			colorGuidance += `- Style/Vibe: ${style} - Colors must match this aesthetic:\n`;
+			
+			if (style.toLowerCase().includes('minimalistic') || style.toLowerCase().includes('minimal')) {
+				colorGuidance += `  * Use 1-2 colors maximum, clean and simple palette (e.g., single brand color + neutral gray/black)\n`;
+			} else if (style.toLowerCase().includes('maximalistic') || style.toLowerCase().includes('bold')) {
+				colorGuidance += `  * Use 2-3 vibrant, high-contrast colors that pop (e.g., bright primary + complementary accent + neutral)\n`;
+			} else if (style.toLowerCase().includes('professional') || style.toLowerCase().includes('corporate')) {
+				colorGuidance += `  * Use professional, trustworthy colors (e.g., deep blue/navy + accent color + neutral gray)\n`;
+			} else if (style.toLowerCase().includes('playful') || style.toLowerCase().includes('funky')) {
+				colorGuidance += `  * Use energetic, fun colors (e.g., bright primary + secondary + accent)\n`;
+			} else if (style.toLowerCase().includes('elegant') || style.toLowerCase().includes('luxury')) {
+				colorGuidance += `  * Use sophisticated, refined colors (e.g., deep rich color + gold/metallic accent + neutral)\n`;
+			} else if (style.toLowerCase().includes('futuristic') || style.toLowerCase().includes('modern')) {
+				colorGuidance += `  * Use contemporary, tech-forward colors (e.g., electric blue/purple + cyan + dark neutral)\n`;
+			} else {
+				colorGuidance += `  * Use 2-3 harmonious colors that reflect the ${style} aesthetic\n`;
+			}
+			
+			colorGuidance += `- These exact colors MUST be used in the SVG logo code\n`;
+			colorGuidance += `- Ensure colors are industry-appropriate and style-appropriate\n`;
+			colorGuidance += `- Colors must work on both light and dark backgrounds\n`;
+		}
+
 		const prompt = `You are a senior professional logo designer and SVG specialist. Create a single, unique, high-quality SVG logo for the brand described below.
 
 ${brandContext}
 ${enhancementPrompt ? `\n\nUSER ENHANCEMENT REQUEST:\n${enhancementPrompt}\n\nPlease incorporate these changes while maintaining professional quality and brand consistency.` : ''}
 
-STRICT REQUIREMENTS & GUARDRAILS:
+STRICT REQUIREMENTS & GUARDRAILS (MANDATORY - NO EXCEPTIONS):
 
 1. Output **ONLY** valid, standalone SVG markup (start with "<svg" and end with "</svg>"). No markdown, no code fences, no explanations, no extra text, no multiple-choice variants — exactly one <svg>...</svg>.
 
@@ -95,7 +123,7 @@ STRICT REQUIREMENTS & GUARDRAILS:
 
 5. Ensure the brand name "${brandName}" is clearly visible, legible at small sizes (32px) and balanced at large sizes. Use readable, professional typography and include a sensible font-family stack (primary font name plus generic fallback).
 
-6. Choose a refined color palette that matches the ${style || 'professional'} style in ${brandContext} — prefer 2–3 harmonious colors. Ensure sufficient contrast for accessibility (text readable on transparent and light/dark backgrounds).
+6. **COLOR REQUIREMENT (CRITICAL)**: ${colorGuidance || `Choose a refined color palette that matches the ${style || 'professional'} style and ${industry || 'brand'} industry — prefer 2–3 harmonious colors. Ensure sufficient contrast for accessibility (text readable on transparent and light/dark backgrounds).`}
 
 7. Keep shapes and paths clean and optimized: avoid unnecessary nodes, group related elements with <g>, and use unique ID attributes when needed.
 
@@ -115,19 +143,21 @@ STRICT REQUIREMENTS & GUARDRAILS:
 
 DESIGN GUIDANCE (follow but do not output explanations):
 
-- Style: clean, modern, timeless, and distinctive.
+- Style: clean, modern, timeless, and distinctive. Must reflect "${style || 'professional'}" aesthetic.
 
 - Proportions: make the mark and logotype work well when stacked and when horizontal.
 
-- Industry relevance: include relevant symbol(s) or abstract mark that reflect the brand context and ${industry || 'the brand'} industry in a tasteful, professional manner.
+- Industry relevance: include relevant symbol(s) or abstract mark that reflect the brand context and "${industry || 'the brand'}" industry in a tasteful, professional manner. The logo must be immediately recognizable as belonging to the ${industry || 'brand'} industry.
 
 - Typography: choose a style matching the brand (e.g., geometric sans for futuristic; humanist sans for friendly; serif only if explicitly appropriate), then include a fallback stack.
 
-- Color: suggest a primary color and one or two accent/neutral colors through the chosen palette in the SVG code itself.
+- Color: ${industry && style ? `Use colors that are BOTH industry-appropriate for ${industry} AND style-appropriate for ${style}. The colors must be clearly visible in the SVG code with specific hex values.` : `Suggest a primary color and one or two accent/neutral colors through the chosen palette in the SVG code itself.`}
+
+- Accuracy: The logo must be unique, professional, and accurately represent the brand "${brandName}" in the ${industry || 'specified'} industry with a ${style || 'professional'} aesthetic.
 
 OUTPUT FORMAT:
 
-Return ONLY the complete SVG code. No additional text, no explanation. The SVG must include <title> and <desc>, proper namespaces (xmlns), and be valid XML/SVG.
+Return ONLY the complete SVG code. No additional text, no explanation. The SVG must include <title> and <desc>, proper namespaces (xmlns), and be valid XML/SVG. The colors used in the logo MUST match the industry and style requirements specified above.
 
 Now generate the SVG.`;
 

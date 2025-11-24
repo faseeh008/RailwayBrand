@@ -516,9 +516,21 @@ function createColorPalettePrompt(
 	currentStepContent?: string,
 	isCompleteReplacement?: boolean
 ): string {
+	// Build color guidance based on industry and style (same as logo generation)
+	let logoColorGuidance = '';
+	if (industry && style) {
+		logoColorGuidance = `\n\n🎨 LOGO COLOR REQUIREMENTS (MUST MATCH):\n`;
+		logoColorGuidance += `The logo was generated using colors based on:\n`;
+		logoColorGuidance += `- Industry: ${industry} - Colors appropriate for this industry\n`;
+		logoColorGuidance += `- Style/Vibe: ${style} - Colors matching this aesthetic\n`;
+		logoColorGuidance += `\n⚠️ CRITICAL: The color palette MUST use the SAME colors that were used in the logo generation.\n`;
+		logoColorGuidance += `If extracted colors from logo are provided, use them as the PRIMARY source.\n`;
+		logoColorGuidance += `If no extracted colors, generate colors based on ${industry} industry + ${style} style (same logic as logo).\n`;
+	}
+	
 	const colorContext = extractedColors
-		? `\n\n🎨 EXTRACTED COLORS FROM LOGO:\n${extractedColors}\n\n⚠️ SECONDARY: Use these extracted colors ONLY if they align with ${style} vibe and ${industry} industry. If they conflict, IGNORE them and generate colors based on Industry + Vibe ONLY.`
-		: '';
+		? `\n\n🎨 EXTRACTED COLORS FROM LOGO (PRIMARY SOURCE - USE THESE):\n${extractedColors}\n\n${logoColorGuidance}\n⚠️ These colors were extracted from the logo and MUST be used as the primary color palette. Ensure they align with ${style} vibe and ${industry} industry.`
+		: `\n\n${logoColorGuidance}\n⚠️ Since no logo colors were extracted, generate colors based on ${industry} industry + ${style} style using the SAME color logic that was used for logo generation.`;
 
 	let feedbackContext = '';
 	if (feedback) {
@@ -554,17 +566,20 @@ ${contextInfo}${colorContext}${feedbackContext}
 ${vibeColorGuidelines}
 
 🎯 PRIMARY REQUIREMENTS (MANDATORY):
+- Colors MUST match the colors used in the logo generation (based on ${industry} industry + ${style} style)
+- If extracted colors from logo are provided, use them as PRIMARY source and expand them into a full palette
+- If no extracted colors, generate colors using the SAME logic as logo generation (${industry} industry + ${style} style)
 - Colors MUST be generated based on ${industry} industry FIRST
 - Colors MUST STRICTLY follow ${style} vibe color guidelines above
 - Industry + Vibe are the PRIMARY drivers - everything else is secondary
 - Provide EXACTLY 5 colors maximum in this structure:
-  1. Primary Color (1 color)
-  2. Secondary Color (1 color)
-  3. Accent 1 (1 color)
-  4. Accent 2 (1 color)
+  1. Primary Color (1 color) - MUST match logo primary color if available
+  2. Secondary Color (1 color) - MUST match logo secondary color if available
+  3. Accent 1 (1 color) - Can be from logo or complementary to logo colors
+  4. Accent 2 (1 color) - Can be from logo or complementary to logo colors
   5. Optional Color (1 color - can be a neutral, additional accent, or supporting color)
 - All colors must include hex codes and RGB values
-- If extracted colors or feedback conflict with Industry + Vibe, IGNORE them
+- The color palette MUST be consistent with the logo colors
 
 EXAMPLES (3-shot learning):
 

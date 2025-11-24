@@ -659,19 +659,68 @@ async function ensureGroundingDataForIndustry(industry?: string) {
 						const existingQuestionIds = new Set(allQuestions.map(q => q.id));
 						const uniqueNewQuestions = newIndustryQuestions.filter(q => !existingQuestionIds.has(q.id));
 						
-						if (uniqueNewQuestions.length > 0) {
-							industryQuestions = uniqueNewQuestions;
-							// Add only unique questions to the queue
-							allQuestions = [...allQuestions, ...uniqueNewQuestions];
+					if (uniqueNewQuestions.length > 0) {
+						industryQuestions = uniqueNewQuestions;
+						// Add only unique questions to the queue
+						allQuestions = [...allQuestions, ...uniqueNewQuestions];
+						await askNextQuestion();
+					} else {
+						// All questions were duplicates, add logo question
+						console.log('[chatbot] All industry questions were duplicates, adding logo question');
+						// Add logo question at the end if not already present
+						if (!allQuestions.find(q => q.id === 'logo')) {
+							allQuestions.push({
+								id: 'logo',
+								question: 'Do you have a logo, or would you like us to generate one with AI?',
+								type: 'logo',
+								required: true,
+								icon: '🖼️',
+								helper: 'Upload your existing logo or let AI create one based on your brand details'
+							});
 							await askNextQuestion();
 						} else {
-							// All questions were duplicates, finish
-							console.log('[chatbot] All industry questions were duplicates, finishing conversation');
-							await finishConversation();
+							// Logo question already exists, check if it's been answered
+							const logoAnswer = answers['logo'];
+							const isLogoAccepted = logoAnswer && (
+								logoAnswer.status === 'accepted' || 
+								logoAnswer.status === 'generated' || 
+								(logoAnswer.type !== 'ai-generated' && logoAnswer.fileData)
+							);
+							if (isLogoAccepted) {
+								await finishConversation();
+							} else {
+								// Logo question exists but not answered, ask it
+								await askNextQuestion();
+							}
 						}
+					}
 					} else {
-						// No industry questions, finish and start generation
-						await finishConversation();
+						// No industry questions, add logo question
+						if (!allQuestions.find(q => q.id === 'logo')) {
+							allQuestions.push({
+								id: 'logo',
+								question: 'Do you have a logo, or would you like us to generate one with AI?',
+								type: 'logo',
+								required: true,
+								icon: '🖼️',
+								helper: 'Upload your existing logo or let AI create one based on your brand details'
+							});
+							await askNextQuestion();
+						} else {
+							// Logo question already exists, check if it's been answered
+							const logoAnswer = answers['logo'];
+							const isLogoAccepted = logoAnswer && (
+								logoAnswer.status === 'accepted' || 
+								logoAnswer.status === 'generated' || 
+								(logoAnswer.type !== 'ai-generated' && logoAnswer.fileData)
+							);
+							if (isLogoAccepted) {
+								await finishConversation();
+							} else {
+								// Logo question exists but not answered, ask it
+								await askNextQuestion();
+							}
+						}
 					}
 				} else {
 					// If industry questions fail, just proceed
@@ -756,8 +805,35 @@ async function ensureGroundingDataForIndustry(industry?: string) {
 			if (!hasFetchedIndustryQuestions) {
 				await handleQuestionsComplete();
 			} else {
-				// Already fetched industry questions, just finish
-				await finishConversation();
+				// Already fetched industry questions - check if logo question needs to be added
+				const hasLogoQuestion = allQuestions.find(q => q.id === 'logo');
+				const logoAnswer = answers['logo'];
+				const isLogoAccepted = logoAnswer && (
+					logoAnswer.status === 'accepted' || 
+					logoAnswer.status === 'generated' || 
+					(logoAnswer.type !== 'ai-generated' && logoAnswer.fileData)
+				);
+				
+				if (!hasLogoQuestion) {
+					// Add logo question if not present
+					allQuestions.push({
+						id: 'logo',
+						question: 'Do you have a logo, or would you like us to generate one with AI?',
+						type: 'logo',
+						required: true,
+						icon: '🖼️',
+						helper: 'Upload your existing logo or let AI create one based on your brand details'
+					});
+					// Ask the logo question
+					await askNextQuestion();
+				} else if (!isLogoAccepted) {
+					// Logo question exists but not answered/accepted yet - don't finish
+					console.log('[askNextQuestion] Logo question exists but not accepted yet');
+					return;
+				} else {
+					// Logo is accepted, finish conversation
+					await finishConversation();
+				}
 			}
 			return;
 		}
@@ -808,7 +884,15 @@ async function ensureGroundingDataForIndustry(industry?: string) {
 		
 		await sendBotMessage("✅ Great! I've saved your logo. It will be used in your brand guidelines.");
 		await delay(500);
-		await askNextQuestion();
+		
+		// Check if we're at the end of questions - if so, finish conversation
+		const questionsToUse = allQuestions.length > 0 ? allQuestions : questions;
+		if (currentQuestionIndex >= questionsToUse.length - 1) {
+			// We've completed all questions including logo, finish conversation
+			await finishConversation();
+		} else {
+			await askNextQuestion();
+		}
 	}
 	
 	// Handle logo rejection/regeneration request
@@ -1481,6 +1565,35 @@ async function ensureGroundingDataForIndustry(industry?: string) {
 
 	// Finish conversation and show summary
 	async function finishConversation() {
+		// Check if logo question exists and if it's been answered/accepted
+		const hasLogoQuestion = allQuestions.find(q => q.id === 'logo');
+		const logoAnswer = answers['logo'];
+		const isLogoAccepted = logoAnswer && (
+			logoAnswer.status === 'accepted' || 
+			logoAnswer.status === 'generated' || 
+			(logoAnswer.type !== 'ai-generated' && logoAnswer.fileData)
+		);
+		
+		// If logo question exists but hasn't been accepted, don't finish yet
+		if (hasLogoQuestion && !isLogoAccepted) {
+			console.log('[finishConversation] Logo question exists but not accepted yet, waiting...');
+			return;
+		}
+		
+		// If logo question doesn't exist and we're done with all questions, add it
+		if (!hasLogoQuestion && hasFetchedIndustryQuestions) {
+			allQuestions.push({
+				id: 'logo',
+				question: 'Do you have a logo, or would you like us to generate one with AI?',
+				type: 'logo',
+				required: true,
+				icon: '🖼️',
+				helper: 'Upload your existing logo or let AI create one based on your brand details'
+			});
+			await askNextQuestion();
+			return; // Don't finish yet, wait for logo answer
+		}
+		
 		conversationComplete = true;
 		await delay(500);
 		await sendBotMessage(

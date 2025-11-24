@@ -23,6 +23,7 @@ import { writeFile, mkdir } from 'fs/promises';
 import { join } from 'path';
 import { existsSync } from 'fs';
 import { readFileSync } from 'fs';
+import { svgToPngNode } from '$lib/utils/svg-to-png';
 
 export const POST: RequestHandler = async ({ request, locals, fetch }) => {
 	try {
@@ -173,20 +174,59 @@ export const POST: RequestHandler = async ({ request, locals, fetch }) => {
 						throw new Error('No logo file data available for color extraction');
 					}
 					
-					// Now extract colors using the File object
-					console.log('Extracting colors from logo file:', { filename: logoFileObj.name, type: logoFileObj.type, size: logoFileObj.size });
-					const colorResult = await extractColorsFromLogo(logoFileObj);
-					console.log('Color extraction result:', { success: colorResult.success, hasColors: !!colorResult.brand_color_system });
+					// Check if file is SVG - if so, convert to PNG first (color extraction service requires raster images)
+					let fileToExtract = logoFileObj;
+					const isSvg = logoFileObj.type === 'image/svg+xml' || logoFileObj.name.endsWith('.svg');
 					
-					if (colorResult.success) {
-						extractedColors = convertExtractedColorsToProgressiveFormat(colorResult.brand_color_system);
-						console.log('Extracted colors formatted for progressive generation');
-					} else {
-						console.error('Color extraction failed - no fallback available');
-						return json({
-							error: 'Color extraction failed. Please ensure your logo file is valid and try again.',
-							details: 'The color extraction microservice could not process your logo file.'
-						}, { status: 400 });
+					if (isSvg) {
+						console.log('Logo is SVG, converting to PNG for color extraction...');
+						try {
+							// Read SVG content
+							const svgContent = await logoFileObj.text();
+							
+							// Convert SVG to PNG (use 800x800 as default size for good quality)
+							const pngDataUrl = await svgToPngNode(svgContent, 800, 800);
+							
+							// Extract base64 data from data URL
+							const base64Data = pngDataUrl.split(',')[1];
+							const pngBuffer = Buffer.from(base64Data, 'base64');
+							
+							// Create new File object with PNG data
+							const pngFilename = logoFileObj.name.replace(/\.svg$/i, '.png');
+							fileToExtract = new File([pngBuffer], pngFilename, { type: 'image/png' });
+							
+							console.log('SVG converted to PNG successfully:', { filename: pngFilename, size: pngBuffer.length });
+						} catch (svgConversionError) {
+							console.error('Failed to convert SVG to PNG:', svgConversionError);
+							// Continue with original file - the service might handle it, or we'll get a better error
+							console.warn('Proceeding with SVG file - color extraction may fail');
+						}
+					}
+					
+					// Now extract colors using the File object (PNG if converted, or original if not SVG)
+					console.log('Extracting colors from logo file:', { filename: fileToExtract.name, type: fileToExtract.type, size: fileToExtract.size });
+					
+					try {
+						const colorResult = await extractColorsFromLogo(fileToExtract);
+						console.log('Color extraction result:', { success: colorResult.success, hasColors: !!colorResult.brand_color_system });
+						
+						if (colorResult.success) {
+							extractedColors = convertExtractedColorsToProgressiveFormat(colorResult.brand_color_system);
+							console.log('Extracted colors formatted for progressive generation');
+						} else {
+							console.warn('Color extraction returned success=false, but continuing without extracted colors');
+							// Don't fail completely - let the AI generate colors based on industry/vibe
+							extractedColors = '';
+						}
+					} catch (extractionError: any) {
+						console.error('Color extraction error:', extractionError);
+						// Don't fail completely - log the error but continue without extracted colors
+						// The AI will generate colors based on industry and vibe
+						console.warn('Continuing without extracted colors - AI will generate colors based on industry and vibe');
+						extractedColors = '';
+						
+						// Log a user-friendly message (but don't throw - we'll continue)
+						console.log('Note: Color extraction from logo failed, but color palette will be generated based on industry and brand style instead.');
 					}
 				}
 				
@@ -199,13 +239,11 @@ export const POST: RequestHandler = async ({ request, locals, fetch }) => {
 				}
 			} catch (error) {
 				console.error('Failed to extract colors/typography from logo:', error);
-				if (step === 'color-palette') {
-					return json({
-						error: 'Color extraction failed due to a technical error. Please try again.',
-						details: error instanceof Error ? error.message : 'Unknown error'
-					}, { status: 500 });
-				}
-				// For typography, continue without extracted data if extraction fails
+				// Don't fail the request - continue without extracted colors/typography
+				// The AI will generate colors/typography based on industry and vibe
+				console.warn('Continuing without extracted colors/typography - AI will generate based on industry and brand style');
+				extractedColors = '';
+				extractedTypography = '';
 			}
 		} else {
 			console.log('No logo files found in previousSteps:', previousSteps?.logo_files);
