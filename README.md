@@ -55,6 +55,7 @@ A SvelteKit prototype for an AI-powered brand guideline assistant that helps sta
    ```
 
    Or manually:
+
    ```bash
    cd color-service
    python3 -m venv venv
@@ -64,6 +65,7 @@ A SvelteKit prototype for an AI-powered brand guideline assistant that helps sta
 
 3. **Set up environment variables**:
    Create a `.env` file with:
+
    ```
    GOOGLE_GEMINI_API=your-gemini-api-key
    ```
@@ -71,11 +73,13 @@ A SvelteKit prototype for an AI-powered brand guideline assistant that helps sta
 4. **Start the services**:
 
    **Option A: Using Docker (Recommended)**:
+
    ```bash
    docker-compose up
    ```
 
    **Option B: Manual**:
+
    ```bash
    # Terminal 1: Start color service
    cd color-service

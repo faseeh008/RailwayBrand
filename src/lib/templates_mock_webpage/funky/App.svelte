@@ -19,6 +19,11 @@
 	$: secondaryColor = brandData?.colorPalette?.[1] || '#ec4899';
 	$: heroImage = images?.hero || '';
 	$: galleryImages = images?.gallery || [];
+	$: footerDescription =
+		content?.footerDescription ||
+		brandData?.short_description ||
+		brandData?.description ||
+		'Bold. Funky. Fearless. Express yourself with fashion that speaks your language.';
 	$: collections = content?.collections || galleryImages.slice(0, 3).map((url: string, i: number) => ({
 		title: ['Premium Suits', 'Traditional Elegance', 'Street Style'][i] || 'Collection',
 		description: ['Executive Power', 'Shalwar Kameez', 'Urban Collection'][i] || 'Featured',
@@ -74,12 +79,7 @@
 		{primaryColor}
 		{secondaryColor}
 	/>
-	<Footer
-		{brandName}
-		brandDescription={content?.footerDescription || brandDescription}
-		{primaryColor}
-		{secondaryColor}
-	/>
+	<Footer {brandName} brandDescription={footerDescription} {primaryColor} {secondaryColor} />
 </div>
 
 

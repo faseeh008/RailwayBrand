@@ -54,6 +54,18 @@
 				id: guideline.id
 			};
 
+			let structuredData: any = null;
+			if (guideline.structuredData) {
+				try {
+					structuredData =
+						typeof guideline.structuredData === 'string'
+							? JSON.parse(guideline.structuredData)
+							: guideline.structuredData;
+				} catch (e) {
+					console.warn('⚠️ Failed to parse guideline.structuredData:', e);
+				}
+			}
+
 			// Parse JSON fields
 			if (guideline.logoFiles) {
 				try {
@@ -75,30 +87,43 @@
 				}
 			}
 
-			// Parse structuredData for stepHistory
-			if (guideline.structuredData) {
+			// Always attempt to load stepHistory (even if structuredData is missing)
+			previewData.stepHistory = [];
+			if (guideline.stepHistory) {
 				try {
-					const structuredData = typeof guideline.structuredData === 'string'
-						? JSON.parse(guideline.structuredData)
-						: guideline.structuredData;
-					
-					// Try to get stepHistory from guideline if stored
-					if (guideline.stepHistory) {
-						try {
-							previewData.stepHistory = typeof guideline.stepHistory === 'string'
-								? JSON.parse(guideline.stepHistory)
-								: guideline.stepHistory;
-						} catch (e) {
-							previewData.stepHistory = [];
-						}
-					} else {
-						previewData.stepHistory = [];
+					previewData.stepHistory =
+						typeof guideline.stepHistory === 'string'
+							? JSON.parse(guideline.stepHistory)
+							: guideline.stepHistory;
+				} catch (e) {
+					console.warn('⚠️ Failed to parse guideline.stepHistory:', e);
+				}
+			} else if (structuredData?.stepHistory) {
+				previewData.stepHistory = structuredData.stepHistory;
+			}
+
+			// Hydrate color palette so slides keep their saved colors
+			if (guideline.colors) {
+				try {
+					const parsedColors =
+						typeof guideline.colors === 'string'
+							? JSON.parse(guideline.colors)
+							: guideline.colors;
+					if (parsedColors) {
+						previewData.colors = parsedColors;
 					}
 				} catch (e) {
-					previewData.stepHistory = [];
+					console.warn('⚠️ Failed to parse guideline.colors:', e);
 				}
-			} else {
-				previewData.stepHistory = [];
+			}
+			if (!previewData.colors && structuredData?.colors) {
+				previewData.colors = structuredData.colors;
+			}
+			if (!previewData.colorPalette && structuredData?.colorPalette) {
+				previewData.colorPalette = structuredData.colorPalette;
+			}
+			if (!previewData.brandColors && structuredData?.brandColors) {
+				previewData.brandColors = structuredData.brandColors;
 			}
 
 			// Store in sessionStorage

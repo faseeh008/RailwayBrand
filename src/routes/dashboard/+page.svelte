@@ -16,6 +16,7 @@
 
 	let brands: any[] = [];
 	let loadingBrands = false;
+	let recentActivity: any[] = [];
 
 	async function loadBrands() {
 		if (loadingBrands) return;
@@ -24,14 +25,58 @@
 			const response = await fetch('/api/brand-guidelines');
 			if (response.ok) {
 				const result = await response.json();
-				if (result.success) {
+				if (result.success && result.guidelines) {
 					brands = result.guidelines || [];
+					// Update recent activity from brands
+					updateRecentActivity();
 				}
 			}
 		} catch (error) {
 			console.error('Failed to load brands:', error);
 		} finally {
 			loadingBrands = false;
+		}
+	}
+
+	function updateRecentActivity() {
+		if (!brands || brands.length === 0) {
+			recentActivity = [];
+			return;
+		}
+
+		// Create activity items from brands
+		recentActivity = brands
+			.filter((brand: any) => brand && brand.brandName)
+			.sort((a: any, b: any) => {
+				const dateA = a.updatedAt || a.createdAt;
+				const dateB = b.updatedAt || b.createdAt;
+				if (!dateA && !dateB) return 0;
+				if (!dateA) return 1;
+				if (!dateB) return -1;
+				return new Date(dateB).getTime() - new Date(dateA).getTime();
+			})
+			.map((brand: any) => ({
+				type: 'brand',
+				icon: Palette,
+				title: `Brand guidelines created for "${brand.brandName}"`,
+				timestamp: brand.updatedAt || brand.createdAt
+			}));
+	}
+
+	function formatTimeAgo(date: string | Date | null | undefined): string {
+		if (!date) return 'Unknown';
+		try {
+			const now = new Date();
+			const past = new Date(date);
+			const diffInSeconds = Math.floor((now.getTime() - past.getTime()) / 1000);
+			
+			if (diffInSeconds < 60) return 'Just now';
+			if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)} minutes ago`;
+			if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)} hours ago`;
+			if (diffInSeconds < 604800) return `${Math.floor(diffInSeconds / 86400)} days ago`;
+			return `${Math.floor(diffInSeconds / 604800)} weeks ago`;
+		} catch {
+			return 'Unknown';
 		}
 	}
 
@@ -59,6 +104,18 @@
 				id: guideline.id
 			};
 
+			let structuredData: any = null;
+			if (guideline.structuredData) {
+				try {
+					structuredData =
+						typeof guideline.structuredData === 'string'
+							? JSON.parse(guideline.structuredData)
+							: guideline.structuredData;
+				} catch (e) {
+					console.warn('⚠️ Failed to parse guideline.structuredData:', e);
+				}
+			}
+
 			// Parse JSON fields
 			if (guideline.logoFiles) {
 				try {
@@ -80,25 +137,43 @@
 				}
 			}
 
-			// Parse structuredData for stepHistory
-			if (guideline.structuredData) {
+			// Always attempt to load stepHistory (even if structuredData is missing)
+			previewData.stepHistory = [];
+			if (guideline.stepHistory) {
 				try {
-					if (guideline.stepHistory) {
-						try {
-							previewData.stepHistory = typeof guideline.stepHistory === 'string'
-								? JSON.parse(guideline.stepHistory)
-								: guideline.stepHistory;
-						} catch (e) {
-							previewData.stepHistory = [];
-						}
-					} else {
-						previewData.stepHistory = [];
+					previewData.stepHistory =
+						typeof guideline.stepHistory === 'string'
+							? JSON.parse(guideline.stepHistory)
+							: guideline.stepHistory;
+				} catch (e) {
+					console.warn('⚠️ Failed to parse guideline.stepHistory:', e);
+				}
+			} else if (structuredData?.stepHistory) {
+				previewData.stepHistory = structuredData.stepHistory;
+			}
+
+			// Hydrate color palette so slides keep their saved colors
+			if (guideline.colors) {
+				try {
+					const parsedColors =
+						typeof guideline.colors === 'string'
+							? JSON.parse(guideline.colors)
+							: guideline.colors;
+					if (parsedColors) {
+						previewData.colors = parsedColors;
 					}
 				} catch (e) {
-					previewData.stepHistory = [];
+					console.warn('⚠️ Failed to parse guideline.colors:', e);
 				}
-			} else {
-				previewData.stepHistory = [];
+			}
+			if (!previewData.colors && structuredData?.colors) {
+				previewData.colors = structuredData.colors;
+			}
+			if (!previewData.colorPalette && structuredData?.colorPalette) {
+				previewData.colorPalette = structuredData.colorPalette;
+			}
+			if (!previewData.brandColors && structuredData?.brandColors) {
+				previewData.brandColors = structuredData.brandColors;
 			}
 
 			// Store in sessionStorage
@@ -139,13 +214,15 @@
 	});
 </script>
 
-<div class="max-w-6xl">
+<div class="mx-auto max-w-6xl">
 	<!-- Welcome Header -->
-	<div class="mb-8">
+	<div class="mb-8 text-center">
 		<h1 class="mb-2 text-3xl font-bold text-foreground">
 			Welcome back, {data?.user?.name || 'User'}!
 		</h1>
-		<p class="text-muted-foreground">Ready to create amazing brand experiences? Let's get started.</p>
+		<p class="text-muted-foreground">
+			Ready to create amazing brand experiences? Let's get started.
+		</p>
 	</div>
 
 	<!-- Quick Stats -->
@@ -278,43 +355,33 @@
 		<h2 class="mb-4 text-xl font-semibold text-foreground">Recent Activity</h2>
 		<Card>
 			<CardContent class="p-6">
-				<div class="space-y-4">
-					<div class="flex items-center space-x-4">
-						<div class="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10">
-							<Palette class="h-4 w-4 text-primary" />
-						</div>
-						<div class="flex-1">
-							<p class="text-sm font-medium text-foreground">
-								Brand guidelines created for "TechCorp"
-							</p>
-							<p class="text-xs text-muted-foreground">2 hours ago</p>
-						</div>
+				{#if loadingBrands}
+					<div class="flex items-center justify-center py-8">
+						<div class="text-sm text-muted-foreground">Loading activity...</div>
 					</div>
-
-					<div class="flex items-center space-x-4">
-						<div class="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10">
-							<Search class="h-4 w-4 text-primary" />
-						</div>
-						<div class="flex-1">
-							<p class="text-sm font-medium text-foreground">
-								Website audit completed for "example.com"
-							</p>
-							<p class="text-xs text-muted-foreground">5 hours ago</p>
-						</div>
+				{:else if recentActivity.length === 0}
+					<div class="flex items-center justify-center py-8">
+						<div class="text-sm text-muted-foreground">No recent activity</div>
 					</div>
-
-					<div class="flex items-center space-x-4">
-						<div class="flex h-8 w-8 items-center justify-center rounded-full bg-accent/10">
-							<Sparkles class="h-4 w-4 text-accent-foreground" />
-						</div>
-						<div class="flex-1">
-							<p class="text-sm font-medium text-foreground">
-								Instagram post generated for summer campaign
-							</p>
-							<p class="text-xs text-muted-foreground">1 day ago</p>
-						</div>
+				{:else}
+					<div class="space-y-4">
+						{#each recentActivity as activity}
+							<div class="flex items-center space-x-4">
+								<div class="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10">
+									<svelte:component this={activity.icon} class="h-4 w-4 text-primary" />
+								</div>
+								<div class="flex-1">
+									<p class="text-sm font-medium text-foreground">
+										{activity.title}
+									</p>
+									<p class="text-xs text-muted-foreground">
+										{formatTimeAgo(activity.timestamp)}
+									</p>
+								</div>
+							</div>
+						{/each}
 					</div>
-				</div>
+				{/if}
 			</CardContent>
 		</Card>
 	</div>

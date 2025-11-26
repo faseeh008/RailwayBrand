@@ -128,7 +128,9 @@ export const POST: RequestHandler = async ({ request }) => {
 		});
 	} catch (error: any) {
 		console.error('Image fetch error:', error);
-		return json({ success: false, error: error.message || 'Failed to fetch images' }, { status: 500 });
+		return json(
+			{ success: false, error: error.message || 'Failed to fetch images' },
+			{ status: 500 }
+		);
 	}
 };
-

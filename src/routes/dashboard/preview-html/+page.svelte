@@ -5,10 +5,10 @@
 	import SlideManager from '$lib/components/SlideManager.svelte';
 	import { convertSvelteSlidesToPptx } from '$lib/services/svelte-slide-to-pptx';
 	import type { SlideData } from '$lib/types/slide-data';
-import { Button } from '$lib/components/ui/button';
-import { RotateCcw, Globe, Loader2 } from 'lucide-svelte';
-import { buildMockWebpage } from '$lib/services/mock-webpage-builder';
-import { saveTempBrandData, updateBuildData } from '$lib/services/temp-brand-storage';
+	import { Button } from '$lib/components/ui/button';
+	import { RotateCcw, Globe, Loader2 } from 'lucide-svelte';
+	import { buildMockWebpage } from '$lib/services/mock-webpage-builder';
+	import { saveTempBrandData, updateBuildData } from '$lib/services/temp-brand-storage';
 
 	let slides: Array<{ name: string; html: string }> = [];
 	let brandData: any = null;
@@ -70,61 +70,61 @@ import { saveTempBrandData, updateBuildData } from '$lib/services/temp-brand-sto
 	];
 
 	// Track whether this guideline has been explicitly saved to history
-let hasSavedGuideline = false;
-let hasUnsavedChanges = false; // Track if user made changes
-let isSavingToMyBrands = false; // Track save to My Brands operation
-let isSavingSlides = false; // Track local slide saves
+	let hasSavedGuideline = false;
+	let hasUnsavedChanges = false; // Track if user made changes
+	let isSavingToMyBrands = false; // Track save to My Brands operation
+	let isSavingSlides = false; // Track local slide saves
 
-function cloneData<T>(obj: T): T {
-	try {
-		// @ts-ignore structuredClone exists in modern runtimes
-		return structuredClone(obj);
-	} catch (err) {
-		return JSON.parse(JSON.stringify(obj));
-	}
-}
-
-function prepareBrandDataForCache(data: any) {
-	const clone = cloneData(data);
-	if (clone.logoFiles) {
-		clone.logoFiles = clone.logoFiles.map((file: any) => ({
-			id: file?.id,
-			fileName: file?.fileName || file?.name
-		}));
-	}
-	if (clone.stepHistory) {
-		clone.stepHistory = clone.stepHistory.map((step: any) => {
-			const entry = { ...step };
-			if (entry.step === 'generated-slides') {
-				entry.content = '__slides_cached_externally__';
-			} else if (typeof entry.content === 'string' && entry.content.length > 2500) {
-				entry.content = `${entry.content.slice(0, 2500)}…`;
-			}
-			return entry;
-		});
-	}
-	return clone;
-}
-
-function safeSetSessionItem(key: string, value: string) {
-	try {
-		sessionStorage.setItem(key, value);
-		return true;
-	} catch (error) {
-		if (error instanceof DOMException && error.name === 'QuotaExceededError') {
-			console.warn('Session storage quota exceeded for', key);
-			try {
-				sessionStorage.removeItem(key);
-				sessionStorage.setItem(key, value);
-				return true;
-			} catch (err) {
-				console.warn('Still unable to store item after cleanup:', err);
-				return false;
-			}
+	function cloneData<T>(obj: T): T {
+		try {
+			// @ts-ignore structuredClone exists in modern runtimes
+			return structuredClone(obj);
+		} catch (err) {
+			return JSON.parse(JSON.stringify(obj));
 		}
-		throw error;
 	}
-}
+
+	function prepareBrandDataForCache(data: any) {
+		const clone = cloneData(data);
+		if (clone.logoFiles) {
+			clone.logoFiles = clone.logoFiles.map((file: any) => ({
+				id: file?.id,
+				fileName: file?.fileName || file?.name
+			}));
+		}
+		if (clone.stepHistory) {
+			clone.stepHistory = clone.stepHistory.map((step: any) => {
+				const entry = { ...step };
+				if (entry.step === 'generated-slides') {
+					entry.content = '__slides_cached_externally__';
+				} else if (typeof entry.content === 'string' && entry.content.length > 2500) {
+					entry.content = `${entry.content.slice(0, 2500)}…`;
+				}
+				return entry;
+			});
+		}
+		return clone;
+	}
+
+	function safeSetSessionItem(key: string, value: string) {
+		try {
+			sessionStorage.setItem(key, value);
+			return true;
+		} catch (error) {
+			if (error instanceof DOMException && error.name === 'QuotaExceededError') {
+				console.warn('Session storage quota exceeded for', key);
+				try {
+					sessionStorage.removeItem(key);
+					sessionStorage.setItem(key, value);
+					return true;
+				} catch (err) {
+					console.warn('Still unable to store item after cleanup:', err);
+					return false;
+				}
+			}
+			throw error;
+		}
+	}
 
 	onMount(async () => {
 		try {
@@ -342,7 +342,6 @@ function safeSetSessionItem(key: string, value: string) {
 			// Data is already stored in database via saveSlidesToDatabase()
 			// We can fetch it later if needed using guidelineId
 			console.log('💾 Skipping sessionStorage update - slides stored in DB');
-
 		} catch (e: any) {
 			error = e?.message || 'Failed to load preview';
 		} finally {
@@ -442,12 +441,12 @@ function safeSetSessionItem(key: string, value: string) {
 			try {
 				await syncToDatabase(brandData);
 
-			// Update snapshot to current saved state
-			originalSlidesSnapshot = slides.map((slide) => ({ name: slide.name, html: slide.html }));
-			hasUnsavedChanges = false;
-			console.log('📸 Updated snapshot after saving');
+				// Update snapshot to current saved state
+				originalSlidesSnapshot = slides.map((slide) => ({ name: slide.name, html: slide.html }));
+				hasUnsavedChanges = false;
+				console.log('📸 Updated snapshot after saving');
 
-			// Remove saving message and show success
+				// Remove saving message and show success
 				savingMsg.remove();
 				const successMsg = document.createElement('div');
 				successMsg.className =
@@ -2742,16 +2741,17 @@ function safeSetSessionItem(key: string, value: string) {
 			? null
 			: (() => {
 					const msg = document.createElement('div');
-					msg.className = 'fixed top-4 right-4 bg-primary text-white px-4 py-2 rounded-lg z-50 shadow-lg';
+					msg.className =
+						'fixed top-4 right-4 bg-primary text-white px-4 py-2 rounded-lg z-50 shadow-lg';
 					msg.textContent = '💾 Saving to My Brands...';
 					document.body.appendChild(msg);
 					return msg;
-			  })();
+				})();
 
 		try {
 			const guidelineId = sessionStorage.getItem('current_guideline_id');
 			const updatedBrandData = { ...brandData };
-			
+
 			// Update stepHistory with current slides
 			if (!updatedBrandData.stepHistory) {
 				updatedBrandData.stepHistory = [];
@@ -2810,7 +2810,7 @@ function safeSetSessionItem(key: string, value: string) {
 								// Found existing, update it
 								const existingId = findResult.guideline.id;
 								console.log('🔄 Found existing guideline, updating:', existingId);
-								
+
 								const updateResponse = await fetch(`/api/brand-guidelines/${existingId}`, {
 									method: 'PUT',
 									headers: { 'Content-Type': 'application/json' },
@@ -2829,7 +2829,7 @@ function safeSetSessionItem(key: string, value: string) {
 										hasSavedGuideline = true;
 										hasUnsavedChanges = false;
 										sessionStorage.setItem('preview_brand_saved', 'true');
-										
+
 										savingMsg.remove();
 										const successMsg = document.createElement('div');
 										successMsg.className =
@@ -2918,7 +2918,7 @@ function safeSetSessionItem(key: string, value: string) {
 	}
 
 	// Reactive statement to check for changes
-$: if (slides.length > 0 && originalSlidesSnapshot.length > 0) {
+	$: if (slides.length > 0 && originalSlidesSnapshot.length > 0) {
 		checkForChanges();
 	}
 
@@ -3033,8 +3033,8 @@ $: if (slides.length > 0 && originalSlidesSnapshot.length > 0) {
 
 			slides = cleanedSlides;
 
-			const updatedBrandData =
-				payload?.brandDataSnapshot ?? slideManagerRef?.getBrandDataSnapshot?.() ?? {
+			const updatedBrandData = payload?.brandDataSnapshot ??
+				slideManagerRef?.getBrandDataSnapshot?.() ?? {
 					...brandData
 				};
 			if (!updatedBrandData.stepHistory) {
@@ -3288,7 +3288,7 @@ $: if (slides.length > 0 && originalSlidesSnapshot.length > 0) {
 		</div>
 	</div>
 {:else}
-	<div class="min-h-screen bg-background px-4 pb-10 pt-4">
+	<div class="min-h-screen bg-background px-4 pt-4 pb-10">
 		<div class="mx-auto w-full space-y-6">
 			{#if brandData}
 				<SlideManager
@@ -3297,12 +3297,14 @@ $: if (slides.length > 0 && originalSlidesSnapshot.length > 0) {
 					onDownloadPPTX={downloadPPTX}
 					onDownloadPDF={downloadPDF}
 					onGoToBrands={() => goto('/dashboard/my-brands')}
-									onSaveSlides={saveSlidesSnapshot}
-									isSavingSlides={isSavingSlides}
+					onSaveSlides={saveSlidesSnapshot}
+					{isSavingSlides}
 					{isDownloading}
 				/>
 			{:else}
-				<div class="rounded-xl border border-dashed border-amber-200 bg-white/70 p-8 text-center text-gray-500 shadow-sm">
+				<div
+					class="rounded-xl border border-dashed border-amber-200 bg-white/70 p-8 text-center text-gray-500 shadow-sm"
+				>
 					Loading brand data...
 				</div>
 			{/if}
@@ -3312,7 +3314,7 @@ $: if (slides.length > 0 && originalSlidesSnapshot.length > 0) {
 					{#if originalSlidesSnapshot && originalSlidesSnapshot.length > 0}
 						<Button
 							variant="outline"
-							class="flex h-11 items-center justify-center gap-2 rounded-full border-slate-200 text-sm font-semibold text-slate-700 hover:bg-slate-50 dark:bg-gray-600 dark:text-white dark:border-orange-500 dark:hover:bg-gray-500"
+							class="flex h-11 items-center justify-center gap-2 rounded-full border-slate-200 text-sm font-semibold text-slate-700 hover:bg-slate-50 dark:border-orange-500 dark:bg-gray-600 dark:text-white dark:hover:bg-gray-500"
 							onclick={revertChanges}
 							title="Discard all edits and revert to original state"
 						>
@@ -3322,7 +3324,7 @@ $: if (slides.length > 0 && originalSlidesSnapshot.length > 0) {
 					{/if}
 					{#if !webpageBuildComplete}
 						<Button
-							class="flex h-11 items-center justify-center gap-2 rounded-full bg-blue-600 text-white hover:bg-blue-700 text-sm font-semibold dark:bg-blue-500 dark:hover:bg-blue-600"
+							class="flex h-11 items-center justify-center gap-2 rounded-full bg-blue-600 text-sm font-semibold text-white hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600"
 							onclick={buildMockWebpageHandler}
 							disabled={isBuildingWebpage}
 							title="Build a mock webpage based on your brand guidelines"
@@ -3337,7 +3339,7 @@ $: if (slides.length > 0 && originalSlidesSnapshot.length > 0) {
 						</Button>
 					{:else}
 						<Button
-							class="flex h-11 items-center justify-center gap-2 rounded-full bg-green-600 text-white hover:bg-green-700 text-sm font-semibold dark:bg-green-500 dark:hover:bg-green-600"
+							class="flex h-11 items-center justify-center gap-2 rounded-full bg-green-600 text-sm font-semibold text-white hover:bg-green-700 dark:bg-green-500 dark:hover:bg-green-600"
 							onclick={visitMockWebpage}
 							title="Visit your mock webpage"
 						>
@@ -3347,7 +3349,9 @@ $: if (slides.length > 0 && originalSlidesSnapshot.length > 0) {
 					{/if}
 				</div>
 				{#if hasUnsavedChanges}
-					<span class="inline-flex items-center justify-center rounded-full border border-amber-300 bg-amber-50 px-3 py-1 text-xs font-medium text-amber-700">
+					<span
+						class="inline-flex items-center justify-center rounded-full border border-amber-300 bg-amber-50 px-3 py-1 text-xs font-medium text-amber-700"
+					>
 						Unsaved edits
 					</span>
 				{/if}

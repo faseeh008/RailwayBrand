@@ -1,6 +1,6 @@
 /**
  * Mock Webpage Builder Service
- * 
+ *
  * Orchestrates the building of mock webpages by:
  * 1. Fetching images from Pexels/Unsplash
  * 2. Generating custom content using Gemini API
@@ -151,4 +151,3 @@ async function generateContent(brandData: any, theme: string): Promise<Record<st
 		stats: []
 	};
 }
-

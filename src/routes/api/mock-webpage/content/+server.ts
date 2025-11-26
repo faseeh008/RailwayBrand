@@ -97,9 +97,9 @@ Generate complete website content as JSON with the following structure:
 Make it authentic, engaging, and perfectly aligned with the ${theme} aesthetic. Include 3-6 items for arrays. Use brand colors where specified.`;
 
 		// Use the correct Gemini API endpoint
-		const model = 'gemini-pro';
-		const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${geminiKey}`;
-		
+		const model = 'gemini-1.5-flash'; // Using stable model name
+		const apiUrl = `https://generativelanguage.googleapis.com/v1/models/${model}:generateContent?key=${geminiKey}`;
+
 		let response: Response;
 		try {
 			response = await fetch(apiUrl, {
@@ -164,7 +164,7 @@ Make it authentic, engaging, and perfectly aligned with the ${theme} aesthetic. 
 			const jsonMatch = generatedText.match(/```(?:json)?\s*(\{[\s\S]*\})\s*```/);
 			const jsonText = jsonMatch ? jsonMatch[1] : generatedText;
 			content = JSON.parse(jsonText) as GeneratedContent;
-			
+
 			// Normalize content structure
 			if (content.title && !content.heroTitle) {
 				content.heroTitle = content.title;
@@ -194,7 +194,9 @@ Make it authentic, engaging, and perfectly aligned with the ${theme} aesthetic. 
 		});
 	} catch (error: any) {
 		console.error('Content generation error:', error);
-		return json({ success: false, error: error.message || 'Failed to generate content' }, { status: 500 });
+		return json(
+			{ success: false, error: error.message || 'Failed to generate content' },
+			{ status: 500 }
+		);
 	}
 };
-

@@ -42,12 +42,17 @@
 			const response = await fetch('/api/brand-guidelines');
 			if (response.ok) {
 				const result = await response.json();
-				if (result.success) {
+				if (result.success && result.guidelines) {
 					myBrands = result.guidelines || [];
+				} else {
+					myBrands = [];
 				}
+			} else {
+				myBrands = [];
 			}
 		} catch (error) {
 			console.error('Failed to load brands:', error);
+			myBrands = [];
 		} finally {
 			loadingBrands = false;
 		}
@@ -77,6 +82,18 @@
 				id: guideline.id
 			};
 
+			let structuredData: any = null;
+			if (guideline.structuredData) {
+				try {
+					structuredData =
+						typeof guideline.structuredData === 'string'
+							? JSON.parse(guideline.structuredData)
+							: guideline.structuredData;
+				} catch (e) {
+					console.warn('⚠️ Failed to parse guideline.structuredData:', e);
+				}
+			}
+
 			// Parse JSON fields
 			if (guideline.logoFiles) {
 				try {
@@ -98,31 +115,43 @@
 				}
 			}
 
-			// Parse structuredData for stepHistory
-			if (guideline.structuredData) {
+			// Always attempt to load stepHistory (even if structuredData is missing)
+			previewData.stepHistory = [];
+			if (guideline.stepHistory) {
 				try {
-					const structuredData = typeof guideline.structuredData === 'string'
-						? JSON.parse(guideline.structuredData)
-						: guideline.structuredData;
-					
-					// Reconstruct stepHistory from structuredData if needed
-					// For now, we'll try to get it from the guideline's stepHistory if stored
-					if (guideline.stepHistory) {
-						try {
-							previewData.stepHistory = typeof guideline.stepHistory === 'string'
-								? JSON.parse(guideline.stepHistory)
-								: guideline.stepHistory;
-						} catch (e) {
-							previewData.stepHistory = [];
-						}
-					} else {
-						previewData.stepHistory = [];
+					previewData.stepHistory =
+						typeof guideline.stepHistory === 'string'
+							? JSON.parse(guideline.stepHistory)
+							: guideline.stepHistory;
+				} catch (e) {
+					console.warn('⚠️ Failed to parse guideline.stepHistory:', e);
+				}
+			} else if (structuredData?.stepHistory) {
+				previewData.stepHistory = structuredData.stepHistory;
+			}
+
+			// Hydrate color palette so slides keep their saved colors
+			if (guideline.colors) {
+				try {
+					const parsedColors =
+						typeof guideline.colors === 'string'
+							? JSON.parse(guideline.colors)
+							: guideline.colors;
+					if (parsedColors) {
+						previewData.colors = parsedColors;
 					}
 				} catch (e) {
-					previewData.stepHistory = [];
+					console.warn('⚠️ Failed to parse guideline.colors:', e);
 				}
-			} else {
-				previewData.stepHistory = [];
+			}
+			if (!previewData.colors && structuredData?.colors) {
+				previewData.colors = structuredData.colors;
+			}
+			if (!previewData.colorPalette && structuredData?.colorPalette) {
+				previewData.colorPalette = structuredData.colorPalette;
+			}
+			if (!previewData.brandColors && structuredData?.brandColors) {
+				previewData.brandColors = structuredData.brandColors;
 			}
 
 			// Store in sessionStorage
@@ -150,8 +179,9 @@
 
 			if (!response.ok) throw new Error('Failed to delete brand');
 
-			// Remove from local state
+			// Remove from local state and reload
 			myBrands = myBrands.filter(b => b.id !== brand.id);
+			await loadBrands();
 		} catch (error) {
 			console.error('Failed to delete brand:', error);
 			alert('Failed to delete brand. Please try again.');
@@ -166,7 +196,7 @@
 <div class="flex h-screen bg-background">
 	{#if !isPreviewPage}
 		<!-- Sidebar -->
-		<aside class="flex w-64 flex-col border-r border-border bg-card">
+		<aside class="flex w-72 flex-col border-r border-border bg-card">
 			<!-- Logo -->
 			<div class="border-b border-border p-6">
 				<h1 class="text-xl font-bold text-foreground">EternaBrand</h1>
@@ -205,7 +235,16 @@
 					<div class="px-3 py-2 text-xs text-muted-foreground">No brands saved yet</div>
 				{:else}
 					<div class="max-h-64 space-y-2 overflow-y-auto px-3">
-						{#each myBrands.slice(0, 4) as brand}
+						{#each myBrands
+							.sort((a: any, b: any) => {
+								const dateA = a.updatedAt || a.createdAt;
+								const dateB = b.updatedAt || b.createdAt;
+								if (!dateA && !dateB) return 0;
+								if (!dateA) return 1;
+								if (!dateB) return -1;
+								return new Date(dateB).getTime() - new Date(dateA).getTime();
+							})
+							.slice(0, 2) as brand}
 							<BrandCard {brand} onPreview={handlePreviewBrand} onDelete={handleDeleteBrand} compact={true} />
 						{/each}
 					</div>
