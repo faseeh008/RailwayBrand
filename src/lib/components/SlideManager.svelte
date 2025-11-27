@@ -594,9 +594,17 @@ export function getSlidesHtmlSnapshot(): Array<{ name: string; html: string }> {
     color2 = extractColor(brandData, 'accent') || extractColor(brandData, 'color2') || '#3B82F6';
     color3 = extractColor(brandData, 'color3') || '#60A5FA';
     // Fix double base64 prefix issue
-    const rawLogoData = brandData?.logoFiles?.[0]?.fileData || '';
+    const rawLogoEntry = brandData?.logoFiles?.[0];
+    const rawLogoData =
+      rawLogoEntry?.fileUrl ||
+      rawLogoEntry?.fileData ||
+      rawLogoEntry?.url ||
+      rawLogoEntry?.filePath ||
+      '';
     if (rawLogoData && rawLogoData.startsWith('data:image')) {
       // If it already has the data:image prefix, use it as is
+      logoData = rawLogoData;
+    } else if (rawLogoData && (rawLogoData.startsWith('http') || rawLogoData.startsWith('/'))) {
       logoData = rawLogoData;
     } else if (rawLogoData) {
       // If it's just base64 data, add the prefix

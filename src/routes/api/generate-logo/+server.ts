@@ -2,11 +2,12 @@ import { json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { env } from '$lib/env';
+import { saveLogoAsset } from '$lib/server/logo-storage';
 
 /**
  * API endpoint for generating professional logos using Gemini 2.5 Flash Image model
  */
-export const POST: RequestHandler = async ({ request }) => {
+export const POST: RequestHandler = async ({ request, locals }) => {
 	try {
 		const body = await request.json();
 		const {
@@ -191,16 +192,25 @@ Now generate the SVG.`;
 			throw new Error('Generated SVG code is incomplete');
 		}
 		
-		// Convert SVG to base64 data URL for easy use
-		const base64Svg = Buffer.from(svgCode).toString('base64');
-		const imageData = `data:image/svg+xml;base64,${base64Svg}`;
+		const svgBuffer = Buffer.from(svgCode, 'utf-8');
+		const session = typeof locals.auth === 'function' ? await locals.auth() : null;
+		const filename = `${brandName.toLowerCase().replace(/\s+/g, '-')}-logo.svg`;
+
+		const { id: storageId, fileUrl } = await saveLogoAsset({
+			buffer: svgBuffer,
+			filename,
+			mimeType: 'image/svg+xml',
+			userId: session?.user?.id,
+			source: 'ai-generated'
+		});
 
 		console.log('[generate-logo] Logo generated successfully');
 
 		return json({
 			success: true,
-			logoData: imageData,
-			filename: `${brandName.toLowerCase().replace(/\s+/g, '-')}-logo.svg`,
+			logoUrl: fileUrl,
+			logoId: storageId,
+			filename,
 			type: 'ai-generated',
 			svgCode: svgCode // Also return raw SVG for potential editing
 		});

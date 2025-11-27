@@ -3,8 +3,8 @@ import { db } from '$lib/db';
 import { brandGuidelines } from '$lib/db/schema';
 import { generateProgressiveBrandGuidelines } from '$lib/services/gemini';
 import { generateEnhancedProgressiveStep } from '$lib/services/enhanced-progressive-generator';
-import { 
-	extractColorsFromLogo, 
+import {
+	extractColorsFromLogo,
 	convertExtractedColorsToProgressiveFormat
 } from '$lib/services/color-extraction';
 import { generateProfessionalIcon } from '$lib/services/icon-generator-service';
@@ -24,6 +24,7 @@ import { join } from 'path';
 import { existsSync } from 'fs';
 import { readFileSync } from 'fs';
 import { svgToPngNode } from '$lib/utils/svg-to-png';
+import { loadLogoBuffer } from '$lib/server/logo-file-utils';
 
 export const POST: RequestHandler = async ({ request, locals, fetch }) => {
 	try {
@@ -101,25 +102,12 @@ export const POST: RequestHandler = async ({ request, locals, fetch }) => {
 					
 					let logoFileObj: File;
 					let savedFilePath: string | null = null;
-					
-					// If we have base64 data but no file path, save it to filesystem first
-					if (logoFile.fileData && !logoFile.filePath) {
-						console.log('Saving logo to filesystem first for color extraction');
-						
-						// New behavior: create File directly from base64 data stored in DB.
-						const isSvg =
-							logoFile.fileData.includes('data:image/svg+xml') ||
-							logoFile.filename.endsWith('.svg');
-						const mimeType =
-							logoFile.fileData.match(/data:([^;]+)/)?.[1] ||
-							(isSvg ? 'image/svg+xml' : 'image/png');
 
-						const base64Data = logoFile.fileData.includes(',')
-							? logoFile.fileData.split(',')[1]
-							: logoFile.fileData;
-
-						const binaryData = Buffer.from(base64Data, 'base64');
-						logoFileObj = new File([binaryData], logoFile.filename, { type: mimeType });
+					const loadedLogo = await loadLogoBuffer(logoFile);
+					if (loadedLogo) {
+						logoFileObj = new File([loadedLogo.buffer], logoFile.filename, {
+							type: loadedLogo.mimeType || 'image/png'
+						});
 					} else if (logoFile.filePath) {
 						console.log('Using existing file path for color extraction (legacy support)');
 						// Legacy support: only fetch from URL, do not read/write local files

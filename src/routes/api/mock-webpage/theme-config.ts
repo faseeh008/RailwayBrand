@@ -1,4 +1,5 @@
 import type { ThemeContentConfig, ThemeKey } from '$lib/types/theme-content';
+import { buildFuturisticThemeConfig } from '../mockpagebuilder/buildfuturistic';
 
 export function normalizeTheme(raw: string | undefined): ThemeKey {
 	const value = (raw || 'Minimalistic') as ThemeKey;
@@ -8,7 +9,18 @@ export function normalizeTheme(raw: string | undefined): ThemeKey {
 	return 'Minimalistic';
 }
 
-export function buildThemeConfig(
+export async function buildThemeConfig(
+	brandData: any,
+	theme: ThemeKey,
+	slides: Array<{ name: string; html: string }> = []
+): Promise<ThemeContentConfig> {
+	if (theme === 'Futuristic') {
+		return buildFuturisticThemeConfig(brandData, slides);
+	}
+	return buildDefaultThemeConfig(brandData, theme);
+}
+
+function buildDefaultThemeConfig(
 	brandData: any,
 	theme: ThemeKey
 ): ThemeContentConfig {
@@ -74,8 +86,7 @@ export function buildThemeConfig(
 		isFunky: theme === 'Funky',
 		isFuturistic: theme === 'Futuristic',
 		stats: brandData?.stats || [],
-		features: brandData?.features || []
+		features: brandData?.features || [],
+		brandConfigOverrides: undefined
 	};
 }
-
-

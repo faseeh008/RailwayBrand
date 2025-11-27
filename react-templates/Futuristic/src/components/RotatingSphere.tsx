@@ -1,10 +1,16 @@
 import { motion } from "motion/react";
+import type { BrandConfig } from "../shared-brand-config";
 
-export function RotatingSphere() {
-  // Create sphere particles
+interface RotatingSphereProps {
+  palette: BrandConfig["colorPalette"];
+}
+
+const withOpacity = (color: string, opacity: number) => `color-mix(in srgb, ${color} ${opacity * 100}%, transparent)`;
+
+export function RotatingSphere({ palette }: RotatingSphereProps) {
   const particles = [];
-  const radius = 400; // Increased from 250 to 400
-  const particleCount = 150; // Increased particle count
+  const radius = 400;
+  const particleCount = 150;
 
   for (let i = 0; i < particleCount; i++) {
     const phi = Math.acos(-1 + (2 * i) / particleCount);
@@ -22,60 +28,44 @@ export function RotatingSphere() {
       <motion.div
         className="relative w-full h-full"
         style={{ perspective: "2000px" }}
-        animate={{
-          rotateY: 360,
-        }}
-        transition={{
-          duration: 30,
-          repeat: Infinity,
-          ease: "linear",
-        }}
+        animate={{ rotateY: 360 }}
+        transition={{ duration: 30, repeat: Infinity, ease: "linear" }}
       >
-        <div
-          className="relative w-full h-full"
-          style={{ transformStyle: "preserve-3d" }}
-        >
+        <div className="relative w-full h-full" style={{ transformStyle: "preserve-3d" }}>
           {particles.map((particle) => {
             const scale = (particle.z + radius) / (2 * radius);
             return (
               <motion.div
                 key={particle.id}
-                className="absolute w-4 h-4 bg-blue-400 rounded-full"
+                className="absolute w-4 h-4 rounded-full"
                 style={{
                   left: "50%",
                   top: "50%",
                   transform: `translate3d(${particle.x}px, ${particle.y}px, ${particle.z}px)`,
                   opacity: 0.5 + scale * 0.5,
+                  backgroundColor: palette.primary,
                 }}
                 animate={{
                   boxShadow: [
-                    "0 0 15px rgba(59, 130, 246, 0.8)",
-                    "0 0 30px rgba(147, 51, 234, 1)",
-                    "0 0 15px rgba(59, 130, 246, 0.8)",
+                    `0 0 15px ${withOpacity(palette.primary, 0.8)}`,
+                    `0 0 30px ${withOpacity(palette.secondary, 1)}`,
+                    `0 0 15px ${withOpacity(palette.primary, 0.8)}`,
                   ],
-                  backgroundColor: [
-                    "rgba(59, 130, 246, 1)",
-                    "rgba(147, 51, 234, 1)",
-                    "rgba(59, 130, 246, 1)",
-                  ],
+                  backgroundColor: [palette.primary, palette.secondary, palette.primary],
                 }}
-                transition={{
-                  duration: 3,
-                  repeat: Infinity,
-                  delay: particle.id * 0.01,
-                }}
+                transition={{ duration: 3, repeat: Infinity, delay: particle.id * 0.01 }}
               />
             );
           })}
-          
-          {/* Wireframe circles */}
+
           {[...Array(15)].map((_, i) => (
             <div
               key={`circle-${i}`}
-              className="absolute inset-0 border-2 border-blue-400/30 rounded-full"
+              className="absolute inset-0 rounded-full"
               style={{
                 transform: `rotateY(${i * 12}deg) rotateX(60deg)`,
                 transformStyle: "preserve-3d",
+                border: `2px solid ${withOpacity(palette.primary, 0.3)}`,
               }}
             />
           ))}

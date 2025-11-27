@@ -1,4 +1,15 @@
-import { pgTable, text, timestamp, primaryKey, integer, boolean, serial, varchar, jsonb, real } from 'drizzle-orm/pg-core';
+import {
+	pgTable,
+	text,
+	timestamp,
+	primaryKey,
+	integer,
+	boolean,
+	serial,
+	varchar,
+	jsonb,
+	real
+} from 'drizzle-orm/pg-core';
 import { relations } from 'drizzle-orm';
 
 // Auth.js compatible user table
@@ -91,6 +102,21 @@ export const brandGuidelines = pgTable('brand_guidelines', {
 		.notNull()
 		.$defaultFn(() => new Date()),
 	updatedAt: timestamp('updatedAt', { mode: 'date' })
+		.notNull()
+		.$defaultFn(() => new Date())
+});
+
+// Stored logo assets (binary blobs referenced via URLs)
+export const logoAssets = pgTable('logo_assets', {
+	id: text('id')
+		.primaryKey()
+		.$defaultFn(() => crypto.randomUUID()),
+	userId: text('user_id').references(() => user.id, { onDelete: 'set null' }),
+	filename: text('filename').notNull(),
+	mimeType: text('mime_type').notNull(),
+	data: text('data').notNull(),
+	source: text('source'),
+	createdAt: timestamp('created_at', { mode: 'date' })
 		.notNull()
 		.$defaultFn(() => new Date())
 });
@@ -348,6 +374,7 @@ export const brandBuilderChats = pgTable('brand_builder_chats', {
 	brandName: text('brand_name'),
 	messages: text('messages'),
 	state: text('state'),
+	latestLogoSnapshot: text('latest_logo_snapshot'),
 	createdAt: timestamp('created_at', { mode: 'date' })
 		.notNull()
 		.$defaultFn(() => new Date()),

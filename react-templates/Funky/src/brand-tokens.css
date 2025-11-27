@@ -1,0 +1,86 @@
+:root {
+  /* Tokens that will be hydrated from the runtime brand config */
+  --brand-primary: CanvasText;
+  --brand-secondary: ButtonFace;
+  --brand-accent: Highlight;
+  --brand-background: Canvas;
+  --brand-text: CanvasText;
+  --brand-font-heading: var(--font-sans);
+  --brand-font-body: var(--font-sans);
+
+  /* Derived UI tokens that avoid literal color codes */
+  --background: var(--brand-background, Canvas);
+  --foreground: var(--brand-text, CanvasText);
+  --card: var(--brand-background, Canvas);
+  --card-foreground: var(--brand-text, CanvasText);
+  --popover: var(--brand-background, Canvas);
+  --popover-foreground: var(--brand-text, CanvasText);
+  --primary: var(--brand-primary, CanvasText);
+  --primary-foreground: var(--brand-background, Canvas);
+  --secondary: var(--brand-secondary, ButtonFace);
+  --secondary-foreground: var(--brand-text, CanvasText);
+  --muted: color-mix(in srgb, var(--brand-text, CanvasText) 12%, transparent);
+  --muted-foreground: color-mix(
+    in srgb,
+    var(--brand-text, CanvasText) 65%,
+    var(--brand-background, Canvas)
+  );
+  --accent: var(--brand-accent, Highlight);
+  --accent-foreground: var(--brand-background, Canvas);
+  --destructive: var(--brand-accent, Highlight);
+  --destructive-foreground: var(--brand-background, Canvas);
+  --border: color-mix(in srgb, var(--brand-text, CanvasText) 10%, transparent);
+  --input: color-mix(in srgb, var(--brand-text, CanvasText) 18%, transparent);
+  --input-background: color-mix(
+    in srgb,
+    var(--brand-background, Canvas) 90%,
+    var(--brand-text, CanvasText)
+  );
+  --switch-background: color-mix(
+    in srgb,
+    var(--brand-background, Canvas),
+    var(--brand-text, CanvasText)
+  );
+  --ring: color-mix(in srgb, var(--brand-primary, CanvasText) 40%, transparent);
+  --sidebar: var(--brand-background, Canvas);
+  --sidebar-foreground: var(--brand-text, CanvasText);
+  --sidebar-primary: var(--brand-primary, CanvasText);
+  --sidebar-primary-foreground: var(--brand-background, Canvas);
+  --sidebar-accent: var(--brand-accent, Highlight);
+  --sidebar-accent-foreground: var(--brand-background, Canvas);
+  --sidebar-border: color-mix(
+    in srgb,
+    var(--brand-text, CanvasText) 8%,
+    transparent
+  );
+  --sidebar-ring: color-mix(in srgb, var(--brand-primary, CanvasText) 35%, transparent);
+}
+
+.dark {
+  --background: color-mix(in srgb, var(--brand-text, CanvasText) 15%, var(--brand-background, Canvas));
+  --foreground: color-mix(in srgb, var(--brand-background, Canvas) 5%, var(--brand-text, CanvasText));
+  --card: color-mix(in srgb, var(--brand-text, CanvasText) 12%, var(--brand-background, Canvas));
+  --card-foreground: var(--foreground);
+  --popover: var(--card);
+  --popover-foreground: var(--card-foreground);
+  --muted: color-mix(in srgb, var(--brand-text, CanvasText) 20%, transparent);
+  --muted-foreground: color-mix(
+    in srgb,
+    var(--brand-background, Canvas) 70%,
+    var(--brand-text, CanvasText)
+  );
+  --accent: var(--brand-secondary, ButtonFace);
+  --accent-foreground: var(--brand-text, CanvasText);
+  --border: color-mix(in srgb, var(--brand-text, CanvasText) 20%, transparent);
+  --input: var(--border);
+  --ring: color-mix(in srgb, var(--brand-accent, Highlight) 50%, transparent);
+  --sidebar: color-mix(in srgb, var(--brand-text, CanvasText) 25%, var(--brand-background, Canvas));
+  --sidebar-foreground: var(--foreground);
+  --sidebar-primary: var(--brand-primary, CanvasText);
+  --sidebar-primary-foreground: var(--brand-background, Canvas);
+  --sidebar-accent: var(--brand-accent, Highlight);
+  --sidebar-accent-foreground: var(--brand-background, Canvas);
+  --sidebar-border: var(--border);
+  --sidebar-ring: var(--ring);
+}
+

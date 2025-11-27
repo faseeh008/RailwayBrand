@@ -3,13 +3,15 @@
 	import { Button } from '$lib/components/ui/button';
 	import { Eye, Trash2 } from 'lucide-svelte';
 
-	interface Brand {
-		id: string;
-		brandName: string;
-		shortDescription?: string | null;
-		brandDomain?: string | null;
-		createdAt?: string | Date;
-	}
+interface Brand {
+	id: string;
+	brandName: string;
+	shortDescription?: string | null;
+	brandDomain?: string | null;
+	mood?: string | null;
+	selectedMood?: string | null;
+	createdAt?: string | Date;
+}
 
 	interface Props {
 		brand: Brand;
@@ -34,9 +36,12 @@
 <Card class="group relative flex flex-col transition-shadow hover:shadow-md {compact ? 'p-2' : ''}">
 	<CardHeader class="{compact ? 'p-3 pb-2' : ''}">
 		<CardTitle class="{compact ? 'text-sm' : 'text-lg'}">{brand.brandName}</CardTitle>
-		<CardDescription class="{compact ? 'text-xs line-clamp-2' : 'line-clamp-2'}">
-			{getDescription()}
-		</CardDescription>
+	<CardDescription class="{compact ? 'text-xs line-clamp-2' : 'line-clamp-2'}">
+		{getDescription()}
+	</CardDescription>
+	<p class="mt-1 text-xs uppercase tracking-wide text-muted-foreground">
+		vibe: {(brand.mood || brand.selectedMood || 'Not set').toLowerCase()}
+	</p>
 	</CardHeader>
 	<CardContent class="mt-auto flex gap-2 {compact ? 'p-3 pt-0' : ''}">
 		<Button

@@ -39,6 +39,10 @@ export interface ThemeContentConfig {
 	// Optional extra data for sections
 	stats?: Array<{ value: string; label: string }>;
 	features?: Array<{ title: string; description: string }>;
+	/**
+	 * Optional brand-config overrides for React templates (e.g. Futuristic UI)
+	 */
+	brandConfigOverrides?: Record<string, any>;
 }
 
 

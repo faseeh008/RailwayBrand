@@ -7,14 +7,15 @@ import { buildMockWebpageHtml } from './template-writer';
 interface BuildRequest {
 	brandData: any;
 	theme: ThemeKey;
+	slides?: Array<{ name: string; html: string }>;
 }
 
 export const POST: RequestHandler = async ({ request }) => {
 	try {
-		const { brandData, theme } = (await request.json()) as BuildRequest;
+		const { brandData, theme, slides = [] } = (await request.json()) as BuildRequest;
 		const normalizedTheme = normalizeTheme(theme);
 
-		const config = buildThemeConfig(brandData, normalizedTheme);
+		const config = await buildThemeConfig(brandData, normalizedTheme, slides);
 		const build = await buildMockWebpageHtml(config);
 
 		return json({

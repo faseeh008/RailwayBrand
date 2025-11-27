@@ -34,6 +34,7 @@ export interface ExportPptxOptions {
 	structuredData?: any;
 	useTemplate?: boolean; // Use detailed JSON template or simple layout
 	useHtmlSlides?: boolean; // Use new HTML-based slide generation
+	chatId?: string;
 }
 
 /**
@@ -77,7 +78,8 @@ export async function downloadBrandGuidelinesPptx(
 				generatedSteps: options.generatedSteps,
 				logoFiles: options.logoFiles,
 				structuredData: options.structuredData,
-				useTemplate: options.useTemplate || false
+				useTemplate: options.useTemplate || false,
+				chatId: options.chatId
 			})
 		});
 

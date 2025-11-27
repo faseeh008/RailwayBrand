@@ -11,25 +11,28 @@
 export interface BuildResult {
 	theme: string;
 	html: string;
-	content: Record<string, any>;
-	images: {
+	content?: Record<string, any>;
+	images?: {
 		hero: string | null;
 		gallery: string[];
 	};
-	colors: Record<string, string>;
-	fontFamily: string;
+	colors?: Record<string, string>;
+	fontFamily?: string;
+	brandConfig?: Record<string, any>;
 }
 
 export async function buildMockWebpage(
 	brandData: any,
-	theme: 'Minimalistic' | 'Maximalistic' | 'Funky' | 'Futuristic'
+	theme: 'Minimalistic' | 'Maximalistic' | 'Funky' | 'Futuristic',
+	slides: Array<{ name: string; html: string }> = []
 ): Promise<BuildResult> {
-	const response = await fetch('/api/mock-webpage', {
+	const response = await fetch('/api/mockpagebuilder', {
 		method: 'POST',
 		headers: { 'Content-Type': 'application/json' },
 		body: JSON.stringify({
 			brandData,
-			theme
+			theme,
+			slides
 		})
 	});
 

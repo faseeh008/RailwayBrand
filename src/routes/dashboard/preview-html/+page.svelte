@@ -18,7 +18,7 @@ import {
 		type BuildResult as MockBuildResult
 	} from '$lib/services/mock-webpage-builder';
 
-	let slides: Array<{ name: string; html: string }> = [];
+let slides: Array<{ name: string; html: string }> = [];
 	let brandData: any = null;
 	let loading = true;
 	let error: string | null = null;
@@ -52,6 +52,22 @@ function migrateLegacyPreviewData(): Omit<TempBrandData, 'timestamp'> | null {
 		const userInput = legacyData.brandInput || {};
 		const selectedTheme = inferThemeFromMood(legacyData.selectedMood);
 
+		let logoFiles: Array<any> = [];
+		try {
+			const legacyLogoFilesRaw =
+				legacyData.logoFiles || legacyData.logo_files || legacyData.logo?.files || [];
+			if (Array.isArray(legacyLogoFilesRaw)) {
+				logoFiles = legacyLogoFilesRaw;
+			} else if (typeof legacyLogoFilesRaw === 'string') {
+				logoFiles = JSON.parse(legacyLogoFilesRaw);
+			}
+		} catch (logoParseError) {
+			console.warn('[preview-html] Failed to parse legacy logo files:', logoParseError);
+		}
+
+		const primaryLogoData =
+			logoFiles[0]?.fileData || logoFiles[0]?.data || legacyData.logoData || null;
+
 		const brandDataPayload = {
 			...(legacyData.completeGuidelines || {}),
 			brandName: legacyData.brandName || legacyData.brand_name,
@@ -62,7 +78,17 @@ function migrateLegacyPreviewData(): Omit<TempBrandData, 'timestamp'> | null {
 			short_description: legacyData.short_description || legacyData.shortDescription,
 			stepHistory: legacyData.stepHistory || [],
 			guidelineId: legacyData.guidelineId,
-			brandInput: userInput
+			brandInput: userInput,
+			logoFiles,
+			logoData: primaryLogoData,
+			logo:
+				legacyData.logo ||
+				(primaryLogoData
+					? {
+							primaryLogoUrl: primaryLogoData,
+							primary: primaryLogoData
+					  }
+					: legacyData.logo)
 		};
 
 		return {
@@ -78,7 +104,7 @@ function migrateLegacyPreviewData(): Omit<TempBrandData, 'timestamp'> | null {
 	}
 }
 
-onMount(() => {
+onMount(async () => {
 	try {
 		let stored = loadTempBrandData();
 
@@ -97,6 +123,21 @@ onMount(() => {
 		brandData = stored.brandData;
 		previewTheme = stored.selectedTheme || inferThemeFromBrandData(brandData);
 		slides = stored.slides || [];
+
+		if ((!slides || slides.length === 0) && brandData?.guidelineId) {
+			const fetchedSlides = await fetchSlidesFromDatabase(brandData.guidelineId);
+			if (fetchedSlides.length) {
+				slides = fetchedSlides;
+				saveTempBrandData({
+					userInput: stored.userInput,
+					selectedTheme: stored.selectedTheme,
+					brandData: stored.brandData,
+					slides: fetchedSlides,
+					buildData: stored.buildData
+				});
+			}
+		}
+
 		if (stored.buildData?.html) {
 			mockPageBuild = stored.buildData as MockBuildResult;
 			webpageBuildComplete = true;
@@ -132,7 +173,7 @@ onMount(() => {
 
 			buildStepMessage = 'Fetching images and logos...';
 
-			const buildPromise = buildMockWebpage(brandData, theme);
+			const buildPromise = buildMockWebpage(brandData, theme, slides);
 
 			// Give the API some breathing room while we show progress
 			await sleep(3000);
@@ -163,6 +204,27 @@ onMount(() => {
 			buildStepMessage = '';
 		}
 	}
+
+async function fetchSlidesFromDatabase(guidelineId: string) {
+	try {
+		const response = await fetch(`/api/history-slides?brandGuidelinesId=${guidelineId}`);
+		if (!response.ok) {
+			throw new Error('Failed to fetch slides from database');
+		}
+		const result = await response.json();
+		if (result?.success && Array.isArray(result.slides)) {
+			return result.slides
+				.map((slide: any) => ({
+					name: slide.slideTitle || slide.brandName || `Slide ${slide.slideNumber || ''}`.trim(),
+					html: slide.htmlContent || ''
+				}))
+				.filter((slide: { name: string; html: string }) => slide.html);
+		}
+	} catch (err) {
+		console.error('Failed to fetch slides from database:', err);
+	}
+	return [];
+}
 
 	function handleVisitMockWebpage() {
 		if (!webpageBuildComplete || !mockPageBlobUrl) {

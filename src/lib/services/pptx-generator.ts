@@ -1,4 +1,12 @@
 import PptxGenJS from 'pptxgenjs';
+import { getLogoDataUrl } from '$lib/server/logo-file-utils';
+async function resolveLogoImageData(logoFile: any): Promise<string | null> {
+	if (!logoFile) return null;
+	if (logoFile.fileData && typeof logoFile.fileData === 'string' && logoFile.fileData.startsWith('data:')) {
+		return logoFile.fileData;
+	}
+	return getLogoDataUrl(logoFile);
+}
 
 // EMU to Inches conversion (1 inch = 914400 EMUs)
 const EMU_TO_INCHES = 914400;
@@ -246,11 +254,11 @@ export async function generateBrandGuidelinePptx(
 				// You can add logo here if it matches certain criteria
 				if (templateSlide.slide_number === 1 && data.logoFiles && data.logoFiles.length > 0) {
 					try {
-						// Add logo on title slide
 						const logoFile = data.logoFiles[0];
-						if (logoFile.fileData) {
+						const logoImage = await resolveLogoImageData(logoFile);
+						if (logoImage) {
 							slide.addImage({
-								data: logoFile.fileData,
+								data: logoImage,
 								x: position.x,
 								y: position.y,
 								w: position.w,
@@ -317,10 +325,11 @@ export async function generateProgressivePptx(
 	// Add logo if available
 	if (data.logoFiles && data.logoFiles.length > 0) {
 		const logoFile = data.logoFiles[0];
-		if (logoFile.fileData) {
+		const logoImage = await resolveLogoImageData(logoFile);
+		if (logoImage) {
 			try {
 				titleSlide.addImage({
-					data: logoFile.fileData,
+					data: logoImage,
 					x: 4,
 					y: 0.5,
 					w: 2,

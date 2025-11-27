@@ -2,6 +2,8 @@ import { json, type RequestHandler } from '@sveltejs/kit';
 import { convertHtmlSlidesToPdf } from '$lib/services/pdf-generator';
 import { adaptBrandDataForSlides, validateAdaptedData } from '$lib/services/brand-data-adapter.js';
 import { buildFilledHtmlSlides } from '$lib/services/html-slide-generator.js';
+import { db, brandBuilderChats } from '$lib/db';
+import { and, desc, eq } from 'drizzle-orm';
 
 export const POST: RequestHandler = async ({ request, locals }) => {
 	try {
@@ -14,6 +16,7 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 
 		// Parse request body
 		const requestData = await request.json();
+		await hydrateLogoFilesFromSnapshots(session.user.id, requestData);
 		
 		console.log('📥 Received request for PDF generation', {
 			brandName: requestData.brandName,
@@ -78,4 +81,67 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 		}, { status: 500 });
 	}
 };
+
+async function hydrateLogoFilesFromSnapshots(userId: string, requestData: any): Promise<void> {
+	if (requestData.logoFiles && requestData.logoFiles.length > 0) return;
+
+	const logoFiles = await loadLogoFilesFromChatSnapshot(
+		userId,
+		requestData.chatId,
+		requestData.brandName
+	);
+
+	if (logoFiles) {
+		requestData.logoFiles = logoFiles;
+	}
+}
+
+async function loadLogoFilesFromChatSnapshot(
+	userId: string,
+	chatId?: string,
+	brandName?: string
+): Promise<Array<{ filename: string; usageTag: string; fileData: string }> | null> {
+	let query = db
+		.select({ snapshot: brandBuilderChats.latestLogoSnapshot })
+		.from(brandBuilderChats)
+		.where(eq(brandBuilderChats.userId, userId))
+		.limit(1);
+
+	if (chatId) {
+		query = db
+			.select({ snapshot: brandBuilderChats.latestLogoSnapshot })
+			.from(brandBuilderChats)
+			.where(and(eq(brandBuilderChats.id, chatId), eq(brandBuilderChats.userId, userId)))
+			.limit(1);
+	} else if (brandName) {
+		query = db
+			.select({ snapshot: brandBuilderChats.latestLogoSnapshot })
+			.from(brandBuilderChats)
+			.where(and(eq(brandBuilderChats.userId, userId), eq(brandBuilderChats.brandName, brandName)))
+			.orderBy(desc(brandBuilderChats.updatedAt))
+			.limit(1);
+	}
+
+	const rows = await query;
+	const snapshotRaw = rows?.[0]?.snapshot;
+	if (!snapshotRaw) return null;
+
+	try {
+		const parsed = JSON.parse(snapshotRaw);
+		const fileUrl = parsed.fileUrl || parsed.data || null;
+		if (!fileUrl) return null;
+		return [
+			{
+				filename: parsed.filename || 'logo.svg',
+				usageTag: 'primary',
+				fileData: fileUrl,
+				fileUrl,
+				storageId: parsed.assetId || parsed.storageId
+			}
+		];
+	} catch (error) {
+		console.warn('Failed to parse logo snapshot', error);
+		return null;
+	}
+}
 

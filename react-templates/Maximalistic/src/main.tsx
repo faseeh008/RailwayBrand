@@ -1,7 +1,10 @@
 
-  import { createRoot } from "react-dom/client";
-  import App from "./App.tsx";
-  import "./index.css";
+import { createRoot } from "react-dom/client";
+import App from "./App";
+import "./index.css";
+import { applyBrandTokens, getBrandTokens } from "./theme/brand-tokens";
 
-  createRoot(document.getElementById("root")!).render(<App />);
+applyBrandTokens(getBrandTokens());
+
+createRoot(document.getElementById("root")!).render(<App />);
   

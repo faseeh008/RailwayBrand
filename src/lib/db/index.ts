@@ -22,5 +22,6 @@ export {
 	analysisResults,
 	scrapedWebpages,
 	complianceIssues,
-	auditSessions
+	auditSessions,
+	logoAssets
 } from './schema.js';

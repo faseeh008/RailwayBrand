@@ -51,13 +51,16 @@ import { inferThemeFromMood } from '$lib/utils/theme-utils';
 	let contactRole = '';
 	let contactCompany = '';
 
-	type LogoFileEntry = {
-		filename: string;
-		filePath: string;
-		usageTag: string;
-		fileData?: string;
-		aiGenerated?: boolean;
-	};
+type LogoFileEntry = {
+	filename: string;
+	filePath: string;
+	usageTag: string;
+	fileData?: string; // legacy support (now stores fileUrl)
+	fileUrl?: string;
+	storageId?: string;
+	mimeType?: string;
+	aiGenerated?: boolean;
+};
 
 
 	// UI state
@@ -787,14 +790,18 @@ import { inferThemeFromMood } from '$lib/utils/theme-utils';
 					logoFiles = [
 						{
 							filename: result.filename,
-							filePath: result.filePath,
-							fileData: result.fileData, // Base64 data URL
-							usageTag: 'primary'
+						filePath: result.fileUrl,
+						fileUrl: result.fileUrl,
+						fileData: result.fileUrl,
+						usageTag: 'primary',
+						storageId: result.storageId,
+						mimeType: result.mimeType
 						}
 					];
 
 					// Store the base64 data for later use
-					savedLogoPath = result.fileData;
+				savedLogoPath = result.fileUrl;
+				logoPreview = result.fileUrl;
 
 					errorMessage = '';
 				} else {
@@ -1040,16 +1047,19 @@ ${customPrompt}`;
 
 			// Handle logo
 			if (data.logoData) {
+				const logoSrc = data.logoData.fileUrl || data.logoData.fileData || data.logoData.url;
 				// Check if it's an uploaded logo or AI-generated
 				if (data.logoData.type === 'ai-generated') {
 					// AI-generated logo - use the fileData from generation
-					if (data.logoData.fileData) {
-						logoPreview = data.logoData.fileData;
+					if (logoSrc) {
+						logoPreview = logoSrc;
 						logoFiles = [
 							{
 								filename: data.logoData.filename || 'ai-generated-logo.svg',
 								filePath: '',
-								fileData: data.logoData.fileData,
+								fileData: logoSrc,
+								fileUrl: logoSrc,
+								storageId: data.logoData.storageId || data.logoData.logoId,
 								usageTag: 'primary',
 								aiGenerated: true
 							}
@@ -1068,12 +1078,14 @@ ${customPrompt}`;
 					}
 				} else {
 					// Uploaded logo
-					logoPreview = data.logoData.fileData;
+					logoPreview = logoSrc || null;
 					logoFiles = [
 						{
 							filename: data.logoData.filename,
 							filePath: data.logoData.filePath,
-							fileData: data.logoData.fileData,
+							fileData: logoSrc,
+							fileUrl: logoSrc,
+							storageId: data.logoData.storageId,
 							usageTag: 'primary'
 						}
 					];
@@ -1168,6 +1180,9 @@ ${customPrompt}`;
 		};
 
 		const structuredData = data.completeGuidelines || {};
+		const remoteChatId =
+			activeChatStorageKey && activeChatStorageKey !== LOCAL_CHAT_ID ? activeChatStorageKey : undefined;
+
 		const previewBrandData = {
 			...structuredData,
 			brandName: structuredData?.brandName || (structuredData as any)?.brand_name || brandName,
@@ -1186,7 +1201,8 @@ ${customPrompt}`;
 			logoFiles: logoFiles.length > 0 ? logoFiles : (structuredData as any)?.logoFiles || [],
 			stepHistory: data.stepHistory,
 			brandInput: data.brandInput,
-			guidelineId: data.savedGuidelines?.id
+			guidelineId: data.savedGuidelines?.id,
+			chatId: remoteChatId
 		};
 
 		const rawSlides =
@@ -1231,6 +1247,9 @@ ${customPrompt}`;
 
 	async function handleDownloadPptx() {
 		try {
+			const remoteChatId =
+				activeChatStorageKey && activeChatStorageKey !== LOCAL_CHAT_ID ? activeChatStorageKey : undefined;
+
 			const result = await downloadBrandGuidelinesPptx({
 				brandName,
 				brandDomain,
@@ -1247,7 +1266,8 @@ ${customPrompt}`;
 				logoFiles: logoFiles,
 				structuredData: lastGeneratedStructuredData,
 				useHtmlSlides: true, // 🎨 Use new HTML-based slide system
-				useTemplate: false // Not using old template
+				useTemplate: false, // Not using old template
+				chatId: remoteChatId
 			});
 
 			if (!result.success) {

@@ -454,7 +454,9 @@ export function adaptBrandDataForSlides(frontendData: any): any {
 		logoFilesCount: frontendData.logoFiles?.length || 0,
 		firstLogoFile: frontendData.logoFiles?.[0],
 		logoFileKeys: frontendData.logoFiles?.[0] ? Object.keys(frontendData.logoFiles[0]) : [],
-		logoFileData: frontendData.logoFiles?.[0]?.fileData,
+		logoFileData:
+			frontendData.logoFiles?.[0]?.fileUrl ||
+			frontendData.logoFiles?.[0]?.fileData,
 		logoFileUrl: frontendData.logoFiles?.[0]?.url,
 		logoFileSrc: frontendData.logoFiles?.[0]?.src,
 		allFrontendKeys: Object.keys(frontendData),
@@ -673,7 +675,9 @@ export function adaptBrandDataForSlides(frontendData: any): any {
 		
 		// Slide 3: Logo Guidelines
 		logo: {
-			primaryLogoUrl: frontendData.logoFiles?.[0]?.fileData || 
+			primaryLogoUrl:
+				frontendData.logoFiles?.[0]?.fileUrl ||
+				frontendData.logoFiles?.[0]?.fileData ||
 							frontendData.logoFiles?.[0]?.url || 
 							frontendData.logoFiles?.[0]?.src ||
 							frontendData.logoFiles?.[0]?.data ||

@@ -133,30 +133,32 @@ export async function buildMockWebpageHtml(
 	);
 
 	// Build BrandConfig-like object for React templates
-	const brandConfig = {
-		brandName: config.brandName,
-		brandDescription: config.description,
-		logoUrl: config.logoUrl,
-		colorPalette: {
-			primary: config.primary,
-			secondary: config.secondary,
-			accent: config.accent,
-			background: config.background,
-			text: config.text
-		},
-		fonts: {
-			heading: config.headingFont,
-			body: config.bodyFont
-		},
-		images: {
-			hero: images.hero || config.heroImage || '',
-			gallery: images.gallery.length ? images.gallery : config.galleryImages
-		},
-		industry: config.brandType,
-		stats: config.stats || [],
-		features: config.features || [],
-		contact: {}
-	};
+	const brandConfig =
+		config.brandConfigOverrides ||
+		{
+			brandName: config.brandName,
+			brandDescription: config.description,
+			logoUrl: config.logoUrl,
+			colorPalette: {
+				primary: config.primary,
+				secondary: config.secondary,
+				accent: config.accent,
+				background: config.background,
+				text: config.text
+			},
+			fonts: {
+				heading: config.headingFont,
+				body: config.bodyFont
+			},
+			images: {
+				hero: images.hero || config.heroImage || '',
+				gallery: images.gallery.length ? images.gallery : config.galleryImages
+			},
+			industry: config.brandType,
+			stats: config.stats || [],
+			features: config.features || [],
+			contact: {}
+		};
 
 	const styleVars = `
     <style>
@@ -177,7 +179,15 @@ export async function buildMockWebpageHtml(
     </style>
   `;
 
+	const fontLinks =
+		config.googleFontImports && config.googleFontImports.length
+			? config.googleFontImports
+					.map((url) => `<link rel="stylesheet" href="${url}" />`)
+					.join('\n')
+			: '';
+
 	const injection = `
+    ${fontLinks}
     <script>
       window.__BRAND_CONFIG__ = ${JSON.stringify(brandConfig)};
     </script>

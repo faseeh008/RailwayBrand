@@ -1,7 +1,7 @@
-import { Menu, X } from "lucide-react";
+import { useMemo, useState } from "react";
 import { Button } from "./ui/button";
-import { useState } from "react";
-import { BrandConfig } from "../shared-brand-config";
+import type { BrandConfig } from "../shared-brand-config";
+import { getIconComponent } from "../icon-registry";
 
 interface NavbarProps {
   brandConfig: BrandConfig;
@@ -9,93 +9,122 @@ interface NavbarProps {
 
 export function Navbar({ brandConfig }: NavbarProps) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const palette = brandConfig.colorPalette;
+
+  const { MenuIcon, CloseIcon } = useMemo(() => {
+    return {
+      MenuIcon: getIconComponent(brandConfig.navigation.menuIcon),
+      CloseIcon: getIconComponent(brandConfig.navigation.closeIcon),
+    };
+  }, [brandConfig.navigation.closeIcon, brandConfig.navigation.menuIcon]);
+
+  const navLinkStyle = {
+    color: palette.text,
+    opacity: 0.75,
+  };
 
   return (
-    <nav className="sticky top-0 z-50 border-b border-neutral-200/50 bg-white/80 backdrop-blur-lg">
+    <nav
+      className="sticky top-0 z-50 backdrop-blur-lg"
+      style={{
+        borderBottom: `1px solid ${palette.border}`,
+        backgroundColor: palette.surface,
+      }}
+    >
       <div className="mx-auto max-w-7xl px-6 py-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             {brandConfig.logoUrl ? (
-              <img 
-                src={brandConfig.logoUrl} 
-                alt={brandConfig.brandName} 
+              <img
+                src={brandConfig.logoUrl}
+                alt={brandConfig.brandName}
                 className="h-9 w-auto"
               />
             ) : (
-              <div 
+              <div
                 className="flex h-9 w-9 items-center justify-center rounded-lg"
-                style={{ backgroundColor: brandConfig.colorPalette.primary }}
+                style={{ backgroundColor: palette.primary }}
               >
-                <span className="text-white">{brandConfig.brandName[0]}</span>
+                <span style={{ color: palette.primaryForeground }}>
+                  {brandConfig.brandName[0]}
+                </span>
               </div>
             )}
-            <span 
+            <span
               className="font-medium"
-              style={{ color: brandConfig.colorPalette.text }}
+              style={{ color: palette.text }}
             >
               {brandConfig.brandName}
             </span>
           </div>
 
-          {/* Desktop Menu */}
           <div className="hidden items-center gap-8 md:flex">
-            <a href="#" className="text-neutral-600 transition-colors hover:text-neutral-900">
-              Sofas
-            </a>
-            <a href="#" className="text-neutral-600 transition-colors hover:text-neutral-900">
-              Chairs
-            </a>
-            <a href="#" className="text-neutral-600 transition-colors hover:text-neutral-900">
-              Tables
-            </a>
-            <a href="#" className="text-neutral-600 transition-colors hover:text-neutral-900">
-              Collections
-            </a>
+            {brandConfig.navigation.links.map((link) => (
+              <a
+                key={link.label}
+                href={link.href}
+                className="transition-colors"
+                style={navLinkStyle}
+              >
+                {link.label}
+              </a>
+            ))}
           </div>
 
           <div className="hidden items-center gap-4 md:flex">
-            <Button variant="ghost" className="text-neutral-600">
-              Cart
-            </Button>
-            <Button 
-              className="text-white"
-              style={{ backgroundColor: brandConfig.colorPalette.primary }}
+            <Button
+              variant="ghost"
+              style={{ color: palette.text }}
             >
-              Shop Now
+              {brandConfig.navigation.cartLabel}
+            </Button>
+            <Button
+              style={{
+                backgroundColor: palette.primary,
+                color: palette.primaryForeground,
+              }}
+            >
+              {brandConfig.navigation.primaryCtaLabel}
             </Button>
           </div>
 
-          {/* Mobile Menu Button */}
           <button
             className="md:hidden"
-            onClick={() => setIsMenuOpen(!isMenuOpen)}
+            onClick={() => setIsMenuOpen((prev) => !prev)}
+            style={{ color: palette.text }}
+            aria-label="Toggle navigation menu"
           >
             {isMenuOpen ? (
-              <X className="h-6 w-6" style={{ color: brandConfig.colorPalette.text }} />
+              CloseIcon ? <CloseIcon className="h-6 w-6" /> : null
             ) : (
-              <Menu className="h-6 w-6" style={{ color: brandConfig.colorPalette.text }} />
+              MenuIcon ? <MenuIcon className="h-6 w-6" /> : null
             )}
           </button>
         </div>
 
-        {/* Mobile Menu */}
         {isMenuOpen && (
-          <div className="mt-4 flex flex-col gap-4 border-t border-neutral-200 pt-4 md:hidden">
-            <a href="#" className="text-neutral-600 transition-colors hover:text-neutral-900">
-              Products
-            </a>
-            <a href="#" className="text-neutral-600 transition-colors hover:text-neutral-900">
-              About
-            </a>
-            <a href="#" className="text-neutral-600 transition-colors hover:text-neutral-900">
-              Contact
-            </a>
-            <div className="flex flex-col gap-2 pt-2">
-              <Button 
-                className="text-white"
-                style={{ backgroundColor: brandConfig.colorPalette.primary }}
+          <div
+            className="mt-4 flex flex-col gap-4 border-t pt-4 md:hidden"
+            style={{ borderColor: palette.border }}
+          >
+            {brandConfig.navigation.links.map((link) => (
+              <a
+                key={`mobile-${link.label}`}
+                href={link.href}
+                className="transition-colors"
+                style={navLinkStyle}
               >
-                Get Started
+                {link.label}
+              </a>
+            ))}
+            <div className="flex flex-col gap-2 pt-2">
+              <Button
+                style={{
+                  backgroundColor: palette.primary,
+                  color: palette.primaryForeground,
+                }}
+              >
+                {brandConfig.navigation.mobileCtaLabel}
               </Button>
             </div>
           </div>

@@ -949,6 +949,43 @@
 		);
 	}
 
+	async function persistLogoSnapshot(source: 'ai-generated' | 'upload') {
+		if (
+			!storageKey ||
+			storageKey === 'local-chat' ||
+			typeof fetch === 'undefined' ||
+			!answers['logo'] ||
+			!answers['logo'].fileData
+		) {
+			return;
+		}
+
+		const brandName = collectedInfo.brandName || answers['brandName'] || '';
+
+		try {
+			const logo = answers['logo'];
+			const payload: Record<string, any> = {
+				brandName,
+				source,
+				filename: logo.filename || `${brandName || 'brand'}-logo.svg`,
+				storageId: logo.storageId,
+				fileUrl: logo.fileUrl || logo.fileData
+			};
+
+			if (!logo.storageId && logo.fileData?.startsWith('data:')) {
+				payload.logoData = logo.fileData;
+			}
+
+			await fetch(`/api/chat-sessions/${storageKey}/logo`, {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify(payload)
+			});
+		} catch (error) {
+			console.warn('[chatbot] Failed to persist logo snapshot', error);
+		}
+	}
+
 	// Handle logo acceptance
 	async function handleAcceptLogo(messageId: string) {
 		// Mark logo as accepted
@@ -967,6 +1004,7 @@
 		await sendBotMessage(
 			"✅ Great! I've saved your logo. It will be used in your brand guidelines."
 		);
+		await persistLogoSnapshot('ai-generated');
 		await delay(500);
 
 		// Check if we're at the end of questions - if so, finish conversation
@@ -1043,16 +1081,18 @@
 
 			const result = await response.json();
 
-			if (result.success && result.logoData) {
+			if (result.success && result.logoUrl && result.logoId) {
 				// Update the logo
 				answers['logo'] = {
 					type: 'ai-generated',
-					fileData: result.logoData,
+					fileData: result.logoUrl,
+					fileUrl: result.logoUrl,
+					storageId: result.logoId,
 					filename: result.filename || `${brandName.toLowerCase().replace(/\s+/g, '-')}-logo.svg`,
 					status: 'pending-acceptance'
 				};
 
-				logoPreview = result.logoData;
+				logoPreview = result.logoUrl;
 
 				// Send bot message with the regenerated logo
 				const logoMessage = await sendBotMessage(
@@ -1060,7 +1100,7 @@
 					undefined,
 					undefined,
 					undefined,
-					result.logoData
+					result.logoUrl
 				);
 
 				if (logoMessage && logoMessage.id) {
@@ -1598,12 +1638,15 @@
 				if (response.ok) {
 					const result = await response.json();
 
-					// Store the server response with base64 data
-					logoPreview = result.fileData;
+					// Store the server response with persisted data
+					logoPreview = result.fileUrl;
 					answers['logo'] = {
 						filename: result.filename,
-						filePath: result.filePath,
-						fileData: result.fileData,
+						filePath: result.fileUrl,
+						fileData: result.fileUrl,
+						fileUrl: result.fileUrl,
+						storageId: result.storageId,
+						mimeType: result.mimeType,
 						usageTag: 'primary'
 					};
 
@@ -1613,6 +1656,7 @@
 					if (answers['logo']) {
 						answers['logo'].status = 'accepted';
 					}
+					await persistLogoSnapshot('upload');
 					waitingForLogoAcceptance = false;
 					currentLogoMessageId = null;
 					await askNextQuestion();
@@ -1693,18 +1737,20 @@
 				throw new Error(error.error || 'Failed to generate logo');
 			}
 
-			const result = await response.json();
+		const result = await response.json();
 
-			if (result.success && result.logoData) {
+		if (result.success && result.logoUrl && result.logoId) {
 				// Store the generated logo (but don't mark as accepted yet)
 				answers['logo'] = {
 					type: 'ai-generated',
-					fileData: result.logoData,
-					filename: result.filename || `${brandName.toLowerCase().replace(/\s+/g, '-')}-logo.svg`,
+				fileData: result.logoUrl,
+				fileUrl: result.logoUrl,
+				storageId: result.logoId,
+				filename: result.filename || `${brandName.toLowerCase().replace(/\s+/g, '-')}-logo.svg`,
 					status: 'pending-acceptance'
 				};
 
-				logoPreview = result.logoData;
+			logoPreview = result.logoUrl;
 
 				// Send bot message with the logo image displayed and waiting for acceptance
 				const logoMessage = await sendBotMessage(
@@ -1712,7 +1758,7 @@
 					undefined,
 					undefined,
 					undefined,
-					result.logoData
+				result.logoUrl
 				);
 				currentLogoMessageId = logoMessage.id;
 				waitingForLogoAcceptance = true;

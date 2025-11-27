@@ -280,7 +280,15 @@ export class FixedLayoutEngine {
     if (binding === '{{BRAND_NAME}}') return brandData.brandName || 'Brand';
     if (binding === '{{CURRENT_DATE}}') return new Date().toLocaleDateString();
     if (binding === '{{STEP_TITLE}}') return stepData?.title || 'Content';
-    if (binding === '{{BRAND_LOGO}}') return brandData.logoFiles?.[0]?.fileData || '';
+    if (binding === '{{BRAND_LOGO}}') {
+      const logoEntry = brandData.logoFiles?.[0];
+      return (
+        logoEntry?.fileUrl ||
+        logoEntry?.fileData ||
+        logoEntry?.filePath ||
+        ''
+      );
+    }
     
     // Handle extracted content
     const key = binding.replace(/[{}]/g, '').toLowerCase();

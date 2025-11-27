@@ -1,5 +1,6 @@
 import { json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
+import { saveLogoAsset } from '$lib/server/logo-storage';
 
 /**
  * Logo upload endpoint
@@ -9,7 +10,7 @@ import type { RequestHandler } from './$types';
  * - Returns base64 data URL so the client can preview and send it along
  *   to brand-guidelines APIs, which store it in the database.
  */
-export const POST: RequestHandler = async ({ request }) => {
+export const POST: RequestHandler = async ({ request, locals }) => {
 	try {
 		const formData = await request.formData();
 		const file = formData.get('logo') as File | null;
@@ -28,15 +29,24 @@ export const POST: RequestHandler = async ({ request }) => {
 
 		const arrayBuffer = await file.arrayBuffer();
 		const buffer = Buffer.from(arrayBuffer);
-		const base64Data = buffer.toString('base64');
 		const mimeType =
 			file.type || (file.name.endsWith('.svg') ? 'image/svg+xml' : 'image/png');
-		const dataUrl = `data:${mimeType};base64,${base64Data}`;
+
+		const session = typeof locals.auth === 'function' ? await locals.auth() : null;
+		const { id: storageId, fileUrl } = await saveLogoAsset({
+			buffer,
+			filename: file.name,
+			mimeType,
+			userId: session?.user?.id,
+			source: 'upload'
+		});
 
 		return json({
 			success: true,
 			filename: file.name,
-			fileData: dataUrl,
+			fileData: fileUrl,
+			fileUrl,
+			storageId,
 			fileSize: file.size,
 			mimeType
 		});
