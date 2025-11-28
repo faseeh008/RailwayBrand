@@ -106,7 +106,10 @@
   }
 </script>
 
-<div class="applications-slide" style="background: linear-gradient(135deg, {color7Lighter} 0%, {color8Lighter} 20%, #FFFFFF 40%, {color1Lighter} 60%, {color2Lighter} 80%, #FFFFFF 100%);">
+<div
+  class="applications-slide"
+  style={`background: linear-gradient(135deg, ${color7Lighter} 0%, ${color8Lighter} 20%, #FFFFFF 40%, ${color1Lighter} 60%, ${color2Lighter} 80%, #FFFFFF 100%); --color7-rgba12: ${color7Rgba12}; --color8-rgba12: ${color8Rgba12}; --color1-rgba5: ${color1Rgba5}; --primary-color: ${primaryColor}; --secondary-color: ${secondaryColor};`}
+>
   <div class="radial-overlay"></div>
   
   <div class="slide">
@@ -154,9 +157,9 @@
     right: 0;
     bottom: 0;
     background: 
-      radial-gradient(circle at 20% 30%, {color7Rgba12} 0%, transparent 50%),
-      radial-gradient(circle at 80% 70%, {color8Rgba12} 0%, transparent 50%),
-      linear-gradient(45deg, transparent 0%, {color1Rgba5} 50%, transparent 100%);
+      radial-gradient(circle at 20% 30%, var(--color7-rgba12) 0%, transparent 50%),
+      radial-gradient(circle at 80% 70%, var(--color8-rgba12) 0%, transparent 50%),
+      linear-gradient(45deg, transparent 0%, var(--color1-rgba5) 50%, transparent 100%);
     pointer-events: none;
     z-index: 1;
   }
@@ -170,7 +173,7 @@
   }
   
   .header {
-    border-bottom: 4px solid {primaryColor};
+    border-bottom: 4px solid var(--primary-color);
     padding-bottom: 15px;
     margin-bottom: 30px;
   }
@@ -178,7 +181,7 @@
   .title {
     font-size: 42px;
     font-weight: bold;
-    color: {primaryColor};
+    color: var(--primary-color);
   }
   
   .content {
@@ -211,7 +214,7 @@
     width: 100px;
     height: 100px;
     border-radius: 12px;
-    background: linear-gradient(135deg, {primaryColor} 0%, {secondaryColor} 100%);
+    background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -270,7 +273,7 @@
   .note-title {
     font-size: 16px;
     font-weight: bold;
-    color: {primaryColor};
+    color: var(--primary-color);
     margin-bottom: 8px;
   }
   

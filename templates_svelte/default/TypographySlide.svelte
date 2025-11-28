@@ -173,7 +173,10 @@
   }
 </script>
 
-<div class="typography-slide" style="background: linear-gradient(135deg, {color4Lighter} 0%, {color5Lighter} 25%, #FFFFFF 50%, {color6Lighter} 75%, #FFFFFF 100%);">
+<div
+  class="typography-slide"
+  style={`background: linear-gradient(135deg, ${color4Lighter} 0%, ${color5Lighter} 25%, #FFFFFF 50%, ${color6Lighter} 75%, #FFFFFF 100%); --primary-color: ${primaryColor}; --color4-rgba8: ${color4Rgba8}; --color5-rgba8: ${color5Rgba8}; --color6-rgba8: ${color6Rgba8};`}
+>
   <div class="radial-overlay"></div>
   
   <div class="slide">
@@ -186,9 +189,14 @@
         {#if isEditable}
           <input type="text" bind:value={primaryFont} class="font-name-input" />
         {:else}
-          <div class="font-name" style="font-family: '{primaryFont}', Arial, sans-serif;">{primaryFont}</div>
+          <div
+            class="font-name"
+            style={`font-family: '${primaryFont}', Arial, sans-serif;`}
+          >
+            {primaryFont}
+          </div>
         {/if}
-        <div class="font-sample" style="font-family: '{primaryFont}', Arial, sans-serif;">
+        <div class="font-sample" style={`font-family: '${primaryFont}', Arial, sans-serif;`}>
           Aa Bb Cc Dd Ee Ff Gg Hh Ii Jj Kk Ll Mm Nn Oo Pp Qq Rr Ss Tt Uu Vv Ww Xx Yy Zz<br>
           0123456789
         </div>
@@ -204,9 +212,14 @@
         {#if isEditable}
           <input type="text" bind:value={secondaryFont} class="font-name-input" />
         {:else}
-          <div class="font-name" style="font-family: '{secondaryFont}', Arial, sans-serif;">{secondaryFont}</div>
+          <div
+            class="font-name"
+            style={`font-family: '${secondaryFont}', Arial, sans-serif;`}
+          >
+            {secondaryFont}
+          </div>
         {/if}
-        <div class="font-sample" style="font-family: '{secondaryFont}', Arial, sans-serif;">
+        <div class="font-sample" style={`font-family: '${secondaryFont}', Arial, sans-serif;`}>
           Aa Bb Cc Dd Ee Ff Gg Hh Ii Jj Kk Ll Mm Nn Oo Pp Qq Rr Ss Tt Uu Vv Ww Xx Yy Zz<br>
           0123456789
         </div>
@@ -244,7 +257,7 @@
     right: 0;
     bottom: 0;
     background: 
-      linear-gradient(90deg, transparent 0%, {color4Rgba8} 20%, transparent 40%, {color5Rgba8} 60%, transparent 80%, {color6Rgba8} 100%);
+      linear-gradient(90deg, transparent 0%, var(--color4-rgba8) 20%, transparent 40%, var(--color5-rgba8) 60%, transparent 80%, var(--color6-rgba8) 100%);
     pointer-events: none;
     z-index: 1;
   }
@@ -260,7 +273,7 @@
   .title {
     font-size: 42px;
     font-weight: bold;
-    color: {primaryColor};
+    color: var(--primary-color);
     margin-bottom: 15px;
   }
   

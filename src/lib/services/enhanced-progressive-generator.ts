@@ -38,7 +38,7 @@ export interface EnhancedGenerationRequest {
 export async function generateEnhancedProgressiveStep(
 	request: EnhancedGenerationRequest
 ): Promise<{
-	content: string;
+	content: any;
 	message: string;
 }> {
 	try {
@@ -252,15 +252,23 @@ Output:
 NOW GENERATE FOR:
 ${contextInfo}
 
-FORMAT AS:
-**Brand Positioning**: [1-2 line statement specific to "${brandName}" in ${industry} with ${style} style - MUST follow ${style} vibe guidelines]
-**Mission**: [1-2 line mission specific to "${brandName}" - MUST reflect ${style} tone]
-**Vision**: [1-2 line vision specific to "${brandName}" - MUST reflect ${style} tone]
-**Core Values**: [3-5 short values, one per line, specific to "${brandName}" - MUST align with ${style} values]
-**Target Audience**: [1-2 line description specific to "${brandName}" audience]
-**Voice & Tone**: [1-2 line guidelines specific to "${brandName}" brand voice - MUST match ${style} tone exactly]
+FORMAT AS VALID JSON (NO MARKDOWN, NO EXTRA TEXT, NO BULLET POINTS):
+{
+  "step": "brand-positioning",
+  "brand_name": "${brandName}",
+  "positioning_statement": "[1-2 sentence positioning line tailored to ${industry} with ${style} tone]",
+  "mission": "[1 sentence mission in ${style} tone]",
+  "vision": "[1 sentence vision in ${style} tone]",
+  "values": ["Value 1", "Value 2", "Value 3"],
+  "target_audience": "[1-2 sentence audience summary]",
+  "voice_and_tone": {
+    "adjectives": ["trait 1", "trait 2", "trait 3"],
+    "guidelines": "[1-2 sentence communication guidance]",
+    "sample_lines": ["Short sample line 1", "Short sample line 2"]
+  }
+}
 
-Return ONLY the formatted text above. Make it SPECIFIC to "${brandName}" brand, ${industry} industry, and ${style} style. STRICTLY follow the ${style} vibe messaging guidelines.`;
+Return ONLY this JSON object.`;
 }
 
 function getVibeMessagingGuidelines(style: string): string {
@@ -387,12 +395,27 @@ Output:
 NOW GENERATE FOR:
 ${contextInfo}
 
-FORMAT AS:
-**Logo Concept**: [Description specific to "${brandName}" with ${style} style for ${industry}]
-**Variants**: [List of variants: full_color, monochrome, icon_only, reversed]
-**Usage Rules**: [3-5 specific rules for "${brandName}" logo usage]
+FORMAT AS VALID JSON (NO MARKDOWN, NO EXTRA TEXT):
+{
+  "step": "logo-guidelines",
+  "brand_name": "${brandName}",
+  "concept": "[2 sentence description of concept tied to ${industry} and ${style}]",
+  "variants": [
+    { "name": "full_color", "description": "[usage note]" },
+    { "name": "monochrome", "description": "[usage note]" },
+    { "name": "icon_only", "description": "[usage note]" },
+    { "name": "reversed", "description": "[usage note]" }
+  ],
+  "usage_rules": [
+    "Rule 1",
+    "Rule 2",
+    "Rule 3"
+  ],
+  "clearspace": "[brief clearspace guidance]",
+  "minimum_size": "[digital + print minimums]"
+}
 
-Return ONLY the formatted text above. Make it SPECIFIC to "${brandName}" brand, ${industry} industry, and ${style} style.`;
+Return ONLY this JSON object.`;
 }
 
 function createColorPalettePrompt(
@@ -424,8 +447,9 @@ ${vibeColorGuidelines}
 - Colors MUST be generated based on ${industry} industry FIRST
 - Colors MUST STRICTLY follow ${style} vibe color guidelines above
 - Industry + Vibe are the PRIMARY drivers - everything else is secondary
-- Provide 5-7 colors total: primary (1-2), secondary (1-2), accent (1), neutrals (2-3)
-- All colors must include hex codes
+- Provide AT LEAST 6 unique colors total (ideal 5-7): core palette (3-4 colors), accent palette (2 colors minimum), neutral palette (2-3 colors)
+- All colors must include hex codes and rgb values
+- Return structured JSON only; no markdown
 - If extracted colors or feedback conflict with Industry + Vibe, IGNORE them
 
 EXAMPLES (3-shot learning):
@@ -516,17 +540,35 @@ Output:
 NOW GENERATE FOR:
 ${contextInfo}${colorContext}${feedbackContext}
 
-FORMAT AS:
-**Primary Colors**: [1-2 colors with hex, rgb, name, and usage]
-**Secondary Colors**: [1-2 colors with hex, rgb, name, and usage]
-**Accent Color**: [1 color with hex, rgb, name, and usage]
-**Neutrals**: [2-3 colors with hex, rgb, name, and usage]
-**Usage Guidelines**: [Brief guidelines specific to "${brandName}" and ${industry}]
+FORMAT AS VALID JSON (NO MARKDOWN, NO EXTRA TEXT):
+{
+  "step": "color-palette",
+  "brand_name": "${brandName}",
+  "colors": {
+    "core_palette": [
+      { "name": "Primary One", "hex": "#000000", "rgb": "0,0,0", "usage": "Primary brand color" },
+      { "name": "Primary Two", "hex": "#111111", "rgb": "17,17,17", "usage": "Secondary headline color" },
+      { "name": "Support Tone", "hex": "#222222", "rgb": "34,34,34", "usage": "UI highlight" }
+    ],
+    "accent_palette": [
+      { "name": "Accent Highlight", "hex": "#333333", "rgb": "51,51,51", "usage": "Call-to-action buttons" },
+      { "name": "Accent Contrast", "hex": "#444444", "rgb": "68,68,68", "usage": "Badges and emphasis" }
+    ],
+    "neutral_palette": [
+      { "name": "Neutral Light", "hex": "#555555", "rgb": "85,85,85", "usage": "Backgrounds" },
+      { "name": "Neutral Dark", "hex": "#666666", "rgb": "102,102,102", "usage": "Body text" }
+    ]
+  },
+  "usage": {
+    "backgrounds": "[guidance]",
+    "text": "[guidance]",
+    "buttons": "[guidance]",
+    "gradients": ["Tip 1", "Tip 2"]
+  },
+  "contrast_guidelines": ["Guideline 1", "Guideline 2"]
+}
 
-IMPORTANT: Format colors clearly with hex codes visible. Use this format for each color:
-- [Color Name]: #[HEXCODE] (rgb: r, g, b) - [usage description]
-
-Return ONLY the formatted text above. Make colors SPECIFIC to "${brandName}" brand, ${industry} industry, and ${style} style. Ensure all hex codes are clearly visible and properly formatted.`;
+Return ONLY this JSON object.`;
 }
 
 function createTypographyPrompt(
@@ -621,14 +663,24 @@ Output:
 NOW GENERATE FOR:
 ${contextInfo}${typographyContext}${feedbackContext}
 
-FORMAT AS:
-**Primary Font**: [Exact Font Name] - [1-2 line description explaining WHY this font fits "${brandName}" with ${style} style in ${industry}]
-**Supporting Font**: [Exact Font Name] - [1-2 line description explaining WHY this font complements the primary]
-**Font Hierarchy**: [H1, H2, H3, Body, UI with sizes and weights]
-**Web Usage**: [1-2 line web implementation guidelines]
-**Print Usage**: [1-2 line print guidelines]
+FORMAT AS VALID JSON (NO MARKDOWN, NO EXTRA TEXT):
+{
+  "step": "typography",
+  "brand_name": "${brandName}",
+  "primary_font": "[Exact font name]",
+  "primary_usage": "[1 sentence reason]",
+  "secondary_font": "[Exact font name]",
+  "secondary_usage": "[1 sentence reason]",
+  "font_hierarchy": [
+    { "label": "H1", "font": "[Font]", "weight": "bold", "size": "48px" },
+    { "label": "H2", "font": "[Font]", "weight": "semibold", "size": "32px" },
+    { "label": "Body", "font": "[Font]", "weight": "regular", "size": "16px" }
+  ],
+  "web_usage": "[1-2 sentence guidance]",
+  "print_usage": "[1-2 sentence guidance]"
+}
 
-Return ONLY the formatted text above. Make typography SPECIFIC to "${brandName}" brand, ${industry} industry, and ${style} style.`;
+Return ONLY this JSON object.`;
 }
 
 function createIconographyPrompt(
@@ -652,7 +704,7 @@ ${vibeIconGuidelines}
 - Industry + Vibe are the PRIMARY drivers - everything else is secondary
 - Icons must be SPECIFIC to ${industry} industry
 - Must be relevant to "${brandName}" brand (use brand name for personalization only)
-- Provide 6-8 required icon glyphs
+- Provide AT LEAST 16 required icon glyphs (ideal range: 16-20 unique icons covering real product/service use-cases)
 
 EXAMPLES (3-shot learning):
 
@@ -716,13 +768,25 @@ Output:
 NOW GENERATE FOR:
 ${contextInfo}
 
-FORMAT AS:
-**Icon Style**: [Description of icon style matching ${style} for ${industry}]
-**Source Recommendation**: [Iconify, Lucide, or custom SVG] - [Reasoning]
-**Required Glyphs**: [6-8 icon names specific to ${industry} and "${brandName}"]
-**Usage Guidelines**: [Brief guidelines for icon usage]
+FORMAT AS VALID JSON (NO MARKDOWN, NO EXTRA TEXT):
+{
+  "step": "iconography",
+  "brand_name": "${brandName}",
+  "style": "[2 sentence style description]",
+  "source": { "library": "[lucide|custom|iconify]", "reason": "[why]" },
+  "icons": [
+    { "name": "icon-one", "description": "[usage]" },
+    { "name": "icon-two", "description": "[usage]" },
+    "... minimum of 16 total entries ..."
+  ],
+  "usage_guidelines": [
+    "Guideline 1",
+    "Guideline 2"
+  ],
+  "grid": "[e.g., 24px grid, 2px stroke]"
+}
 
-Return ONLY the formatted text above. Make icons SPECIFIC to "${brandName}" brand, ${industry} industry, and ${style} style.`;
+Return ONLY this JSON object.`;
 }
 
 function createPhotographyPrompt(
@@ -778,12 +842,16 @@ Output:
 NOW GENERATE FOR:
 ${contextInfo}
 
-FORMAT AS:
-**Photo Style**: [Description specific to ${style} style for ${industry}]
-**Patterns & Textures**: [2-3 patterns/textures specific to "${brandName}"]
-**Stock Search Keywords**: [5-6 keywords for stock photo searches specific to ${industry} and ${style}]
+FORMAT AS VALID JSON (NO MARKDOWN, NO EXTRA TEXT):
+{
+  "step": "photography",
+  "brand_name": "${brandName}",
+  "style": "[2-3 sentence description]",
+  "patterns_textures": ["Pattern 1", "Pattern 2"],
+  "keywords": ["keyword 1", "keyword 2", "keyword 3", "keyword 4", "keyword 5"]
+}
 
-Return ONLY the formatted text above. Make photography SPECIFIC to "${brandName}" brand, ${industry} industry, and ${style} style.`;
+Return ONLY this JSON object.`;
 }
 
 function createApplicationsPrompt(
@@ -845,13 +913,20 @@ Output:
 NOW GENERATE FOR:
 ${contextInfo}${industryContext}
 
-FORMAT AS:
-**Application 1**: [Name] - [Description specific to ${industry} and ${style}]
-**Application 2**: [Name] - [Description specific to ${industry} and ${style}]
-**Application 3**: [Name] - [Description specific to ${industry} and ${style}]
-[Add 2-4 more applications as needed for ${industry}]
+FORMAT AS VALID JSON (NO MARKDOWN, NO EXTRA TEXT):
+{
+  "step": "applications",
+  "brand_name": "${brandName}",
+  "applications": [
+    { "name": "Application 1", "description": "[1 sentence use case]" },
+    { "name": "Application 2", "description": "[1 sentence use case]" },
+    { "name": "Application 3", "description": "[1 sentence use case]" },
+    { "name": "Application 4", "description": "[1 sentence use case]" }
+  ],
+  "priorities": ["Priority 1", "Priority 2"]
+}
 
-Return ONLY the formatted text above. Make applications SPECIFIC to "${brandName}" brand, ${industry} industry, and ${style} style.`;
+Return ONLY this JSON object.`;
 }
 
 function createGenericStepPrompt(
@@ -861,7 +936,7 @@ function createGenericStepPrompt(
 	industry: string,
 	style: string
 ): string {
-	return `Generate ${step} content for "${brandName}" in the ${industry} industry with a ${style} aesthetic.
+return `Generate ${step} content for "${brandName}" in the ${industry} industry with a ${style} aesthetic.
 
 ${contextInfo}
 
@@ -872,7 +947,17 @@ CRITICAL REQUIREMENTS:
 - Professional and accurate
 - Keep descriptions brief - maximum 1-2 lines each
 
-Return formatted content specific to "${brandName}", ${industry} industry, and ${style} style.`;
+FORMAT OUTPUT AS VALID JSON ONLY (NO MARKDOWN, NO EXTRA TEXT):
+{
+  "step": "${step}",
+  "brand_name": "${brandName}",
+  "sections": [
+    { "title": "Section 1", "description": "[1-2 sentences]" },
+    { "title": "Section 2", "description": "[1-2 sentences]" }
+  ]
+}
+
+Return ONLY this JSON object.`;
 }
 
 // Helper functions for vibe-specific guidelines

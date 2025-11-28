@@ -133,7 +133,10 @@
   }
 </script>
 
-<div class="iconography-slide" style="background: linear-gradient(135deg, {color5Lighter} 0%, {color6Lighter} 30%, #FFFFFF 50%, {color7Lighter} 70%, #FFFFFF 100%);">
+<div
+  class="iconography-slide"
+  style={`background: linear-gradient(135deg, ${color5Lighter} 0%, ${color6Lighter} 30%, #FFFFFF 50%, ${color7Lighter} 70%, #FFFFFF 100%); --color5-rgba12: ${color5Rgba12}; --color6-rgba12: ${color6Rgba12}; --primary-color: ${primaryColor}; --secondary-color: ${secondaryColor};`}
+>
   <div class="radial-overlay"></div>
   
   <div class="slide">
@@ -203,8 +206,8 @@
     right: 0;
     bottom: 0;
     background: 
-      radial-gradient(circle at 30% 40%, {color5Rgba12} 0%, transparent 50%),
-      radial-gradient(circle at 70% 60%, {color6Rgba12} 0%, transparent 50%);
+      radial-gradient(circle at 30% 40%, var(--color5-rgba12) 0%, transparent 50%),
+      radial-gradient(circle at 70% 60%, var(--color6-rgba12) 0%, transparent 50%);
     pointer-events: none;
     z-index: 1;
   }
@@ -218,7 +221,7 @@
   }
   
   .header {
-    border-bottom: 4px solid {primaryColor};
+    border-bottom: 4px solid var(--primary-color);
     padding-bottom: 15px;
     margin-bottom: 30px;
   }
@@ -226,7 +229,7 @@
   .title {
     font-size: 42px;
     font-weight: bold;
-    color: {primaryColor};
+    color: var(--primary-color);
   }
   
   .content {
@@ -246,7 +249,7 @@
   .grid-title {
     font-size: 20px;
     font-weight: bold;
-    color: {primaryColor};
+    color: var(--primary-color);
     margin-bottom: 25px;
   }
   
@@ -264,7 +267,7 @@
     width: 80px;
     height: 80px;
     border-radius: 50%;
-    background: linear-gradient(135deg, {primaryColor} 0%, {secondaryColor} 100%);
+    background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
     margin: 0 auto 10px;
     display: flex;
     align-items: center;
@@ -307,7 +310,7 @@
   .card-title {
     font-size: 18px;
     font-weight: bold;
-    color: {primaryColor};
+    color: var(--primary-color);
     margin-bottom: 12px;
   }
   
@@ -329,7 +332,7 @@
     width: 50px;
     height: 50px;
     border-radius: 8px;
-    background: {primaryColor};
+    background: var(--primary-color);
     margin: 0 auto;
     display: flex;
     align-items: center;

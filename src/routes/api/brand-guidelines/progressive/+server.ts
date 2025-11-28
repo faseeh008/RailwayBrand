@@ -216,7 +216,9 @@ export const POST: RequestHandler = async ({ request, locals, fetch }) => {
 		
 		// Use enhanced progressive generator if we have the required fields
 		let stepResult;
-		if (brandName && industry && style) {
+		const canUseEnhanced = Boolean(brandName && industry && style);
+
+		if (canUseEnhanced) {
 			console.log('Using enhanced progressive generator with:', {
 				brandName,
 				industry,
@@ -225,22 +227,35 @@ export const POST: RequestHandler = async ({ request, locals, fetch }) => {
 				hasIndustrySpecificInfo: Object.keys(industrySpecificInfo).length > 0,
 				hasGroundingData: !!groundingData
 			});
-			
-			stepResult = await generateEnhancedProgressiveStep({
-				step,
-				brandName,
-				industry,
-				style,
-				audience: audience || undefined,
-				description: description || undefined,
-				values: values || undefined,
-				industrySpecificInfo: Object.keys(industrySpecificInfo).length > 0 ? industrySpecificInfo : undefined,
-				previousSteps: previousSteps || {},
-				feedback: feedback || undefined,
-				extractedColors: extractedColors || undefined,
-				extractedTypography: extractedTypography || undefined,
-				groundingData: groundingData
-			});
+
+			try {
+				stepResult = await generateEnhancedProgressiveStep({
+					step,
+					brandName,
+					industry,
+					style,
+					audience: audience || undefined,
+					description: description || undefined,
+					values: values || undefined,
+					industrySpecificInfo: Object.keys(industrySpecificInfo).length > 0 ? industrySpecificInfo : undefined,
+					previousSteps: previousSteps || {},
+					feedback: feedback || undefined,
+					extractedColors: extractedColors || undefined,
+					extractedTypography: extractedTypography || undefined,
+					groundingData: groundingData
+				});
+			} catch (enhancedError) {
+				console.warn('[progressive API] Enhanced generator failed, falling back to legacy:', enhancedError);
+				stepResult = await generateProgressiveBrandGuidelines({
+					step,
+					previousSteps: previousSteps || {},
+					userApproval,
+					feedback,
+					extractedColors,
+					extractedTypography,
+					groundingData: groundingData
+				});
+			}
 		} else {
 			// Fallback to old generator if required fields are missing
 			console.log('Using legacy progressive generator (missing required fields)');
@@ -255,13 +270,17 @@ export const POST: RequestHandler = async ({ request, locals, fetch }) => {
 			});
 		}
 
+		let normalizedContent = normalizeStepContent(step, stepResult.content);
+		
 		if (step === 'iconography') {
 			try {
-				stepResult.content = await enhanceIconographyContent(stepResult.content);
+				normalizedContent = await enhanceIconographyContent(normalizedContent);
 			} catch (error) {
 				console.error('Failed to enhance iconography content:', error);
 			}
 		}
+
+		stepResult.content = normalizedContent;
 
 		console.log('Step result:', {
 			step,
@@ -317,7 +336,7 @@ async function enhanceIconographyContent(content: any) {
 
 	if (typeof content !== 'string') return content;
 
-	const iconEntries = extractIconEntries(content).slice(0, 6);
+	const iconEntries = extractIconEntries(content).slice(0, 24);
 	if (iconEntries.length === 0) return content;
 
 	const iconsWithSvg = await Promise.all(
@@ -336,6 +355,56 @@ async function enhanceIconographyContent(content: any) {
 		rawText: content,
 		icons: iconsWithSvg
 	};
+}
+
+function normalizeStepContent(step: string, content: any) {
+	if (!content) return content;
+	if (typeof content === 'object' && !Array.isArray(content)) {
+		return content;
+	}
+
+	if (typeof content !== 'string') {
+		return content;
+	}
+
+	const parsed = tryParseJson(content);
+	if (parsed) {
+		(parsed as any).step = (parsed as any).step || step;
+		return parsed;
+	}
+
+	return content;
+}
+
+function tryParseJson(raw: string) {
+	if (!raw) return null;
+	const trimmed = raw.trim();
+	const attempts = [
+		trimmed,
+		trimmed.replace(/^```json\s*/i, '').replace(/\s*```$/i, '').trim()
+	];
+
+	for (const candidate of attempts) {
+		try {
+			if (!candidate) continue;
+			return JSON.parse(candidate);
+		} catch {
+			continue;
+		}
+	}
+
+	const firstBrace = trimmed.indexOf('{');
+	const lastBrace = trimmed.lastIndexOf('}');
+	if (firstBrace !== -1 && lastBrace !== -1 && lastBrace > firstBrace) {
+		const block = trimmed.slice(firstBrace, lastBrace + 1);
+		try {
+			return JSON.parse(block);
+		} catch {
+			return null;
+		}
+	}
+
+	return null;
 }
 
 function extractIconEntries(text: string): Array<{ name: string; description?: string }> {

@@ -1,6 +1,7 @@
 <script lang="ts">
   import { onMount } from 'svelte';
   import SlideManager from '$lib/components/SlideManager.svelte';
+  import { adaptBrandDataForSlides } from '$lib/services/brand-data-adapter';
   
   let brandData: any = null;
   let loading = true;
@@ -17,7 +18,12 @@
         return;
       }
       
-      brandData = JSON.parse(raw);
+      const parsed = JSON.parse(raw);
+      const adapted = adaptBrandDataForSlides({
+        ...parsed,
+        generatedSteps: parsed.stepHistory || parsed.generatedSteps || []
+      });
+      brandData = { ...parsed, ...adapted };
       console.log('✅ Brand data loaded:', {
         brandName: brandData.brandName || brandData.brand_name,
         hasColors: !!brandData.colors,

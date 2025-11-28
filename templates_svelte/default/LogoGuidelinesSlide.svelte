@@ -103,7 +103,10 @@
   }
 </script>
 
-<div class="logo-guidelines-slide" style="background: linear-gradient(135deg, {color3Lighter} 0%, {color4Lighter} 25%, #FFFFFF 50%, {color3Lighter} 75%, #FFFFFF 100%);">
+<div
+  class="logo-guidelines-slide"
+  style={`background: linear-gradient(135deg, ${color3Lighter} 0%, ${color4Lighter} 25%, #FFFFFF 50%, ${color3Lighter} 75%, #FFFFFF 100%); --primary-color: ${primaryColor}; --color3-rgba12: ${color3Rgba12}; --color4-rgba12: ${color4Rgba12};`}
+>
   <div class="radial-overlay"></div>
   
   <div class="slide">
@@ -116,9 +119,9 @@
         <div class="section-title">Primary Logo</div>
         <div class="logo-placeholder">
           {#if logoData}
-            <img src="data:image/png;base64,{logoData}" alt="{brandName} Logo" class="logo-image" />
+            <img src={`data:image/png;base64,${logoData}`} alt={`${brandName} Logo`} class="logo-image" />
           {:else if logoUrl}
-            <img src={logoUrl} alt="{brandName} Logo" class="logo-image" />
+            <img src={logoUrl} alt={`${brandName} Logo`} class="logo-image" />
           {:else}
             <div class="logo-text">{brandName}</div>
           {/if}
@@ -182,8 +185,8 @@
     right: 0;
     bottom: 0;
     background: 
-      radial-gradient(ellipse at top left, {color3Rgba12} 0%, transparent 50%),
-      radial-gradient(ellipse at bottom right, {color4Rgba12} 0%, transparent 50%);
+      radial-gradient(ellipse at top left, var(--color3-rgba12) 0%, transparent 50%),
+      radial-gradient(ellipse at bottom right, var(--color4-rgba12) 0%, transparent 50%);
     pointer-events: none;
     z-index: 1;
   }
@@ -197,7 +200,7 @@
   }
   
   .header {
-    border-bottom: 4px solid {primaryColor};
+    border-bottom: 4px solid var(--primary-color);
     padding-bottom: 15px;
     margin-bottom: 30px;
   }
@@ -205,7 +208,7 @@
   .title {
     font-size: 42px;
     font-weight: bold;
-    color: {primaryColor};
+    color: var(--primary-color);
   }
   
   .content {
@@ -229,7 +232,7 @@
   .section-title {
     font-size: 20px;
     font-weight: bold;
-    color: {primaryColor};
+    color: var(--primary-color);
     margin-bottom: 15px;
   }
   
@@ -272,7 +275,7 @@
   .spacing-demo {
     width: 80px;
     height: 80px;
-    border: 3px dashed {primaryColor};
+    border: 3px dashed var(--primary-color);
     border-radius: 8px;
     margin: 0 auto 10px;
     display: flex;
@@ -303,7 +306,7 @@
     content: '✓';
     position: absolute;
     left: 0;
-    color: {primaryColor};
+    color: var(--primary-color);
     font-weight: bold;
     font-size: 18px;
   }

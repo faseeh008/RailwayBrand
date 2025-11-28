@@ -113,7 +113,10 @@
   }
 </script>
 
-<div class="color-palette-slide" style="background: linear-gradient(135deg, {color1Lighter} 0%, {color2Lighter} 20%, #FFFFFF 40%, {color3Lighter} 60%, {color4Lighter} 80%, #FFFFFF 100%);">
+<div
+  class="color-palette-slide"
+  style={`background: linear-gradient(135deg, ${color1Lighter} 0%, ${color2Lighter} 20%, #FFFFFF 40%, ${color3Lighter} 60%, ${color4Lighter} 80%, #FFFFFF 100%); --primary-color: ${primaryColor}; --color1-hex: ${color1Hex}; --color1-rgba15: ${color1Rgba15}; --color2-rgba15: ${color2Rgba15}; --color3-rgba10: ${color3Rgba10};`}
+>
   <div class="radial-overlay"></div>
   
   <div class="slide">
@@ -123,7 +126,7 @@
     <div class="color-grid">
       {#each displayColors as color, index}
         <div class="color-item">
-          <div class="color-swatch" style="background-color: {color.hex};"></div>
+          <div class="color-swatch" style={`background-color: ${color.hex};`}></div>
           {#if isEditable}
             <input type="text" bind:value={color.name} class="color-name-input" />
             <input type="text" bind:value={color.hex} class="color-hex-input" />
@@ -155,9 +158,9 @@
     right: 0;
     bottom: 0;
     background: 
-      radial-gradient(circle at 15% 30%, {color1Rgba15} 0%, transparent 45%),
-      radial-gradient(circle at 85% 70%, {color2Rgba15} 0%, transparent 45%),
-      radial-gradient(circle at 50% 50%, {color3Rgba10} 0%, transparent 60%);
+      radial-gradient(circle at 15% 30%, var(--color1-rgba15) 0%, transparent 45%),
+      radial-gradient(circle at 85% 70%, var(--color2-rgba15) 0%, transparent 45%),
+      radial-gradient(circle at 50% 50%, var(--color3-rgba10) 0%, transparent 60%);
     pointer-events: none;
     z-index: 1;
   }
@@ -173,14 +176,14 @@
   .title {
     font-size: 42px;
     font-weight: bold;
-    color: {primaryColor};
+    color: var(--primary-color);
     margin-bottom: 15px;
   }
   
   .divider {
     width: 100%;
     height: 3px;
-    background: {color1Hex};
+    background: var(--color1-hex);
     margin-bottom: 30px;
   }
   

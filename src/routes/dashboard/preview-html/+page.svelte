@@ -215,7 +215,20 @@
       // Don't update sessionStorage with HTML slides - would exceed quota
       // Data is already stored in database via saveSlidesToDatabase()
       // We can fetch it later if needed using guidelineId
-      console.log('💾 Skipping sessionStorage update - slides stored in DB');
+      if (data.updatedStepHistory && Array.isArray(data.updatedStepHistory)) {
+        try {
+          const updatedPreviewData = {
+            ...brandData,
+            stepHistory: data.updatedStepHistory
+          };
+          sessionStorage.setItem('preview_brand_data', JSON.stringify(updatedPreviewData));
+          console.log('💾 Updated preview_brand_data with latest stepHistory for SlideManager');
+        } catch (storageError) {
+          console.warn('⚠️ Failed to update preview_brand_data, continuing with DB data only:', storageError);
+        }
+      } else {
+        console.log('💾 Skipping sessionStorage update - slides stored in DB');
+      }
       
       // Handle clicking outside export dropdown to close it
       document.addEventListener('click', (e) => {

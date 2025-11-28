@@ -85,7 +85,10 @@
   }
 </script>
 
-<div class="thank-you-slide" style="background: linear-gradient(135deg, {secondaryColor} 0%, {color3Hex} 25%, {color4Hex} 50%, {primaryColor} 75%, {color2Hex} 100%);">
+<div
+  class="thank-you-slide"
+  style={`background: linear-gradient(135deg, ${secondaryColor} 0%, ${color3Hex} 25%, ${color4Hex} 50%, ${primaryColor} 75%, ${color2Hex} 100%);`}
+>
   <div class="radial-overlay"></div>
   
   <div class="slide">

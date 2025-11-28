@@ -91,7 +91,10 @@
   }
 </script>
 
-<div class="logo-donts-slide" style="background: linear-gradient(135deg, {color2Lighter} 0%, {color3Lighter} 15%, #FFFFFF 45%, {color4Lighter} 65%, {color5Lighter} 85%, #FFFFFF 100%);">
+<div
+  class="logo-donts-slide"
+  style={`background: linear-gradient(135deg, ${color2Lighter} 0%, ${color3Lighter} 15%, #FFFFFF 45%, ${color4Lighter} 65%, ${color5Lighter} 85%, #FFFFFF 100%); --color2-rgba12: ${color2Rgba12}; --color4-rgba12: ${color4Rgba12}; --primary-color: ${primaryColor};`}
+>
   <div class="radial-overlay"></div>
   
   <div class="slide">
@@ -109,9 +112,9 @@
           <div class="logo-demo" style="transform: scaleX(1.25);">
             <div class="strike"></div>
             {#if logoData}
-              <img src="data:image/png;base64,{logoData}" alt="{brandName} Logo" />
+              <img src={`data:image/png;base64,${logoData}`} alt={`${brandName} Logo`} />
             {:else if logoUrl}
-              <img src={logoUrl} alt="{brandName} Logo" />
+              <img src={logoUrl} alt={`${brandName} Logo`} />
             {:else}
               <div class="logo-placeholder">{brandName}</div>
             {/if}
@@ -127,9 +130,9 @@
           <div class="logo-demo" style="background: linear-gradient(135deg, #A855F7 0%, #F97316 100%);">
             <div class="strike"></div>
             {#if logoData}
-              <img src="data:image/png;base64,{logoData}" alt="{brandName} Logo" />
+              <img src={`data:image/png;base64,${logoData}`} alt={`${brandName} Logo`} />
             {:else if logoUrl}
-              <img src={logoUrl} alt="{brandName} Logo" />
+              <img src={logoUrl} alt={`${brandName} Logo`} />
             {:else}
               <div class="logo-placeholder">{brandName}</div>
             {/if}
@@ -145,9 +148,9 @@
           <div class="logo-demo" style="filter: drop-shadow(6px 6px 0 #000) blur(1px);">
             <div class="strike"></div>
             {#if logoData}
-              <img src="data:image/png;base64,{logoData}" alt="{brandName} Logo" />
+              <img src={`data:image/png;base64,${logoData}`} alt={`${brandName} Logo`} />
             {:else if logoUrl}
-              <img src={logoUrl} alt="{brandName} Logo" />
+              <img src={logoUrl} alt={`${brandName} Logo`} />
             {:else}
               <div class="logo-placeholder">{brandName}</div>
             {/if}
@@ -163,9 +166,9 @@
           <div class="logo-demo" style="background: repeating-linear-gradient(45deg, #222, #222 10px, #555 10px, #555 20px);">
             <div class="strike"></div>
             {#if logoData}
-              <img src="data:image/png;base64,{logoData}" alt="{brandName} Logo" />
+              <img src={`data:image/png;base64,${logoData}`} alt={`${brandName} Logo`} />
             {:else if logoUrl}
-              <img src={logoUrl} alt="{brandName} Logo" />
+              <img src={logoUrl} alt={`${brandName} Logo`} />
             {:else}
               <div class="logo-placeholder">{brandName}</div>
             {/if}
@@ -201,8 +204,8 @@
     right: 0;
     bottom: 0;
     background: 
-      radial-gradient(ellipse at top left, {color2Rgba12} 0%, transparent 55%),
-      radial-gradient(ellipse at bottom right, {color4Rgba12} 0%, transparent 55%);
+      radial-gradient(ellipse at top left, var(--color2-rgba12) 0%, transparent 55%),
+      radial-gradient(ellipse at bottom right, var(--color4-rgba12) 0%, transparent 55%);
     pointer-events: none;
     z-index: 1;
   }
@@ -216,7 +219,7 @@
   }
   
   .header {
-    border-bottom: 4px solid {primaryColor};
+    border-bottom: 4px solid var(--primary-color);
     padding-bottom: 15px;
     margin-bottom: 30px;
   }
@@ -224,7 +227,7 @@
   .title {
     font-size: 42px;
     font-weight: bold;
-    color: {primaryColor};
+    color: var(--primary-color);
   }
   
   .content {
@@ -322,7 +325,7 @@
   .guidelines-title {
     font-size: 18px;
     font-weight: bold;
-    color: {primaryColor};
+    color: var(--primary-color);
     margin-bottom: 12px;
   }
   

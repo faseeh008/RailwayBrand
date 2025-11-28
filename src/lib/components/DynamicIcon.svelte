@@ -65,6 +65,37 @@
     ArrowUpDown
   } from 'lucide-svelte';
 
+  const aiPriorityKeywords = [
+    't-shirt',
+    'shirt',
+    'dress',
+    'pants',
+    'jeans',
+    'skirt',
+    'hoodie',
+    'sweater',
+    'jacket',
+    'coat',
+    'fashion',
+    'apparel',
+    'garment',
+    'clothing',
+    'shoe',
+    'shoes',
+    'sandal',
+    'boot',
+    'sneaker',
+    'watch',
+    'wristwatch',
+    'timepiece'
+  ];
+
+  const shouldForceAIIcon = (iconName: string) => {
+    if (!iconName) return false;
+    const normalized = iconName.toLowerCase().trim();
+    return aiPriorityKeywords.some((keyword) => normalized.includes(keyword));
+  };
+
   // Icon mapping - map icon names to actual Lucide components
   const iconMap: Record<string, ComponentType> = {
     Plus, Edit, Trash, Save, X, Check, CheckCircle, XCircle,
@@ -121,6 +152,7 @@
   // Get the icon component from the name with aggressive fallback matching
   const iconComponent = $derived.by(() => {
     if (!name) return null;
+    if (shouldForceAIIcon(name)) return null;
     
     const normalizedName = name.toLowerCase().trim().replace(/[^a-z0-9\s-]/g, '').replace(/\s+/g, '-');
     
@@ -175,6 +207,7 @@
   // Find best fallback Lucide icon if exact match not found
   const findFallbackIcon = (iconName: string): ComponentType | null => {
     if (!iconName) return null;
+    if (shouldForceAIIcon(iconName)) return null;
     
     // First try the icon mapper which has fallback logic built-in
     const mappedName = getIconName(iconName);

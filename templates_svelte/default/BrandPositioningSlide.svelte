@@ -5,6 +5,7 @@
   export let vision: string = 'Our vision statement';
   export let values: string = 'Innovation • Excellence • Integrity';
   export let personality: string = 'Our brand personality';
+  export let targetAudience: string = '';
   export let primaryColor: string = '#1E40AF';
   export let color1Hex: string = '#1E40AF';
   export let color2Hex: string = '#3B82F6';
@@ -18,6 +19,7 @@
   export let color1Rgba5: string = 'rgba(30, 64, 175, 0.05)';
   export let isEditable: boolean = false;
   
+  $: resolvedAudience = (targetAudience && targetAudience.trim()) || personality;
   $: slideData = createSlideData();
   
   function createSlideData(): SlideData {
@@ -200,7 +202,7 @@
           id: 'audience-content',
           type: 'text' as const,
           position: { x: 0.57, y: 4.36, w: 8.86, h: 0.8 },
-          text: personality,
+          text: resolvedAudience,
           fontSize: 12,
           fontFace: 'Arial',
           color: '2C2C2C',
@@ -217,7 +219,10 @@
   }
 </script>
 
-<div class="brand-positioning-slide" style="background: linear-gradient(135deg, {color2Lighter} 0%, {color3Lighter} 25%, #FFFFFF 50%, {color1Lighter} 75%, #FFFFFF 100%);">
+<div
+  class="brand-positioning-slide"
+  style={`background: linear-gradient(135deg, ${color2Lighter} 0%, ${color3Lighter} 25%, #FFFFFF 50%, ${color1Lighter} 75%, #FFFFFF 100%); --primary-color: ${primaryColor}; --color1-hex: ${color1Hex}; --color2-hex: ${color2Hex}; --color3-hex: ${color3Hex}; --color1-lighter: ${color1Lighter}; --color2-lighter: ${color2Lighter}; --color3-lighter: ${color3Lighter}; --color2-rgba15: ${color2Rgba15}; --color3-rgba15: ${color3Rgba15}; --color1-rgba5: ${color1Rgba5};`}
+>
   <div class="radial-overlay"></div>
   
   <div class="slide">
@@ -263,9 +268,9 @@
       <div class="card-title">TARGET AUDIENCE</div>
       <div class="card-content">
         {#if isEditable}
-          <textarea bind:value={personality} class="editable-text"></textarea>
+          <textarea bind:value={targetAudience} class="editable-text"></textarea>
         {:else}
-          {personality}
+          {resolvedAudience}
         {/if}
       </div>
     </div>
@@ -288,9 +293,9 @@
     right: 0;
     bottom: 0;
     background: 
-      radial-gradient(circle at 10% 20%, {color2Rgba15} 0%, transparent 40%),
-      radial-gradient(circle at 90% 80%, {color3Rgba15} 0%, transparent 40%),
-      linear-gradient(45deg, transparent 30%, {color1Rgba5} 50%, transparent 70%);
+      radial-gradient(circle at 10% 20%, var(--color2-rgba15) 0%, transparent 40%),
+      radial-gradient(circle at 90% 80%, var(--color3-rgba15) 0%, transparent 40%),
+      linear-gradient(45deg, transparent 30%, var(--color1-rgba5) 50%, transparent 70%);
     pointer-events: none;
     z-index: 1;
   }
@@ -306,14 +311,14 @@
   .title {
     font-size: 42px;
     font-weight: bold;
-    color: {primaryColor};
+    color: var(--primary-color);
     margin-bottom: 15px;
   }
   
   .divider {
     width: 100%;
     height: 3px;
-    background: {color1Hex};
+    background: var(--color1-hex);
     margin-bottom: 25px;
   }
   
@@ -331,18 +336,18 @@
   }
   
   .card.mission {
-    background: {color1Lighter};
-    border-color: {color1Hex};
+    background: var(--color1-lighter);
+    border-color: var(--color1-hex);
   }
   
   .card.vision {
-    background: {color2Lighter};
-    border-color: {color2Hex};
+    background: var(--color2-lighter);
+    border-color: var(--color2-hex);
   }
   
   .card.values {
-    background: {color3Lighter};
-    border-color: {color3Hex};
+    background: var(--color3-lighter);
+    border-color: var(--color3-hex);
     width: 100%;
   }
   
@@ -353,15 +358,15 @@
   }
   
   .card.mission .card-title {
-    color: {color1Hex};
+    color: var(--color1-hex);
   }
   
   .card.vision .card-title {
-    color: {color2Hex};
+    color: var(--color2-hex);
   }
   
   .card.values .card-title {
-    color: {color3Hex};
+    color: var(--color3-hex);
   }
   
   .card-content {

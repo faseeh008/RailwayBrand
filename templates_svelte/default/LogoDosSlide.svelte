@@ -92,7 +92,10 @@
   }
 </script>
 
-<div class="logo-dos-slide" style="background: linear-gradient(135deg, {color1Lighter} 0%, {color2Lighter} 20%, #FFFFFF 50%, {color3Lighter} 70%, {color4Lighter} 90%, #FFFFFF 100%);">
+<div
+  class="logo-dos-slide"
+  style={`background: linear-gradient(135deg, ${color1Lighter} 0%, ${color2Lighter} 20%, #FFFFFF 50%, ${color3Lighter} 70%, ${color4Lighter} 90%, #FFFFFF 100%); --color1-rgba10: ${color1Rgba10}; --color3-rgba10: ${color3Rgba10}; --primary-color: ${primaryColor};`}
+>
   <div class="radial-overlay"></div>
   
   <div class="slide">
@@ -109,9 +112,9 @@
           </div>
           <div class="logo-demo">
             {#if logoData}
-              <img src="data:image/png;base64,{logoData}" alt="{brandName} Logo" />
+              <img src={`data:image/png;base64,${logoData}`} alt={`${brandName} Logo`} />
             {:else if logoUrl}
-              <img src={logoUrl} alt="{brandName} Logo" />
+              <img src={logoUrl} alt={`${brandName} Logo`} />
             {:else}
               <div class="logo-placeholder">{brandName}</div>
             {/if}
@@ -127,9 +130,9 @@
           <div class="logo-demo" style="position: relative;">
             <div class="clear-space-indicator"></div>
             {#if logoData}
-              <img src="data:image/png;base64,{logoData}" alt="{brandName} Logo" />
+              <img src={`data:image/png;base64,${logoData}`} alt={`${brandName} Logo`} />
             {:else if logoUrl}
-              <img src={logoUrl} alt="{brandName} Logo" />
+              <img src={logoUrl} alt={`${brandName} Logo`} />
             {:else}
               <div class="logo-placeholder">{brandName}</div>
             {/if}
@@ -144,9 +147,9 @@
           </div>
           <div class="logo-demo" style="height: 100px;">
             {#if logoData}
-              <img src="data:image/png;base64,{logoData}" alt="{brandName} Logo" />
+              <img src={`data:image/png;base64,${logoData}`} alt={`${brandName} Logo`} />
             {:else if logoUrl}
-              <img src={logoUrl} alt="{brandName} Logo" />
+              <img src={logoUrl} alt={`${brandName} Logo`} />
             {:else}
               <div class="logo-placeholder">{brandName}</div>
             {/if}
@@ -159,11 +162,14 @@
             <div class="badge-do">DO</div>
             <div class="card-title">Ensure Contrast</div>
           </div>
-          <div class="logo-demo" style="background: linear-gradient(135deg, #111 0%, {primaryColor} 100%);">
+          <div
+            class="logo-demo"
+            style={`background: linear-gradient(135deg, #111 0%, ${primaryColor} 100%);`}
+          >
             {#if logoData}
-              <img src="data:image/png;base64,{logoData}" alt="{brandName} Logo" />
+              <img src={`data:image/png;base64,${logoData}`} alt={`${brandName} Logo`} />
             {:else if logoUrl}
-              <img src={logoUrl} alt="{brandName} Logo" />
+              <img src={logoUrl} alt={`${brandName} Logo`} />
             {:else}
               <div class="logo-placeholder">{brandName}</div>
             {/if}
@@ -199,8 +205,8 @@
     right: 0;
     bottom: 0;
     background: 
-      radial-gradient(circle at 25% 25%, {color1Rgba10} 0%, transparent 50%),
-      radial-gradient(circle at 75% 75%, {color3Rgba10} 0%, transparent 50%);
+      radial-gradient(circle at 25% 25%, var(--color1-rgba10) 0%, transparent 50%),
+      radial-gradient(circle at 75% 75%, var(--color3-rgba10) 0%, transparent 50%);
     pointer-events: none;
     z-index: 1;
   }
@@ -214,7 +220,7 @@
   }
   
   .header {
-    border-bottom: 4px solid {primaryColor};
+    border-bottom: 4px solid var(--primary-color);
     padding-bottom: 15px;
     margin-bottom: 30px;
   }
@@ -222,7 +228,7 @@
   .title {
     font-size: 42px;
     font-weight: bold;
-    color: {primaryColor};
+    color: var(--primary-color);
   }
   
   .content {
@@ -311,13 +317,6 @@
     border-radius: 12px;
     padding: 24px;
     box-shadow: 0 4px 12px rgba(0,0,0,0.08);
-  }
-  
-  .guidelines-title {
-    font-size: 18px;
-    font-weight: bold;
-    color: {primaryColor};
-    margin-bottom: 12px;
   }
   
   .guideline-item {

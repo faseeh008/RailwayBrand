@@ -5,21 +5,57 @@
 ### Directory Structure
 ```
 templates_svelte/
-└── default/
+├── default/
+│   ├── CoverSlide.svelte
+│   ├── BrandIntroductionSlide.svelte
+│   ├── BrandPositioningSlide.svelte
+│   ├── LogoGuidelinesSlide.svelte
+│   ├── ColorPaletteSlide.svelte
+│   ├── TypographySlide.svelte
+│   ├── IconographySlide.svelte
+│   ├── PhotographySlide.svelte
+│   ├── ApplicationsSlide.svelte
+│   ├── LogoDosSlide.svelte
+│   ├── LogoDontsSlide.svelte
+│   ├── ThankYouSlide.svelte
+│   └── index.ts
+├── minimalist/
+│   ├── CoverSlide.svelte
+│   ├── ContentsSlide.svelte
+│   ├── LogoOverviewSlide.svelte
+│   ├── LogoShowcaseSlide.svelte
+│   ├── TypographyHeroSlide.svelte
+│   ├── TypographyDetailsSlide.svelte
+│   ├── ColorPaletteSlide.svelte
+│   ├── ColorUsageSlide.svelte
+│   ├── SocialMediaSlide.svelte
+│   ├── InspirationSlide.svelte
+│   ├── MoodboardSlide.svelte
+│   └── ThankYouSlide.svelte
+├── funky/
+│   ├── CoverSlide.svelte
+│   ├── TableOfContentsSlide.svelte
+│   ├── BrandStorySlide.svelte
+│   ├── MoodboardSlide.svelte
+│   ├── PlanSlide.svelte
+│   ├── ProductSlide.svelte
+│   ├── TeamSlide.svelte
+│   ├── PaletteSlide.svelte
+│   ├── LogoVariationsSlide.svelte
+│   ├── TypographySlide.svelte
+│   ├── ContactSlide.svelte
+│   ├── FunkySlideShell.svelte
+│   ├── theme.ts
+│   └── index.ts
+└── maximalist/
     ├── CoverSlide.svelte
-    ├── BrandIntroductionSlide.svelte
-    ├── BrandPositioningSlide.svelte
-    ├── LogoGuidelinesSlide.svelte
-    ├── ColorPaletteSlide.svelte
-    ├── TypographySlide.svelte
-    ├── IconographySlide.svelte
-    ├── PhotographySlide.svelte
-    ├── ApplicationsSlide.svelte
-    ├── LogoDosSlide.svelte
-    ├── LogoDontsSlide.svelte
+    ├── ContentSlide.svelte
+    ├── ImageGridSlide.svelte
+    ├── FullWidthSlide.svelte
     ├── ThankYouSlide.svelte
-    ├── index.ts
-    └── README.md
+    ├── MaximalistSlideShell.svelte
+    ├── theme.ts
+    └── index.ts
 ```
 
 ### Supporting Files
@@ -131,6 +167,55 @@ isEditable: boolean
 ```typescript
 // See individual component files for specific props
 isEditable: boolean
+```
+
+## 🎨 Template-Specific Components
+
+### Funky Template
+The funky template features:
+- Organic shapes and vibrant colors
+- Playful, modern aesthetic
+- Shared `FunkySlideShell` component
+- Theme system via `theme.ts`
+
+**Key Components:**
+- `CoverSlide` - Bold heading with subheading
+- `TableOfContentsSlide` - Ordered list with featured image
+- `BrandStorySlide` - Hero and inset images with copy
+- `MoodboardSlide` - Image gallery with color dots
+- `PlanSlide` - Vision and mission columns
+- `ProductSlide` - Product gallery
+- `TeamSlide` - Team member grid
+- `PaletteSlide` - Color swatches with hex codes
+- `LogoVariationsSlide` - Logo variations showcase
+- `TypographySlide` - Font definitions
+- `ContactSlide` - Contact information
+
+### Maximalist Template
+The maximalist template features:
+- Clean, professional interior design aesthetic
+- Light beige/tan backgrounds
+- Professional typography (Inter font)
+- Footer with studio name, property name, and barcode
+- Shared `MaximalistSlideShell` component
+- Theme system via `theme.ts`
+
+**Key Components:**
+- `CoverSlide` - Large "BRAND GUIDELINES" text with hero image
+- `ContentSlide` - Title, description, and image (left/right positioning)
+- `ImageGridSlide` - Multiple images with descriptive text
+- `FullWidthSlide` - Title and description with full-width image
+- `ThankYouSlide` - Black background with white text and image
+
+**MaximalistSlideShell Props:**
+```typescript
+studioName: string = 'STUDIO SHODWE'
+propertyName: string = 'INTERIOR PROPERTY'
+barcodeNumber: string = '0 38040 02038 70 1'
+backgroundColorOverride?: string
+footerBackgroundOverride?: string
+footerTextColorOverride?: string
+theme: MaximalistTheme
 ```
 
 ## 🚀 Usage Example

@@ -12,7 +12,7 @@
   export let color2: string = '#3B82F6';
   export let color3: string = '#60A5FA';
   export let secondaryColor: string = '#93C5FD';
-  export let logoData?: string; // base64 image data
+export let logoData: string | undefined = undefined; // base64 image data
   export let isEditable: boolean = false;
   
   // Editable state
@@ -89,7 +89,10 @@
   }
 </script>
 
-<div class="cover-slide" style="background: linear-gradient(135deg, {primaryColor} 0%, {color2} 30%, {color3} 60%, {secondaryColor} 100%);">
+<div
+  class="cover-slide"
+  style={`background: linear-gradient(135deg, ${primaryColor} 0%, ${color2} 30%, ${color3} 60%, ${secondaryColor} 100%);`}
+>
   <div class="radial-overlay"></div>
   
   <div class="slide-content">

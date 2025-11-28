@@ -26,11 +26,24 @@ function extractIconographyIcons(brandInput: any, fileName?: string, templateSet
 	const stepHistory = brandInput.stepHistory || [];
 	const iconographyStep = stepHistory.find((step: any) => step.step === 'iconography');
 	
+	// Normalize content to string (handle both string and object cases)
+	const rawContent = iconographyStep?.content;
+	let contentString = '';
+	if (rawContent) {
+		if (typeof rawContent === 'string') {
+			contentString = rawContent;
+		} else if (typeof rawContent === 'object' && rawContent !== null) {
+			// If content is an object, try to extract text from common properties
+			contentString = rawContent.rawText || rawContent.text || rawContent.content || JSON.stringify(rawContent);
+		}
+	}
+	
 	console.log('🔍 Extracting iconography icons:', {
 		hasStepHistory: !!brandInput.stepHistory,
 		stepHistoryLength: stepHistory.length,
 		iconographyStep: !!iconographyStep,
-		iconographyContent: iconographyStep?.content?.substring(0, 200) || 'No content',
+		contentType: typeof rawContent,
+		iconographyContent: contentString ? contentString.substring(0, 200) : 'No content',
 		templateSet: templateSet
 	});
 	
@@ -49,7 +62,7 @@ function extractIconographyIcons(brandInput: any, fileName?: string, templateSet
 	}
 	const iconSymbolClass = useAltFormat ? 'icon-symbol' : 'icon-circle';
 	
-	if (!iconographyStep || !iconographyStep.content) {
+	if (!iconographyStep || !contentString) {
 		// Fallback to default icons if no iconography step found
 		return generateIconHTML([
 			{ symbol: '◐', name: 'Brand' },
@@ -65,7 +78,7 @@ function extractIconographyIcons(brandInput: any, fileName?: string, templateSet
 	
 	// Extract icons from content using the same pattern as SmartPresentationAgent
 	const icons: Array<{ symbol: string; name: string }> = [];
-	const lines = iconographyStep.content.split('\n');
+	const lines = contentString.split('\n');
 	
 	console.log(`🔍 Processing ${lines.length} lines from iconography content`);
 	

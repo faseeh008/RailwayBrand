@@ -89,7 +89,10 @@
   }
 </script>
 
-<div class="brand-intro-slide" style="background: linear-gradient(135deg, {color1Lighter} 0%, {color2Lighter} 30%, {color3Lighter} 60%, #FFFFFF 100%);">
+<div
+  class="brand-intro-slide"
+  style={`background: linear-gradient(135deg, ${color1Lighter} 0%, ${color2Lighter} 30%, ${color3Lighter} 60%, #FFFFFF 100%); --primary-color: ${primaryColor}; --color1-rgba10: ${color1Rgba10}; --color2-rgba10: ${color2Rgba10};`}
+>
   <div class="radial-overlay"></div>
   
   <div class="slide">
@@ -129,8 +132,8 @@
     right: 0;
     bottom: 0;
     background: 
-      radial-gradient(circle at 20% 50%, {color1Rgba10} 0%, transparent 50%),
-      radial-gradient(circle at 80% 80%, {color2Rgba10} 0%, transparent 50%);
+      radial-gradient(circle at 20% 50%, var(--color1-rgba10) 0%, transparent 50%),
+      radial-gradient(circle at 80% 80%, var(--color2-rgba10) 0%, transparent 50%);
     pointer-events: none;
     z-index: 1;
   }
@@ -144,7 +147,7 @@
   }
   
   .header {
-    border-bottom: 4px solid {primaryColor};
+    border-bottom: 4px solid var(--primary-color);
     padding-bottom: 15px;
     margin-bottom: 30px;
   }
@@ -152,7 +155,7 @@
   .title {
     font-size: 42px;
     font-weight: bold;
-    color: {primaryColor};
+    color: var(--primary-color);
     margin-bottom: 15px;
   }
   
@@ -173,7 +176,7 @@
     border-radius: 12px;
     box-shadow: 0 4px 12px rgba(0,0,0,0.08);
     max-width: 800px;
-    border-left: 6px solid {primaryColor};
+    border-left: 6px solid var(--primary-color);
   }
   
   .editable-text {

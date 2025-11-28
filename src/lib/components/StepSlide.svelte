@@ -1251,41 +1251,31 @@ function getIconAccent(index: number): string {
 								{#if stepData.icons.length > 0}
 									<div class="icon-examples">
 										<h4 class="section-subtitle">Brand Icons</h4>
-										<div class="icon-gallery">
-											{#each stepData.icons as iconData, index}
-												<div class="icon-card">
-													<div class="icon-avatar" style={`background:${getIconAccent(index)}`}>
-														<span>{iconData.name?.charAt(0) || '?'}</span>
-													</div>
-													<div class="icon-card-body">
-														<div class="icon-card-header">
-															<div>
-																<div class="icon-card-title">{iconData.name}</div>
-																{#if iconData.description}
-																	<p class="icon-card-description">{iconData.description}</p>
-																{/if}
-															</div>
-															{#if iconData.svg}
-																<button
-																	type="button"
-																	class="icon-copy-btn"
-																	on:click={() => copyIconLabel(iconData.name)}
-																	aria-label="Copy icon name"
-																>
-																	{#if copiedIconName === iconData.name}
-																		<Check class="h-3 w-3" />
-																	{:else}
-																		<Copy class="h-3 w-3" />
-																	{/if}
-																</button>
-															{/if}
-														</div>
-														{#if iconData.svg}
-															<div class="icon-svg-preview" aria-hidden="true">
-																{@html iconData.svg}
-															</div>
+										<div class="icon-gallery icon-mini-gallery">
+											{#each stepData.icons.filter((icon) => !!icon?.name).slice(0, 32) as iconData}
+												<div class="icon-mini">
+													<button
+														type="button"
+														class="icon-copy-btn icon-mini-copy"
+														on:click={() => copyIconLabel(iconData.name)}
+														aria-label="Copy icon name"
+													>
+														{#if copiedIconName === iconData.name}
+															<Check class="h-3 w-3" />
+														{:else}
+															<Copy class="h-3 w-3" />
 														{/if}
+													</button>
+													<div class="icon-mini-preview">
+														<DynamicIcon
+															name={iconData.name}
+															size={36}
+															color="#ff6a2a"
+															strokeWidth={2}
+															class="icon-illustration"
+														/>
 													</div>
+													<div class="icon-mini-label">{iconData.name}</div>
 												</div>
 											{/each}
 										</div>
@@ -1301,34 +1291,31 @@ function getIconAccent(index: number): string {
 								{#if extractedIcons.length > 0}
 									<div class="icon-examples">
 										<h4 class="section-subtitle">Brand Icons</h4>
-										<div class="icon-gallery">
-											{#each extractedIcons as iconData, index}
-												<div class="icon-card">
-													<div class="icon-avatar" style={`background:${getIconAccent(index)}`}>
-														<span>{iconData.name.charAt(0)}</span>
+										<div class="icon-gallery icon-mini-gallery">
+											{#each extractedIcons.filter((icon) => !!icon?.name).slice(0, 32) as iconData}
+												<div class="icon-mini">
+													<button
+														type="button"
+														class="icon-copy-btn icon-mini-copy"
+														on:click={() => copyIconLabel(iconData.name)}
+														aria-label="Copy icon name"
+													>
+														{#if copiedIconName === iconData.name}
+															<Check class="h-3 w-3" />
+														{:else}
+															<Copy class="h-3 w-3" />
+														{/if}
+													</button>
+													<div class="icon-mini-preview">
+														<DynamicIcon
+															name={iconData.name}
+															size={36}
+															color="#ff6a2a"
+															strokeWidth={2}
+															class="icon-illustration"
+														/>
 													</div>
-													<div class="icon-card-body">
-														<div class="icon-card-header">
-															<div>
-																<div class="icon-card-title">{iconData.name}</div>
-																{#if iconData.description}
-																	<p class="icon-card-description">{iconData.description}</p>
-																{/if}
-															</div>
-															<button
-																type="button"
-																class="icon-copy-btn"
-																on:click={() => copyIconLabel(iconData.name)}
-																aria-label="Copy icon name"
-															>
-																{#if copiedIconName === iconData.name}
-																	<Check class="h-3 w-3" />
-																{:else}
-																	<Copy class="h-3 w-3" />
-																{/if}
-															</button>
-														</div>
-													</div>
+													<div class="icon-mini-label">{iconData.name}</div>
 												</div>
 											{/each}
 										</div>
@@ -1420,8 +1407,46 @@ function getIconAccent(index: number): string {
 						<div class="content-preview">
 							{#if typeof stepData === 'string'}
 								{@html renderMarkdown(stepData)}
+							{:else if typeof stepData === 'object' && stepData.sections && stepData.sections.length}
+								<div class="generic-content">
+									{#if stepData.summary}
+										<p class="generic-summary">{stepData.summary}</p>
+									{/if}
+									<div class="generic-sections">
+										{#each stepData.sections as section, idx}
+											<div class="generic-section">
+												<div class="generic-section-header">
+													<span class="generic-section-step">{idx + 1}</span>
+													<div>
+														<h4>{section.title || `Section ${idx + 1}`}</h4>
+														{#if section.subtitle}
+															<p class="generic-subtitle">{section.subtitle}</p>
+														{/if}
+													</div>
+												</div>
+												{#if section.description}
+													<p class="generic-description">{section.description}</p>
+												{/if}
+												{#if section.points && section.points.length}
+													<ul>
+														{#each section.points as point}
+															<li>{point}</li>
+														{/each}
+													</ul>
+												{/if}
+												{#if section.examples && section.examples.length}
+													<div class="generic-examples">
+														{#each section.examples as example}
+															<div class="generic-example">{example}</div>
+														{/each}
+													</div>
+												{/if}
+											</div>
+										{/each}
+									</div>
+								</div>
 							{:else}
-								<div class="text-muted-foreground"></div>
+								<div class="text-muted-foreground">Content will appear here once this step finishes generating.</div>
 							{/if}
 						</div>
 					</div>
@@ -1622,11 +1647,13 @@ function getIconAccent(index: number): string {
 	}
 
 	.positioning-statement {
-		background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
-		color: white;
+		background: linear-gradient(135deg, #f1f5ff 0%, #e0f2ff 50%, #fef3c7 100%);
+		color: #0f172a;
 		padding: 2rem;
-		border-radius: 12px;
+		border-radius: 16px;
 		text-align: center;
+		border: 1px solid rgba(15, 23, 42, 0.08);
+		box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.6), 0 8px 30px rgba(15, 23, 42, 0.08);
 	}
 
 	.statement-title {
@@ -1636,9 +1663,12 @@ function getIconAccent(index: number): string {
 	}
 
 	.statement-text {
-		font-size: 1.25rem;
-		font-style: italic;
-		line-height: 1.4;
+		font-size: 1.2rem;
+		font-weight: 500;
+		line-height: 1.5;
+		color: #0f172a;
+		text-shadow: none;
+		opacity: 0.9;
 	}
 
 	.mission-vision-grid {
@@ -2013,107 +2043,81 @@ function getIconAccent(index: number): string {
 
 	.icon-gallery {
 		display: grid;
-		grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-		gap: 1rem;
+		grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+		gap: 0.75rem;
 	}
 
-	.icon-card {
+	.icon-mini-gallery {
+		margin-top: 0.5rem;
+	}
+
+	.icon-mini {
+		position: relative;
 		display: flex;
-		gap: 0.85rem;
-		padding: 1rem;
-		border-radius: 1rem;
-		border: 1px solid oklch(var(--border));
-		background: oklch(var(--card));
-		box-shadow: 0 4px 12px oklch(var(--foreground) / 0.08);
-		transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+		flex-direction: column;
+		align-items: center;
+		gap: 0.4rem;
+		padding: 0.25rem;
+		min-height: 120px;
 	}
 
-	:global(.dark) .icon-card {
-		background: oklch(var(--muted));
-	}
-
-	.icon-card:hover {
-		transform: translateY(-4px);
-		border-color: oklch(var(--accent));
-		box-shadow: 0 8px 18px oklch(var(--accent) / 0.25);
-	}
-
-	.icon-avatar {
+	.icon-mini-preview {
 		width: 48px;
 		height: 48px;
-		border-radius: 14px;
 		display: flex;
 		align-items: center;
 		justify-content: center;
-		font-weight: 700;
-		font-size: 1.25rem;
-		color: #fff;
+		border: 1px solid rgba(255, 106, 42, 0.6);
+		border-radius: 12px;
+	}
+
+	.icon-mini-preview :global(svg) {
+		width: 32px;
+		height: 32px;
+		color: #ff6a2a;
+		stroke: #ff6a2a !important;
+	}
+
+	.icon-mini-label {
 		text-transform: uppercase;
-		box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15);
-	}
-
-	.icon-card-body {
-		flex: 1;
-		display: flex;
-		flex-direction: column;
-		gap: 0.35rem;
-	}
-
-	.icon-card-header {
-		display: flex;
-		justify-content: space-between;
-		gap: 0.5rem;
-		align-items: flex-start;
-	}
-
-	.icon-card-title {
 		font-weight: 600;
-		font-size: 0.95rem;
-		color: oklch(var(--foreground));
-	}
-
-	.icon-card-description {
-		font-size: 0.825rem;
-		color: oklch(var(--muted-foreground));
-		margin: 0.25rem 0 0;
-		line-height: 1.35;
+		font-size: 0.7rem;
+		letter-spacing: 0.04em;
+		text-align: center;
+		color: #ff6a2a;
 	}
 
 	.icon-copy-btn {
 		border: none;
-		background: rgba(255, 255, 255, 0.2);
-		color: oklch(var(--foreground));
-		border-radius: 50%;
-		padding: 0.3rem;
+		background: rgba(255, 122, 69, 0.18);
+		color: #ff6a2a;
+		border-radius: 9999px;
+		padding: 0.35rem;
 		display: inline-flex;
 		align-items: center;
 		justify-content: center;
 		cursor: pointer;
-		transition: background 0.2s ease;
+		transition: background 0.2s ease, transform 0.2s ease, color 0.2s ease;
 	}
 
 	:global(.dark) .icon-copy-btn {
-		background: rgba(0, 0, 0, 0.25);
-		color: #fff;
+		background: rgba(255, 122, 69, 0.28);
+		color: #ffd4c3;
 	}
 
 	.icon-copy-btn:hover {
-		background: rgba(0, 0, 0, 0.1);
+		background: rgba(255, 122, 69, 0.35);
+		transform: scale(1.05);
 	}
 
-	.icon-svg-preview {
-		margin-top: 0.5rem;
-		padding: 0.5rem;
-		border-radius: 0.65rem;
-		background: rgba(15, 23, 42, 0.04);
-		display: inline-flex;
-		justify-content: center;
-		align-items: center;
-	}
-
-	.icon-svg-preview :global(svg) {
-		width: 56px;
-		height: 56px;
+	.icon-mini-copy {
+		position: absolute;
+		top: 0.25rem;
+		right: 0.25rem;
+		width: 1.5rem;
+		height: 1.5rem;
+		padding: 0;
+		background: rgba(255, 106, 42, 0.1);
 	}
 
 	.logo-guidelines-grid {
@@ -2735,6 +2739,92 @@ function getIconAccent(index: number): string {
 		font-size: 0.875rem;
 		line-height: 1.6;
 		color: #374151;
+	}
+
+	.generic-content {
+		display: flex;
+		flex-direction: column;
+		gap: 1.25rem;
+	}
+
+	.generic-summary {
+		font-size: 0.95rem;
+		color: #475467;
+		margin: 0;
+	}
+
+	.generic-sections {
+		display: flex;
+		flex-direction: column;
+		gap: 1rem;
+	}
+
+	.generic-section {
+		border: 1px solid #f0f0f0;
+		border-radius: 12px;
+		padding: 1rem;
+		background: #fff;
+		box-shadow: 0 1px 2px rgba(15, 23, 42, 0.06);
+	}
+
+	.generic-section-header {
+		display: flex;
+		align-items: center;
+		gap: 0.75rem;
+		margin-bottom: 0.5rem;
+	}
+
+	.generic-section-step {
+		width: 32px;
+		height: 32px;
+		border-radius: 50%;
+		background: #ffeede;
+		color: #b45309;
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		font-weight: 600;
+		font-size: 0.9rem;
+	}
+
+	.generic-section-header h4 {
+		margin: 0;
+		font-size: 1rem;
+	}
+
+	.generic-subtitle {
+		margin: 0.1rem 0 0;
+		color: #6b7280;
+		font-size: 0.85rem;
+	}
+
+	.generic-description {
+		margin: 0 0 0.5rem;
+		color: #475467;
+		font-size: 0.95rem;
+		line-height: 1.45;
+	}
+
+	.generic-section ul {
+		margin: 0.25rem 0 0;
+		padding-left: 1rem;
+		color: #475467;
+		font-size: 0.9rem;
+	}
+
+	.generic-examples {
+		margin-top: 0.75rem;
+		display: flex;
+		flex-wrap: wrap;
+		gap: 0.5rem;
+	}
+
+	.generic-example {
+		padding: 0.35rem 0.75rem;
+		border-radius: 999px;
+		background: #f1f5f9;
+		font-size: 0.8rem;
+		color: #475467;
 	}
 
 	.no-content {
