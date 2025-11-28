@@ -224,66 +224,64 @@ export function getEssentialQuestions(analysis: {
 		});
 	}
 
-	// Industry (always ask so user can confirm or override inferred info)
-	const industryQuestionText = analysis.industry
-		? `You mentioned "${analysis.industry}". Please confirm this industry or choose a different one:`
-		: 'What industry does your brand operate in?';
+	// Industry (only ask if missing - use extracted value directly without confirmation)
+	if (!analysis.industry) {
+		questions.push({
+			id: 'industry',
+			question: 'What industry does your brand operate in?',
+			type: 'text-with-suggestions',
+			required: true,
+			icon: '🎯',
+			helper: 'Choose from common industries or type your own',
+			suggestions: [
+				'SaaS',
+				'Fintech',
+				'Healthcare',
+				'E-commerce',
+				'Retail',
+				'Technology & Software',
+				'Education & Learning',
+				'Food & Beverage',
+				'Fashion & Luxury',
+				'Real Estate',
+				'Consulting & Professional Services',
+				'Non-profit & Social Impact',
+				'Finance & Banking',
+				'Healthcare & Medical',
+				'Manufacturing & Industrial',
+				'Travel & Hospitality',
+				'Entertainment & Media',
+				'Automotive',
+				'Energy & Utilities',
+				'Legal Services',
+				'Marketing & Advertising',
+				'Sports & Fitness',
+				'Beauty & Personal Care',
+				'Creative Agency & Design'
+			]
+		});
+	}
 
-	questions.push({
-		id: 'industry',
-		question: industryQuestionText,
-		type: 'text-with-suggestions',
-		required: true,
-		icon: '🎯',
-		helper: 'Choose from common industries or type your own',
-		suggestions: [
-			'SaaS',
-			'Fintech',
-			'Healthcare',
-			'E-commerce',
-			'Retail',
-			'Technology & Software',
-			'Education & Learning',
-			'Food & Beverage',
-			'Fashion & Luxury',
-			'Real Estate',
-			'Consulting & Professional Services',
-			'Non-profit & Social Impact',
-			'Finance & Banking',
-			'Healthcare & Medical',
-			'Manufacturing & Industrial',
-			'Travel & Hospitality',
-			'Entertainment & Media',
-			'Automotive',
-			'Energy & Utilities',
-			'Legal Services',
-			'Marketing & Advertising',
-			'Sports & Fitness',
-			'Beauty & Personal Care',
-			'Creative Agency & Design'
-		]
-	});
-
-	// Style/Vibe (ALWAYS ASK - even if mentioned)
+	// Style/Vibe (only ask if missing - use extracted value directly without confirmation)
 	// Limited to 4 options for mock webpage generation
-	const styleOptions = [
-		'Minimalistic',
-		'Maximalistic',
-		'Funky',
-		'Futuristic'
-	];
+	if (!analysis.style) {
+		const styleOptions = [
+			'Minimalistic',
+			'Maximalistic',
+			'Funky',
+			'Futuristic'
+		];
 
-	questions.push({
-		id: 'style',
-		question: analysis.style
-			? `You mentioned "${analysis.style}". Please confirm this is the style you want, or choose a different one:`
-			: "What's your brand's visual style/vibe?",
-		type: 'text-with-suggestions',
-		required: true,
-		icon: '🎨',
-		helper: 'Choose one of four styles that best represents your brand\'s aesthetic. This will be used to generate your mock webpage.',
-		suggestions: styleOptions
-	});
+		questions.push({
+			id: 'style',
+			question: "What's your brand's visual style/vibe?",
+			type: 'text-with-suggestions',
+			required: true,
+			icon: '🎨',
+			helper: 'Choose one of four styles that best represents your brand\'s aesthetic. This will be used to generate your mock webpage.',
+			suggestions: styleOptions
+		});
+	}
 
 	// NOTE: Logo question is NOT added here - it will be added at the END after all industry questions
 	// This ensures we have all information (industry, vibe, audience, etc.) before generating the logo

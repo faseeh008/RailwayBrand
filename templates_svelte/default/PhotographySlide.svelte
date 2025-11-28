@@ -66,10 +66,7 @@
   }
 </script>
 
-<div
-  class="photography-slide"
-  style={`background: linear-gradient(135deg, ${color6Lighter} 0%, ${color7Lighter} 25%, #FFFFFF 50%, ${color8Lighter} 75%, ${color6Lighter} 100%); --color6-rgba10: ${color6Rgba10}; --color7-rgba10: ${color7Rgba10}; --primary-color: ${primaryColor}; --secondary-color: ${secondaryColor};`}
->
+<div class="photography-slide" style="background: linear-gradient(135deg, {color6Lighter} 0%, {color7Lighter} 25%, #FFFFFF 50%, {color8Lighter} 75%, {color6Lighter} 100%);">
   <div class="radial-overlay"></div>
   
   <div class="slide">
@@ -143,8 +140,8 @@
     right: 0;
     bottom: 0;
     background: 
-      radial-gradient(ellipse at top right, var(--color6-rgba10) 0%, transparent 60%),
-      radial-gradient(ellipse at bottom left, var(--color7-rgba10) 0%, transparent 60%);
+      radial-gradient(ellipse at top right, {color6Rgba10} 0%, transparent 60%),
+      radial-gradient(ellipse at bottom left, {color7Rgba10} 0%, transparent 60%);
     pointer-events: none;
     z-index: 1;
   }
@@ -158,7 +155,7 @@
   }
   
   .header {
-    border-bottom: 4px solid var(--primary-color);
+    border-bottom: 4px solid {primaryColor};
     padding-bottom: 15px;
     margin-bottom: 30px;
   }
@@ -166,7 +163,7 @@
   .title {
     font-size: 42px;
     font-weight: bold;
-    color: var(--primary-color);
+    color: {primaryColor};
   }
   
   .content {
@@ -192,7 +189,7 @@
   .photo-placeholder {
     width: 100%;
     height: 200px;
-    background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+    background: linear-gradient(135deg, {primaryColor} 0%, {secondaryColor} 100%);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -224,7 +221,7 @@
   .box-title {
     font-size: 18px;
     font-weight: bold;
-    color: var(--primary-color);
+    color: {primaryColor};
     margin-bottom: 15px;
   }
   
@@ -245,7 +242,7 @@
     content: '●';
     position: absolute;
     left: 0;
-    color: var(--primary-color);
+    color: {primaryColor};
     font-size: 18px;
   }
   

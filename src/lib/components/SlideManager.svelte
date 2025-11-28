@@ -1,129 +1,54 @@
 <script lang="ts">
-  import { onMount, onDestroy, tick } from 'svelte';
-  import {
-    CoverSlide as DefaultCoverSlide,
-    BrandIntroductionSlide as DefaultBrandIntroductionSlide,
-    BrandPositioningSlide as DefaultBrandPositioningSlide,
-    LogoGuidelinesSlide as DefaultLogoGuidelinesSlide,
-    ColorPaletteSlide as DefaultColorPaletteSlide,
-    TypographySlide as DefaultTypographySlide,
-    IconographySlide as DefaultIconographySlide,
-    PhotographySlide as DefaultPhotographySlide,
-    ApplicationsSlide as DefaultApplicationsSlide,
-    LogoDosSlide as DefaultLogoDosSlide,
-    LogoDontsSlide as DefaultLogoDontsSlide,
-    ThankYouSlide as DefaultThankYouSlide
-  } from '../../../templates_svelte/default';
-  import {
-    CoverSlide as MinimalistCoverSlide,
-    BrandIntroductionSlide as MinimalistBrandIntroductionSlide,
-    BrandPositioningSlide as MinimalistBrandPositioningSlide,
-    ContentsSlide as MinimalistContentsSlide,
-    LogoOverviewSlide as MinimalistLogoOverviewSlide,
-    LogoShowcaseSlide as MinimalistLogoShowcaseSlide,
-    TypographyHeroSlide as MinimalistTypographyHeroSlide,
-    TypographyDetailsSlide as MinimalistTypographyDetailsSlide,
-    ColorPaletteSlide as MinimalistColorPaletteSlide,
-    ColorUsageSlide as MinimalistColorUsageSlide,
-    SocialMediaSlide as MinimalistSocialMediaSlide,
-    InspirationSlide as MinimalistInspirationSlide,
-    MoodboardSlide as MinimalistMoodboardSlide,
-    ThankYouSlide as MinimalistThankYouSlide
-  } from '../../../templates_svelte/minimalist';
-  import {
-    CoverSlide as FunkyCoverSlide,
-    TableOfContentsSlide as FunkyTableOfContentsSlide,
-    BrandStorySlide as FunkyBrandStorySlide,
-    MoodboardSlide as FunkyMoodboardSlide,
-    PlanSlide as FunkyPlanSlide,
-    ProductSlide as FunkyProductSlide,
-    TeamSlide as FunkyTeamSlide,
-    PaletteSlide as FunkyPaletteSlide,
-    LogoVariationsSlide as FunkyLogoVariationsSlide,
-    TypographySlide as FunkyTypographySlide,
-    ContactSlide as FunkyContactSlide,
-    BrandPositioningSlide as FunkyBrandPositioningSlide
-  } from '../../../templates_svelte/funky';
-  import { defaultFunkyTheme, type FunkyTheme } from '../../../templates_svelte/funky/theme';
-  import { convertSvelteSlidesToPptx } from '$lib/services/svelte-slide-to-pptx';
-  import type { SlideData } from '$lib/types/slide-data';
-  import EditingPanel from './EditingPanel.svelte';
+import { onMount, onDestroy, tick } from 'svelte';
+import CoverSlide from '$lib/templates_svelte/default/CoverSlide.svelte';
+import BrandIntroductionSlide from '$lib/templates_svelte/default/BrandIntroductionSlide.svelte';
+import BrandPositioningSlide from '$lib/templates_svelte/default/BrandPositioningSlide.svelte';
+import LogoGuidelinesSlide from '$lib/templates_svelte/default/LogoGuidelinesSlide.svelte';
+import ColorPaletteSlide from '$lib/templates_svelte/default/ColorPaletteSlide.svelte';
+import TypographySlide from '$lib/templates_svelte/default/TypographySlide.svelte';
+import IconographySlide from '$lib/templates_svelte/default/IconographySlide.svelte';
+import PhotographySlide from '$lib/templates_svelte/default/PhotographySlide.svelte';
+import ApplicationsSlide from '$lib/templates_svelte/default/ApplicationsSlide.svelte';
+import LogoDosSlide from '$lib/templates_svelte/default/LogoDosSlide.svelte';
+import LogoDontsSlide from '$lib/templates_svelte/default/LogoDontsSlide.svelte';
+import ThankYouSlide from '$lib/templates_svelte/default/ThankYouSlide.svelte';
+import type { SlideData } from '$lib/types/slide-data';
+import EditingPanel from './EditingPanel.svelte';
+import {
+	Pencil,
+	FileDown,
+	ChevronLeft,
+	ChevronRight,
+	Folder,
+	Save as SaveIcon,
+	Loader2,
+	Presentation as PresentationIcon,
+	Globe,
+	Download,
+	Trash2
+} from 'lucide-svelte';
+import ThemeToggle from '$lib/components/ThemeToggle.svelte';
   
-  const defaultSlideComponents = {
-    CoverSlide: DefaultCoverSlide,
-    BrandIntroductionSlide: DefaultBrandIntroductionSlide,
-    BrandPositioningSlide: DefaultBrandPositioningSlide,
-    LogoGuidelinesSlide: DefaultLogoGuidelinesSlide,
-    ColorPaletteSlide: DefaultColorPaletteSlide,
-    TypographySlide: DefaultTypographySlide,
-    IconographySlide: DefaultIconographySlide,
-    PhotographySlide: DefaultPhotographySlide,
-    ApplicationsSlide: DefaultApplicationsSlide,
-    LogoDosSlide: DefaultLogoDosSlide,
-    LogoDontsSlide: DefaultLogoDontsSlide,
-    ThankYouSlide: DefaultThankYouSlide
-  } as const;
-  
-  const minimalistSlideComponents = {
-    CoverSlide: MinimalistCoverSlide,
-    BrandIntroductionSlide: MinimalistBrandIntroductionSlide,
-    BrandPositioningSlide: MinimalistBrandPositioningSlide,
-    ContentsSlide: MinimalistContentsSlide,
-    LogoOverviewSlide: MinimalistLogoOverviewSlide,
-    LogoShowcaseSlide: MinimalistLogoShowcaseSlide,
-    TypographyHeroSlide: MinimalistTypographyHeroSlide,
-    TypographyDetailsSlide: MinimalistTypographyDetailsSlide,
-    ColorPaletteSlide: MinimalistColorPaletteSlide,
-    ColorUsageSlide: MinimalistColorUsageSlide,
-    SocialMediaSlide: MinimalistSocialMediaSlide,
-    InspirationSlide: MinimalistInspirationSlide,
-    MoodboardSlide: MinimalistMoodboardSlide,
-    ThankYouSlide: MinimalistThankYouSlide
-  } as const;
-  
-  const funkySlideComponents = {
-    CoverSlide: FunkyCoverSlide,
-    TableOfContentsSlide: FunkyTableOfContentsSlide,
-    BrandStorySlide: FunkyBrandStorySlide,
-    MoodboardSlide: FunkyMoodboardSlide,
-    PlanSlide: FunkyPlanSlide,
-    ProductSlide: FunkyProductSlide,
-    TeamSlide: FunkyTeamSlide,
-    PaletteSlide: FunkyPaletteSlide,
-    LogoVariationsSlide: FunkyLogoVariationsSlide,
-    TypographySlide: FunkyTypographySlide,
-    ContactSlide: FunkyContactSlide,
-    BrandPositioningSlide: FunkyBrandPositioningSlide
-  } as const;
-  
-  export const slideComponentSets = {
-    default: defaultSlideComponents,
-    minimalist: minimalistSlideComponents,
-    funky: funkySlideComponents
-  } as const;
-  
-  export type SlideVibe = keyof typeof slideComponentSets;
-  
-  const {
-    CoverSlide,
-    BrandIntroductionSlide,
-    BrandPositioningSlide,
-    LogoGuidelinesSlide,
-    ColorPaletteSlide,
-    TypographySlide,
-    IconographySlide,
-    PhotographySlide,
-    ApplicationsSlide,
-    LogoDosSlide,
-    LogoDontsSlide,
-    ThankYouSlide
-  } = defaultSlideComponents;
-  
-  export let brandData: any = null;
-  export let slideVibe: SlideVibe | null = null;
+export let brandData: any = null;
+export let onDownloadPPTX: (() => void | Promise<void>) | null = null;
+export let onDownloadPDF: (() => void | Promise<void>) | null = null;
+export let isDownloading = false;
+export let onGoToBrands: (() => void | Promise<void>) | null = null;
+export let onSaveSlides:
+	| ((payload: { brandDataSnapshot: any; slidesHtml: Array<{ name: string; html: string }> }) => void | Promise<void>)
+	| null = null;
+export let isSavingSlides = false;
+
+// Mock webpage controls (optional, provided by parent preview-html page)
+export let onBuildMockWebpage: (() => void | Promise<void>) | null = null;
+export let onVisitMockWebpage: (() => void | Promise<void>) | null = null;
+export let onDownloadMockWebpage: (() => void | Promise<void>) | null = null;
+export let onDeleteMockWebpage: (() => void | Promise<void>) | null = null;
+export let isBuildingMockWebpage = false;
+export let hasMockWebpage = false;
   
   // Component refs
-  let coverSlideRef: CoverSlide;
+let coverSlideRef: CoverSlide;
   let brandIntroRef: BrandIntroductionSlide;
   let brandPositioningRef: BrandPositioningSlide;
   let logoGuidelinesRef: LogoGuidelinesSlide;
@@ -135,51 +60,57 @@
   let logoDosRef: LogoDosSlide;
   let logoDontsRef: LogoDontsSlide;
   let thankYouRef: ThankYouSlide;
-  let minimalistCoverRef: MinimalistCoverSlide;
-  let minimalistBrandIntroductionRef: MinimalistBrandIntroductionSlide;
-  let minimalistBrandPositioningRef: MinimalistBrandPositioningSlide;
-  let minimalistContentsRef: MinimalistContentsSlide;
-  let minimalistLogoOverviewRef: MinimalistLogoOverviewSlide;
-  let minimalistLogoShowcaseRef: MinimalistLogoShowcaseSlide;
-  let minimalistTypographyHeroRef: MinimalistTypographyHeroSlide;
-  let minimalistTypographyDetailsRef: MinimalistTypographyDetailsSlide;
-  let minimalistColorPaletteRef: MinimalistColorPaletteSlide;
-  let minimalistColorUsageRef: MinimalistColorUsageSlide;
-  let minimalistSocialMediaRef: MinimalistSocialMediaSlide;
-  let minimalistInspirationRef: MinimalistInspirationSlide;
-  let minimalistMoodboardRef: MinimalistMoodboardSlide;
-  let minimalistThankYouRef: MinimalistThankYouSlide;
-  let funkyCoverRef: FunkyCoverSlide;
-  let funkyTableOfContentsRef: FunkyTableOfContentsSlide;
-  let funkyBrandStoryRef: FunkyBrandStorySlide;
-  let funkyMoodboardRef: FunkyMoodboardSlide;
-  let funkyPlanRef: FunkyPlanSlide;
-  let funkyProductRef: FunkyProductSlide;
-  let funkyTeamRef: FunkyTeamSlide;
-  let funkyPaletteRef: FunkyPaletteSlide;
-  let funkyBrandPositioningRef: FunkyBrandPositioningSlide;
-  let funkyLogoVariationsRef: FunkyLogoVariationsSlide;
-  let funkyTypographyRef: FunkyTypographySlide;
-  let funkyContactRef: FunkyContactSlide;
   
-  // State
-  let currentSlideIndex = 0;
-  let isEditable = false;
-  let isDownloading = false;
-  let downloadProgress = { current: 0, total: 0 };
-  let showEditingPanel = false;
-  let editingPanelData: any = {};
+// State
+let currentSlideIndex = 0;
+let isEditable = false;
+let showEditingPanel = false;
+let editingPanelData: any = {};
+let colorSignature = '';
+let showExportDropdown = false;
+let exportDropdownRef: HTMLDivElement | null = null;
+let slideWrappers: Array<HTMLDivElement | null> = [];
+
+function trackSlideWrapper(node: HTMLDivElement, index: number) {
+	slideWrappers[index] = node;
+	return {
+		destroy() {
+			if (slideWrappers[index] === node) {
+				slideWrappers[index] = null;
+			}
+		}
+	};
+}
+
+function handleDocumentClick(event: MouseEvent) {
+  if (
+    showExportDropdown &&
+    exportDropdownRef &&
+    !exportDropdownRef.contains(event.target as Node)
+  ) {
+    showExportDropdown = false;
+  }
+}
+
+onMount(() => {
+  document.addEventListener('click', handleDocumentClick);
+});
+
+onDestroy(() => {
+  document.removeEventListener('click', handleDocumentClick);
+});
   
   // Get current slide name
   $: currentSlideName = slides[currentSlideIndex]?.name || '';
   
-  // Get current slide's background (reactive to both slide index and background changes)
-  $: currentSlideBackground = effectiveSlideVibe === 'default'
-    ? (slideBackgrounds[currentSlideIndex] || getDefaultBackground(currentSlideIndex))
-    : null;
+// Get current slide's background (reactive to slide index, saved backgrounds, and color palette)
+$: currentSlideBackground = (() => {
+  colorSignature; // ensure dependency on palette colors
+  return slideBackgrounds[currentSlideIndex] || getDefaultBackground(currentSlideIndex);
+})();
   
   // Update editing panel data when slide changes or isEditable changes
-  $: if (isEditable && currentSlideIndex !== undefined) {
+  $: if (currentSlideIndex !== undefined) {
     updateEditingPanelData();
   }
   
@@ -201,7 +132,6 @@
       vision,
       values,
       personality,
-      targetAudience,
       colors,
       primaryFont,
       secondaryFont,
@@ -244,12 +174,6 @@
       direction: number;
     };
   } {
-    if (effectiveSlideVibe === 'minimalist') {
-      return {
-        type: 'color',
-        color: 'FFFFFF'
-      };
-    }
     switch (slideIndex) {
       case 0: // Cover
         // HTML template: linear-gradient(135deg, {{PRIMARY_COLOR}} 0%, {{COLOR_2_HEX}} 30%, {{COLOR_3_HEX}} 60%, {{SECONDARY_COLOR}} 100%)
@@ -375,7 +299,6 @@
         else if (target === 'mission') mission = value;
         else if (target === 'vision') vision = value;
         else if (target === 'values') values = value;
-        else if (target === 'targetAudience') targetAudience = value;
         else if (target === 'personality') personality = value;
         else if (target === 'positioningStatement') positioningStatement = value;
         else if (target === 'primaryWeights') primaryWeights = value;
@@ -505,13 +428,88 @@
     }
     updateEditingPanelData();
   }
-  
-  function toggleEditingPanel() {
-    showEditingPanel = !showEditingPanel;
-    if (showEditingPanel) {
-      updateEditingPanelData();
-    }
-  }
+
+function cloneBrandDataBase() {
+	try {
+		return structuredClone(brandData ?? {});
+	} catch (error) {
+		return brandData ? JSON.parse(JSON.stringify(brandData)) : {};
+	}
+}
+
+function ensureColorEntry(entry: any, fallback: string) {
+	if (!entry) return { hex: fallback };
+	if (typeof entry === 'string') return { hex: entry };
+	return { ...entry, hex: entry.hex || fallback };
+}
+
+export function getBrandDataSnapshot() {
+	const updated = cloneBrandDataBase();
+
+	updated.brandName = brandName;
+	updated.brand_name = brandName;
+	updated.tagline = tagline;
+	updated.positioningStatement = positioningStatement;
+	updated.mission = mission;
+	updated.vision = vision;
+	updated.values = values;
+	updated.personality = personality;
+
+	updated.colors = updated.colors || {};
+	updated.colors.primary = ensureColorEntry(updated.colors.primary, primaryColor);
+	updated.colors.primary.hex = primaryColor;
+	updated.colors.secondary = ensureColorEntry(updated.colors.secondary, secondaryColor);
+	updated.colors.secondary.hex = secondaryColor;
+	updated.colors.accent = ensureColorEntry(updated.colors.accent, color2);
+	updated.colors.accent.hex = color2;
+	updated.colors.supporting = ensureColorEntry(updated.colors.supporting, color3);
+	updated.colors.supporting.hex = color3;
+	updated.colors.allColors = colors.map((color, idx) => ({
+		name: color.name || `Color ${idx + 1}`,
+		hex: color.hex,
+		usage: color.usage || 'Brand color'
+	}));
+
+	updated.typography = updated.typography || {};
+	updated.typography.primaryFont = {
+		name: primaryFont,
+		weights: primaryWeights
+	};
+	updated.typography.supporting = {
+		name: secondaryFont,
+		weights: secondaryWeights
+	};
+
+	updated.icons = icons;
+	updated.applications = applications;
+	updated.doText = doText;
+	updated.dontText = dontText;
+	updated.guidelineTitle1 = guidelineTitle1;
+	updated.guidelineItems = guidelineItems;
+	updated.guidelineTitle2 = guidelineTitle2;
+
+	updated.contact = {
+		...(updated.contact || {}),
+		name: contactName,
+		email: contactEmail,
+		role: contactRole,
+		company: contactCompany,
+		website,
+		phone
+	};
+
+	return updated;
+}
+
+export function getSlidesHtmlSnapshot(): Array<{ name: string; html: string }> {
+	return slides.map((slide, index) => {
+		const wrapper = slideWrappers[index];
+		return {
+			name: slide.name,
+			html: wrapper ? wrapper.innerHTML : ''
+		};
+	});
+}
   
   // Editable state variables (initialized from brandData)
   let brandName = 'Brand Name';
@@ -527,7 +525,6 @@
   let vision = 'Our vision statement';
   let values = 'Innovation • Excellence • Integrity';
   let personality = 'Our brand personality';
-  let targetAudience = 'Our target audience';
   let colors: Array<{ name: string; hex: string; usage?: string }> = [];
   let primaryFont = 'Arial';
   let secondaryFont = 'Arial';
@@ -597,9 +594,17 @@
     color2 = extractColor(brandData, 'accent') || extractColor(brandData, 'color2') || '#3B82F6';
     color3 = extractColor(brandData, 'color3') || '#60A5FA';
     // Fix double base64 prefix issue
-    const rawLogoData = brandData?.logoFiles?.[0]?.fileData || '';
+    const rawLogoEntry = brandData?.logoFiles?.[0];
+    const rawLogoData =
+      rawLogoEntry?.fileUrl ||
+      rawLogoEntry?.fileData ||
+      rawLogoEntry?.url ||
+      rawLogoEntry?.filePath ||
+      '';
     if (rawLogoData && rawLogoData.startsWith('data:image')) {
       // If it already has the data:image prefix, use it as is
+      logoData = rawLogoData;
+    } else if (rawLogoData && (rawLogoData.startsWith('http') || rawLogoData.startsWith('/'))) {
       logoData = rawLogoData;
     } else if (rawLogoData) {
       // If it's just base64 data, add the prefix
@@ -613,7 +618,6 @@
     vision = extractVision(brandData);
     values = extractValues(brandData);
     personality = extractPersonality(brandData);
-    targetAudience = extractTargetAudience(brandData);
     // Colors will be set by reactive statement below
     primaryFont = extractFont(brandData, 'primary') || 'Arial';
     secondaryFont = extractFont(brandData, 'secondary') || 'Arial';
@@ -632,7 +636,7 @@
   
   // Reactive statement to ensure colors are updated when color values change
   $: if (brandData && primaryColor && secondaryColor) {
-    colors = extractColorsArray(brandData, primaryColor, secondaryColor, color2, color3);
+    colors = extractColorsArray(brandData, primaryColor, secondaryColor, color2, color3).slice(0, 5);
   }
   
   // Save Svelte slides to database when brandData is set and slides are ready
@@ -645,6 +649,18 @@
     if (!data?.colors) return null;
     
     // Try different structures
+    // NEW structure: primary, secondary, accent1, accent2, optional as objects
+    if (type === 'primary' && data.colors?.primary && typeof data.colors.primary === 'object') {
+      return data.colors.primary.hex || data.colors.primary;
+    }
+    if (type === 'secondary' && data.colors?.secondary && typeof data.colors.secondary === 'object') {
+      return data.colors.secondary.hex || data.colors.secondary;
+    }
+    if (type === 'accent' && data.colors?.accent1 && typeof data.colors.accent1 === 'object') {
+      return data.colors.accent1.hex || data.colors.accent1;
+    }
+    
+    // LEGACY structure support
     const colorObj = data.colors[type] || 
                      data.colors[`${type}Color`] ||
                      (data.colors.core_palette && data.colors.core_palette.find((c: any) => c.name?.toLowerCase().includes(type)));
@@ -669,55 +685,74 @@
     
     // Try direct colors object first
     if (data?.colors) {
-      // Try allColors first
+      // Try allColors first - limit to 5 colors max
       if (Array.isArray(data.colors.allColors) && data.colors.allColors.length > 0) {
-        const extracted = data.colors.allColors.map((c: any) => ({
+        const extracted = data.colors.allColors.slice(0, 5).map((c: any) => ({
           name: c.name || 'Color',
           hex: c.hex || c,
           usage: c.usage || 'Brand color'
         }));
-        // Fill to 8 colors if needed (matching HTML generator logic)
-        if (extracted.length < 8) {
-          const defaultColors = [
-            { name: 'Color 5', hex: '#F59E0B', usage: 'Brand color' },
-            { name: 'Color 6', hex: '#EF4444', usage: 'Brand color' },
-            { name: 'Color 7', hex: '#8B5CF6', usage: 'Brand color' },
-            { name: 'Color 8', hex: '#06B6D4', usage: 'Brand color' }
-          ];
-          const filled = [...extracted];
-          for (let i = extracted.length; i < 8; i++) {
-            filled.push(defaultColors[i - 4] || defaultColors[0]);
-          }
-          return filled;
-        }
+        // Return only the extracted colors (max 5), no filling
         return extracted;
       }
       
-      // Try core_palette
+      // NEW structure: primary, secondary, accent1, accent2, optional as objects
+      if (data.colors.primary && typeof data.colors.primary === 'object') {
+        colors.push({
+          name: data.colors.primary.name || 'Primary',
+          hex: data.colors.primary.hex || '#000000',
+          usage: data.colors.primary.usage || 'Primary brand color'
+        });
+      }
+      
+      if (data.colors.secondary && typeof data.colors.secondary === 'object') {
+        colors.push({
+          name: data.colors.secondary.name || 'Secondary',
+          hex: data.colors.secondary.hex || '#000000',
+          usage: data.colors.secondary.usage || 'Secondary brand color'
+        });
+      }
+      
+      if (data.colors.accent1 && typeof data.colors.accent1 === 'object') {
+        colors.push({
+          name: data.colors.accent1.name || 'Accent 1',
+          hex: data.colors.accent1.hex || '#000000',
+          usage: data.colors.accent1.usage || 'Accent color'
+        });
+      }
+      
+      if (data.colors.accent2 && typeof data.colors.accent2 === 'object') {
+        colors.push({
+          name: data.colors.accent2.name || 'Accent 2',
+          hex: data.colors.accent2.hex || '#000000',
+          usage: data.colors.accent2.usage || 'Accent color'
+        });
+      }
+      
+      if (data.colors.optional && typeof data.colors.optional === 'object') {
+        colors.push({
+          name: data.colors.optional.name || 'Optional',
+          hex: data.colors.optional.hex || '#000000',
+          usage: data.colors.optional.usage || 'Optional color'
+        });
+      }
+      
+      if (colors.length > 0) {
+        return colors;
+      }
+      
+      // LEGACY structure: core_palette (array) - limit to 5 colors max
       if (Array.isArray(data.colors.core_palette) && data.colors.core_palette.length > 0) {
-        const extracted = data.colors.core_palette.map((c: any) => ({
+        const extracted = data.colors.core_palette.slice(0, 5).map((c: any) => ({
           name: c.name || 'Color',
           hex: c.hex || c,
           usage: c.usage || 'Brand color'
         }));
-        // Fill to 8 colors if needed (matching HTML generator logic)
-        if (extracted.length < 8) {
-          const defaultColors = [
-            { name: 'Color 5', hex: '#F59E0B', usage: 'Brand color' },
-            { name: 'Color 6', hex: '#EF4444', usage: 'Brand color' },
-            { name: 'Color 7', hex: '#8B5CF6', usage: 'Brand color' },
-            { name: 'Color 8', hex: '#06B6D4', usage: 'Brand color' }
-          ];
-          const filled = [...extracted];
-          for (let i = extracted.length; i < 8; i++) {
-            filled.push(defaultColors[i - 4] || defaultColors[0]);
-          }
-          return filled;
-        }
+        // Return only the extracted colors (max 5), no filling
         return extracted;
       }
       
-      // Build from individual colors
+      // Build from individual colors (legacy string/object format)
       if (data.colors.primary) {
         colors.push({
           name: 'Primary',
@@ -754,20 +789,136 @@
     // Try to parse from stepHistory
     const colorStep = data?.stepHistory?.find((s: any) => s.step === 'color-palette');
     if (colorStep?.content) {
-      const content = colorStep.content;
+      let content = colorStep.content;
       
-      // If it's an object, extract directly
-      if (typeof content === 'object' && content.colors) {
-        const extractedColors = Array.isArray(content.colors) ? content.colors : Object.values(content.colors);
-        const parsed = extractedColors.map((c: any) => ({
-          name: c.name || 'Color',
-          hex: c.hex || c,
-          usage: c.usage || 'Brand color'
-        }));
-        if (parsed.length > 0) return parsed;
+      // If it's a string, try to parse as JSON first (enhanced generator outputs JSON)
+      if (typeof content === 'string') {
+        try {
+          const parsed = JSON.parse(content);
+          if (typeof parsed === 'object' && parsed !== null) {
+            content = parsed;
+          }
+        } catch {
+          // Not JSON, continue with string parsing below
+        }
       }
       
-      // If it's a string, parse it
+      // If it's an object, extract directly
+      if (typeof content === 'object' && content !== null) {
+        // Handle NEW structure: colors.primary, colors.secondary, colors.accent1, colors.accent2, colors.optional (objects)
+        if (content.colors) {
+          const allColors: Array<{ name: string; hex: string; usage?: string }> = [];
+          
+          // New structure: primary, secondary, accent1, accent2, optional as objects
+          if (content.colors.primary && typeof content.colors.primary === 'object') {
+            const c = content.colors.primary;
+            allColors.push({
+              name: c.name || 'Primary',
+              hex: normalizeColorToHex(c.hex || '#000000'),
+              usage: c.usage || 'Primary brand color'
+            });
+          }
+          
+          if (content.colors.secondary && typeof content.colors.secondary === 'object') {
+            const c = content.colors.secondary;
+            allColors.push({
+              name: c.name || 'Secondary',
+              hex: normalizeColorToHex(c.hex || '#000000'),
+              usage: c.usage || 'Secondary brand color'
+            });
+          }
+          
+          if (content.colors.accent1 && typeof content.colors.accent1 === 'object') {
+            const c = content.colors.accent1;
+            allColors.push({
+              name: c.name || 'Accent 1',
+              hex: normalizeColorToHex(c.hex || '#000000'),
+              usage: c.usage || 'Accent color'
+            });
+          }
+          
+          if (content.colors.accent2 && typeof content.colors.accent2 === 'object') {
+            const c = content.colors.accent2;
+            allColors.push({
+              name: c.name || 'Accent 2',
+              hex: normalizeColorToHex(c.hex || '#000000'),
+              usage: c.usage || 'Accent color'
+            });
+          }
+          
+          if (content.colors.optional && typeof content.colors.optional === 'object') {
+            const c = content.colors.optional;
+            allColors.push({
+              name: c.name || 'Optional',
+              hex: normalizeColorToHex(c.hex || '#000000'),
+              usage: c.usage || 'Optional color'
+            });
+          }
+          
+          // LEGACY structure support: colors.core_palette, colors.accent_palette, colors.neutral_palette (arrays)
+          // Limit to 5 colors total from all legacy palettes
+          if (allColors.length === 0) {
+            // Collect from core_palette (max 4)
+            if (Array.isArray(content.colors.core_palette)) {
+              content.colors.core_palette.slice(0, 4).forEach((c: any) => {
+                if (allColors.length < 5) {
+                  allColors.push({
+                    name: c.name || 'Color',
+                    hex: normalizeColorToHex(c.hex || c),
+                    usage: c.usage || 'Primary brand color'
+                  });
+                }
+              });
+            }
+            
+            // Collect from accent_palette (only if we have less than 5 colors)
+            if (Array.isArray(content.colors.accent_palette) && allColors.length < 5) {
+              const remaining = 5 - allColors.length;
+              content.colors.accent_palette.slice(0, remaining).forEach((c: any) => {
+                if (allColors.length < 5) {
+                  allColors.push({
+                    name: c.name || 'Accent Color',
+                    hex: normalizeColorToHex(c.hex || c),
+                    usage: c.usage || 'Accent color'
+                  });
+                }
+              });
+            }
+            
+            // Collect from neutral_palette (only if we have less than 5 colors)
+            if (Array.isArray(content.colors.neutral_palette) && allColors.length < 5) {
+              const remaining = 5 - allColors.length;
+              content.colors.neutral_palette.slice(0, remaining).forEach((c: any) => {
+                if (allColors.length < 5) {
+                  allColors.push({
+                    name: c.name || 'Neutral Color',
+                    hex: normalizeColorToHex(c.hex || c),
+                    usage: c.usage || 'Neutral color'
+                  });
+                }
+              });
+            }
+          }
+          
+          if (allColors.length > 0) {
+            // Return only the extracted colors (max 5), no filling
+            return allColors.slice(0, 5);
+          }
+        }
+        
+        // Handle legacy structure: colors as array or object
+        if (content.colors) {
+          const extractedColors = Array.isArray(content.colors) ? content.colors : Object.values(content.colors);
+          const parsed = extractedColors.map((c: any) => ({
+            name: c.name || 'Color',
+            hex: normalizeColorToHex(c.hex || c),
+            usage: c.usage || 'Brand color'
+          }));
+          if (parsed.length > 0) return parsed;
+        }
+      }
+      
+      // If it's a string (and wasn't JSON), parse it
       if (typeof content === 'string') {
         const foundColors: Array<{ name: string; hex: string }> = [];
         
@@ -795,12 +946,12 @@
           foundColors.push({ name: 'Accent', hex: `#${accentMatch[1]}` });
         }
         
-        // Try to find any hex codes in the content
+        // Try to find any hex codes in the content (limit to 5 colors max)
         const hexMatches = content.match(/#([A-Fa-f0-9]{6})/gi);
         if (hexMatches && hexMatches.length > 0) {
-          hexMatches.forEach((hex, idx) => {
-            if (!foundColors.find(c => c.hex.toLowerCase() === hex.toLowerCase())) {
-              const colorNames = ['Primary', 'Secondary', 'Accent', 'Neutral', 'Tertiary', 'Quaternary', 'Supporting', 'Highlight'];
+          hexMatches.slice(0, 5).forEach((hex, idx) => {
+            if (foundColors.length < 5 && !foundColors.find(c => c.hex.toLowerCase() === hex.toLowerCase())) {
+              const colorNames = ['Primary', 'Secondary', 'Accent 1', 'Accent 2', 'Optional'];
               foundColors.push({ 
                 name: colorNames[idx] || `Color ${idx + 1}`, 
                 hex: hex 
@@ -810,7 +961,8 @@
         }
         
         if (foundColors.length > 0) {
-          return foundColors.map(c => ({ ...c, usage: 'Brand color' }));
+          // Return only first 5 colors
+          return foundColors.slice(0, 5).map(c => ({ ...c, usage: 'Brand color' }));
         }
       }
     }
@@ -840,22 +992,9 @@
       );
     }
     
-    // Fill to 8 colors (matching HTML generator logic)
-    // HTML generator uses defaultColors array to fill remaining slots
-    const defaultColors = [
-      { name: 'Color 5', hex: '#F59E0B', usage: 'Brand color' },
-      { name: 'Color 6', hex: '#EF4444', usage: 'Brand color' },
-      { name: 'Color 7', hex: '#8B5CF6', usage: 'Brand color' },
-      { name: 'Color 8', hex: '#06B6D4', usage: 'Brand color' }
-    ];
-    
-    // Fill missing colors with defaults (same logic as HTML generator)
-    const filledColors = [...fallbackColors];
-    for (let i = fallbackColors.length; i < 8; i++) {
-      filledColors.push(defaultColors[i - 4] || defaultColors[0]);
-    }
-    
-    return filledColors;
+    // Return only the fallback colors (max 5), no filling
+    // Only show the colors that were actually extracted, no placeholder colors
+    return fallbackColors.slice(0, 5);
   }
   
   function extractPositioningStatement(data: any): string {
@@ -1109,63 +1248,6 @@
     
     return 'Our brand personality';
   }
-
-  function extractTargetAudience(data: any): string {
-    const directAudience =
-      data?.targetAudience ||
-      data?.target_audience ||
-      data?.selectedAudience ||
-      data?.audience;
-    if (typeof directAudience === 'string' && directAudience.trim().length > 0) {
-      return directAudience.trim();
-    }
-    
-    const positioningStep = data?.stepHistory?.find((s: any) => s.step === 'brand-positioning');
-    if (positioningStep?.content) {
-      const content = positioningStep.content;
-      
-      if (typeof content === 'object' && content !== null) {
-        const audienceText =
-          content.target_audience ||
-          content.targetAudience ||
-          content.target ||
-          content.audience ||
-          content.persona;
-        if (typeof audienceText === 'string' && audienceText.trim().length > 0) {
-          return audienceText.trim();
-        }
-      }
-      
-      if (typeof content === 'string') {
-        const patterns = [
-          /\*\*Target Audience\*\*:\s*([\s\S]+?)(?=\n\n|\n\*\*|$)/i,
-          /Target Audience[:\s]+([\s\S]+?)(?=\n\n|\n(?:Mission|Vision|Values)|$)/i,
-          /\*\*Audience\*\*:\s*([\s\S]+?)(?=\n\n|\n\*\*|$)/i,
-          /Audience[:\s]+([\s\S]+?)(?=\n\n|\n(?:Mission|Vision|Values)|$)/i
-        ];
-        for (const pattern of patterns) {
-          const match = content.match(pattern);
-          if (match && match[1]) {
-            const extracted = match[1].trim().replace(/\*\*/g, '');
-            if (extracted.length > 5) {
-              return extracted;
-            }
-          }
-        }
-      }
-    }
-    
-    if (typeof data?.persona === 'string' && data.persona.trim().length > 0) {
-      return data.persona.trim();
-    }
-    
-    const personalityText = extractPersonality(data);
-    if (personalityText && personalityText !== 'Our brand personality') {
-      return personalityText;
-    }
-    
-    return 'Our target audience';
-  }
   
   function extractFont(data: any, type: string): string | null {
     // Try direct typography object first
@@ -1199,17 +1281,32 @@
     // Try to parse from stepHistory
     const typographyStep = data?.stepHistory?.find((s: any) => s.step === 'typography');
     if (typographyStep?.content) {
-      const content = typographyStep.content;
+      let content = typographyStep.content;
+      
+      // If it's a string, try to parse as JSON first (enhanced generator outputs JSON)
+      if (typeof content === 'string') {
+        try {
+          const parsed = JSON.parse(content);
+          if (typeof parsed === 'object' && parsed !== null) {
+            content = parsed;
+          }
+        } catch {
+          // Not JSON, continue with string parsing below
+        }
+      }
       
       // If it's an object, extract directly
-      if (typeof content === 'object') {
+      if (typeof content === 'object' && content !== null) {
         let fontObj = null;
         
         if (type === 'primary') {
-          fontObj = content.primaryFont || content.primary || content[type];
+          // Enhanced generator uses primary_font (with underscore)
+          fontObj = content.primary_font || content.primaryFont || content.primary || content[type];
         } else {
+          // Enhanced generator uses secondary_font (with underscore)
           // For secondary, try multiple keys: supporting, secondaryFont, secondary, supportingFont
-          fontObj = content.supporting || 
+          fontObj = content.secondary_font || 
+                   content.supporting || 
                    content.secondaryFont || 
                    content.supportingFont ||
                    content.secondary || 
@@ -1227,7 +1324,7 @@
         }
       }
       
-      // If it's a string, parse it
+      // If it's a string (and wasn't JSON), parse it
       if (typeof content === 'string') {
         // Look for font patterns like "**Primary Font**: FontName" or "Primary Font: FontName"
         let fontPattern = null;
@@ -1288,20 +1385,49 @@
     // Try to parse from stepHistory
     const typographyStep = data?.stepHistory?.find((s: any) => s.step === 'typography');
     if (typographyStep?.content) {
-      const content = typographyStep.content;
+      let content = typographyStep.content;
+      
+      // If it's a string, try to parse as JSON first (enhanced generator outputs JSON)
+      if (typeof content === 'string') {
+        try {
+          const parsed = JSON.parse(content);
+          if (typeof parsed === 'object' && parsed !== null) {
+            content = parsed;
+          }
+        } catch {
+          // Not JSON, continue with string parsing below
+        }
+      }
       
       // If it's an object, extract directly
-      if (typeof content === 'object') {
-        const fontKey = type === 'primary' ? 'primaryFont' : 'secondaryFont';
-        const fontObj = content[fontKey] || content[type] || (type === 'primary' ? content.primary : content.supporting);
+      if (typeof content === 'object' && content !== null) {
+        // Enhanced generator uses primary_font/secondary_font (with underscore)
+        const fontKey = type === 'primary' ? 'primary_font' : 'secondary_font';
+        const fontObj = content[fontKey] || 
+                       (type === 'primary' ? content.primaryFont : content.secondaryFont) ||
+                       content[type] || 
+                       (type === 'primary' ? content.primary : content.supporting);
+        
+        // Check if fontObj has weights property
         if (fontObj?.weights) {
           return Array.isArray(fontObj.weights) 
             ? fontObj.weights.join(', ')
             : fontObj.weights;
         }
+        
+        // Also check font_hierarchy array for weights
+        if (Array.isArray(content.font_hierarchy)) {
+          const hierarchyItem = content.font_hierarchy.find((h: any) => 
+            (type === 'primary' && h.font && h.font.toLowerCase().includes(content.primary_font?.toLowerCase() || '')) ||
+            (type === 'secondary' && h.font && h.font.toLowerCase().includes(content.secondary_font?.toLowerCase() || ''))
+          );
+          if (hierarchyItem?.weight) {
+            return hierarchyItem.weight;
+          }
+        }
       }
       
-      // If it's a string, parse it
+      // If it's a string (and wasn't JSON), parse it
       if (typeof content === 'string') {
         // Look for weights patterns
         const weightPattern = type === 'primary'
@@ -1328,74 +1454,38 @@
     return [];
   }
   
-  function normalizeStyleValue(value: unknown): string {
-    if (!value || typeof value !== 'string') return '';
-    return value.trim().toLowerCase();
-  }
-  
-  function deriveSlideVibeFromBrand(data: any): SlideVibe {
-    const styleCandidates = [
-      data?.selectedMood,
-      data?.style,
-      data?.mood,
-      data?.visualStyle,
-      data?.selectedTheme,
-      data?.vibe
-    ];
-    
-    for (const candidate of styleCandidates) {
-      const normalized = normalizeStyleValue(candidate);
-      if (!normalized) continue;
-      if (normalized.includes('funky') || normalized.includes('playful') || normalized.includes('groovy')) {
-        return 'funky';
-      }
-      if (normalized.includes('minimal')) {
-        return 'minimalist';
-      }
+  // Helper function to normalize color to hex string
+  function normalizeColorToHex(color: any): string {
+    if (!color) return '#1E40AF'; // Default fallback
+    if (typeof color === 'string') {
+      // If it's already a hex string, return it
+      if (color.startsWith('#')) return color;
+      // If it's a hex without #, add it
+      if (/^[0-9A-Fa-f]{6}$/.test(color)) return `#${color}`;
+      // If it's a valid hex, return as is
+      return color;
     }
-    
-    return 'default';
+    // If it's an object, try to extract hex
+    if (typeof color === 'object') {
+      if (color.hex) return normalizeColorToHex(color.hex);
+      if (color.color) return normalizeColorToHex(color.color);
+      if (color.value) return normalizeColorToHex(color.value);
+    }
+    // Fallback to default
+    return '#1E40AF';
   }
-  
-  $: effectiveSlideVibe = slideVibe ?? deriveSlideVibeFromBrand(brandData);
   
   // Extract colors from colors array in the same order as HTML templates
   // COLOR_1 = colors[0], COLOR_2 = colors[1], etc.
-  const defaultColor1 = '#1E40AF';
-  const defaultColor2 = '#2563EB';
-  const defaultColor3 = '#3B82F6';
-  const defaultColor4 = '#60A5FA';
-
-  $: color1Hex = colors.length > 0
-    ? normalizeColorValue(colors[0], primaryColor || defaultColor1)
-    : normalizeColorValue(primaryColor, defaultColor1);
-  $: color2Hex = colors.length > 1
-    ? normalizeColorValue(colors[1], color2 || defaultColor2)
-    : (colors.length > 0
-        ? normalizeColorValue(colors[0], color2 || defaultColor2)
-        : normalizeColorValue(color2, defaultColor2));
-  $: color3Hex = colors.length > 2
-    ? normalizeColorValue(colors[2], color3 || defaultColor3)
-    : (colors.length > 1
-        ? normalizeColorValue(colors[1], color3 || defaultColor3)
-        : normalizeColorValue(color3, defaultColor3));
-  $: color4Hex = colors.length > 3
-    ? normalizeColorValue(colors[3], secondaryColor || defaultColor4)
-    : (colors.length > 2
-        ? normalizeColorValue(colors[2], secondaryColor || defaultColor4)
-        : normalizeColorValue(secondaryColor, defaultColor4));
-  $: color5Hex = colors.length > 4
-    ? normalizeColorValue(colors[4], '#60A5FA')
-    : '#60A5FA';
-  $: color6Hex = colors.length > 5
-    ? normalizeColorValue(colors[5], '#3B82F6')
-    : '#3B82F6';
-  $: color7Hex = colors.length > 6
-    ? normalizeColorValue(colors[6], '#1E40AF')
-    : '#1E40AF';
-  $: color8Hex = colors.length > 7
-    ? normalizeColorValue(colors[7], '#2563EB')
-    : '#2563EB';
+  // Normalize all color values to ensure they're strings
+  $: color1Hex = normalizeColorToHex(colors.length > 0 ? colors[0]?.hex : primaryColor);
+  $: color2Hex = normalizeColorToHex(colors.length > 1 ? colors[1]?.hex : (colors.length > 0 ? colors[0]?.hex : color2));
+  $: color3Hex = normalizeColorToHex(colors.length > 2 ? colors[2]?.hex : (colors.length > 1 ? colors[1]?.hex : color3));
+  $: color4Hex = normalizeColorToHex(colors.length > 3 ? colors[3]?.hex : (colors.length > 2 ? colors[2]?.hex : secondaryColor));
+  $: color5Hex = normalizeColorToHex(colors.length > 4 ? colors[4]?.hex : '#60A5FA');
+  $: color6Hex = normalizeColorToHex(colors.length > 5 ? colors[5]?.hex : '#3B82F6');
+  $: color7Hex = normalizeColorToHex(colors.length > 6 ? colors[6]?.hex : '#1E40AF');
+  $: color8Hex = normalizeColorToHex(colors.length > 7 ? colors[7]?.hex : '#2563EB');
   
   // Color variants for gradients - using same logic as HTML templates
   // HTML uses lightenColor(hex, 0.92) for LIGHTER variants
@@ -1431,117 +1521,31 @@
   $: color6Rgba8 = hexToRgba(color6Hex, 0.08);
   $: color1Rgba5 = hexToRgba(color1Hex, 0.05);
   $: color8Rgba12 = hexToRgba(color8Hex, 0.12);
-  const MINIMALIST_BACKGROUND = '#FFFFFF';
-  $: minimalistTextColor = ensureHexColor(color1Hex, '#1B1B1B');
-  $: minimalistAccentCircleColor = lightenColor(color3Hex, 0.9);
-  $: minimalistPlaceholderColor = lightenColor(color2Hex, 0.94);
-  $: minimalistCoverProps = {
-    titlePrimary: brandName || 'Brand',
-    titleSecondary: tagline || 'Guidelines',
-    subtitle: positioningStatement || mission || '',
-    website: formatWebsiteUrl(website),
-    backgroundColor: '#FFFFFF',
-    textColor: ensureHexColor(color1Hex, '#111111'),
-    accentLineColor: ensureHexColor(color1Hex, '#111111'),
-    accentCircleColor: lightenColor(ensureHexColor(color2Hex, '#C0C0C0'), 0.9)
-  };
-  $: minimalistContentsSections = minimalistContentsDefaults.map((label, index) => ({
-    number: `${String(index + 1).padStart(2, '0')}.`,
-    label
-  }));
-  $: minimalistPalette = buildMinimalistPalette();
-  $: minimalistUsage = buildMinimalistUsage();
-  $: minimalistTypographyColumns = [
-    {
-      letter: initialsFromFont(primaryFont, 'A'),
-      description: `${primaryFont || 'Primary Font'} — ${primaryWeights || 'Regular'}`
-    },
-    {
-      letter: initialsFromFont(secondaryFont, 'B'),
-      description: `${secondaryFont || 'Secondary Font'} — ${secondaryWeights || 'Regular'}`
-    }
-  ];
-  $: minimalistImageSources = extractImageSources(brandData);
-  $: minimalistMoodboardImages = minimalistImageSources.slice(0, 6).map((src) => ({ src }));
-  $: minimalistInspirationImages = {
-    main: minimalistImageSources[0] || '',
-    secondary: minimalistImageSources[1] || '',
-    tertiary: minimalistImageSources[2] || ''
-  };
-  $: minimalistLogoOverviewDescription = mission || positioningStatement || values || 'Our logo represents our ethos.';
-  $: minimalistLogoPrimaryDescription = mission || 'Primary logo usage guidance.';
-  $: minimalistLogoSecondaryDescription = vision || values || 'Secondary logo usage guidance.';
-  $: minimalistSocialDescription = applications.length
-    ? applications
-        .map((app) => app.description || `${app.name || 'Channel'} presence`)
-        .filter(Boolean)
-        .join(' ')
-    : personality || 'Maintain cohesive storytelling across social surfaces.';
-  $: minimalistThankYouDescription = subtitleText || 'Let\'s Create Something Amazing Together';
-  const funkyPageLabels = [
-    'Page 01',
-    'Page 02',
-    'Page 03',
-    'Page 04',
-    'Page 05',
-    'Page 06',
-    'Page 07',
-    'Page 08',
-    'Page 09',
-    'Page 10',
-    'Page 11',
-    'Page 12'
-  ];
-  const funkyContentsDefaults = [
-    'About us',
-    'Moodboard',
-    'Plan',
-    'Team',
-    'Product',
-    'Palette',
-    'Logo Variation',
-    'Typeface',
-    'Contact'
-  ];
-  const funkyFallbackImages = [
-    'https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&w=1200&q=80',
-    'https://images.unsplash.com/photo-1542291026-7eec264c27ff?auto=format&fit=crop&w=1200&q=80',
-    'https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?auto=format&fit=crop&w=1200&q=80',
-    'https://images.unsplash.com/photo-1487412720507-e7ab37603c6f?auto=format&fit=crop&w=1200&q=80'
-  ];
-  $: funkyTheme = buildFunkyTheme();
-  $: funkyContentsItems = funkyContentsDefaults;
-  $: funkyHeroImage = minimalistImageSources[0] || funkyFallbackImages[0];
-  $: funkyInsetImage = minimalistImageSources[1] || funkyHeroImage;
-  $: funkyMoodboardImages = ensureImageCount(minimalistImageSources, 2, funkyFallbackImages).slice(0, 2);
-  $: funkyGalleryImages = ensureImageCount(minimalistImageSources, 4, funkyFallbackImages).slice(0, 4);
-  $: funkyPaletteColors = buildFunkyPaletteColors();
-  $: funkyColorDots = funkyPaletteColors.slice(0, 3).map((color) => color.hex);
-  $: funkyLogoImageSrc = getLogoImageSource();
-  $: funkyLogoVariations = [
-    {
-      name: 'Primary Logo',
-      image: funkyLogoImageSrc || funkyHeroImage,
-      background: '#FFFFFF'
-    },
-    {
-      name: 'Alternate Logo',
-      image: funkyLogoImageSrc || funkyHeroImage,
-      background: ensureHexColor(color2Hex, defaultFunkyTheme.accentPink)
-    }
-  ];
-  $: funkyTypographyDescription = values || mission || 'Presentation tools for communication.';
-  $: funkyTypographyFont = primaryFont || 'Poppins';
-  $: funkyProductDescription = applications.length
-    ? applications.map((app) => app.description || app.name).filter(Boolean).join(' • ')
-    : positioningStatement || values || 'Highlight the product experience.';
-  $: funkyWebsiteDisplay = formatWebsiteUrl(website);
-  $: funkySubheading = tagline || `Presentation by ${brandName || 'Reallygreatsite'}`;
-  $: funkyLoopLabel = (brandName || 'Brand Guidelines').toUpperCase();
-  $: funkyTeamMembers = extractTeamMembers(brandData);
-  $: funkyContactImage = minimalistImageSources[2] || funkyHeroImage;
+
+$: colorSignature = JSON.stringify({
+  c1: color1Hex,
+  c2: color2Hex,
+  c3: color3Hex,
+  c4: color4Hex,
+  c5: color5Hex,
+  c6: color6Hex,
+  c7: color7Hex,
+  c8: color8Hex,
+  c1L: color1Lighter,
+  c2L: color2Lighter,
+  c3L: color3Lighter,
+  c4L: color4Lighter,
+  c5L: color5Lighter,
+  c6L: color6Lighter,
+  c7L: color7Lighter,
+  c8L: color8Lighter,
+  c1R: color1Rgba5,
+  c7R: color7Rgba12,
+  c8R: color8Rgba12
+});
   
-  const defaultSlidesList = [
+  // Slide list
+  const slides = [
     { name: 'Cover', component: 'cover' },
     { name: 'Brand Introduction', component: 'brand-intro' },
     { name: 'Brand Positioning', component: 'brand-positioning' },
@@ -1555,67 +1559,6 @@
     { name: 'Applications', component: 'applications' },
     { name: 'Thank You', component: 'thank-you' }
   ];
-  
-  const minimalistSlidesList = [
-    { name: 'Cover', component: 'minimalist-cover' },
-    { name: 'Brand Introduction', component: 'minimalist-brand-intro' },
-    { name: 'Brand Positioning', component: 'minimalist-brand-positioning' },
-    { name: 'Contents', component: 'minimalist-contents' },
-    { name: 'Logo Overview', component: 'minimalist-logo-overview' },
-    { name: 'Logo Showcase', component: 'minimalist-logo-showcase' },
-    { name: 'Typography', component: 'minimalist-typography-hero' },
-    { name: 'Typography Details', component: 'minimalist-typography-details' },
-    { name: 'Color Palette', component: 'minimalist-color-palette' },
-    { name: 'Color Usage', component: 'minimalist-color-usage' },
-    { name: 'Social Media', component: 'minimalist-social-media' },
-    { name: 'Inspiration', component: 'minimalist-inspiration' },
-    { name: 'Moodboard', component: 'minimalist-moodboard' },
-    { name: 'Thank You', component: 'minimalist-thank-you' }
-  ];
-  
-  const funkySlidesList = [
-    { name: 'Cover', component: 'funky-cover' },
-    { name: 'Brand Introduction', component: 'funky-brand-story' },
-    { name: 'Brand Positioning', component: 'funky-brand-positioning' },
-    { name: 'Table of Contents', component: 'funky-table-of-contents' },
-    { name: 'Moodboard', component: 'funky-moodboard' },
-    { name: 'Plan', component: 'funky-plan' },
-    { name: 'Product', component: 'funky-product' },
-    { name: 'Team', component: 'funky-team' },
-    { name: 'Palette', component: 'funky-palette' },
-    { name: 'Logo Variations', component: 'funky-logo-variations' },
-    { name: 'Typography', component: 'funky-typography' },
-    { name: 'Contact', component: 'funky-contact' }
-  ];
-  
-  const defaultSlideCount = defaultSlidesList.length;
-  
-  type SectionSlide = {
-    id: string;
-    stepId: string;
-    title: string;
-    partLabel?: string;
-  sections: Array<{ title: string; description?: string; points?: string[]; examples?: string[] }>;
-  };
-  
-  let sectionSlides: SectionSlide[] = [];
-  let sectionSlideNavEntries: Array<{ name: string; component: string }> = [];
-  
-  let slides = defaultSlidesList;
-  $: sectionSlides = buildSectionSlides(brandData);
-  $: sectionSlideNavEntries = sectionSlides.map((slide, index) => ({
-    name: slide.partLabel ? `${slide.title} (${slide.partLabel})` : slide.title,
-    component: `dynamic-section-${slide.id || index}`
-  }));
-  
-  $: slides = effectiveSlideVibe === 'minimalist'
-    ? minimalistSlidesList
-    : effectiveSlideVibe === 'funky'
-      ? funkySlidesList
-      : defaultSlidesList.concat(sectionSlideNavEntries);
-  $: if (currentSlideIndex >= slides.length) {
-    currentSlideIndex = Math.max(0, slides.length - 1);
-  }
   
   function extractIcons(data: any): Array<{ symbol: string; name: string }> {
     if (!data) return [];
@@ -1755,11 +1698,14 @@
   }
   
   // Same lightenColor function as HTML generator (matching exactly)
-  function lightenColor(hex: string, amount: number): string {
-    if (!hex || !hex.startsWith('#')) return hex;
-    const r = parseInt(hex.slice(1, 3), 16);
-    const g = parseInt(hex.slice(3, 5), 16);
-    const b = parseInt(hex.slice(5, 7), 16);
+  function lightenColor(hex: any, amount: number): string {
+    const normalizedHex = normalizeColorToHex(hex);
+    if (!normalizedHex || typeof normalizedHex !== 'string' || !normalizedHex.startsWith('#')) {
+      return normalizedHex || '#FFFFFF';
+    }
+    const r = parseInt(normalizedHex.slice(1, 3), 16);
+    const g = parseInt(normalizedHex.slice(3, 5), 16);
+    const b = parseInt(normalizedHex.slice(5, 7), 16);
     // Lighten by mixing with white (same as HTML generator)
     const newR = Math.round(r + (255 - r) * amount);
     const newG = Math.round(g + (255 - g) * amount);
@@ -1767,310 +1713,15 @@
     return `#${newR.toString(16).padStart(2, '0')}${newG.toString(16).padStart(2, '0')}${newB.toString(16).padStart(2, '0')}`;
   }
   
-  function hexToRgba(hex: string, opacity: number): string {
-    if (!hex || !hex.startsWith('#')) return `rgba(0, 0, 0, ${opacity})`;
-    const r = parseInt(hex.slice(1, 3), 16);
-    const g = parseInt(hex.slice(3, 5), 16);
-    const b = parseInt(hex.slice(5, 7), 16);
+  function hexToRgba(hex: any, opacity: number): string {
+    const normalizedHex = normalizeColorToHex(hex);
+    if (!normalizedHex || typeof normalizedHex !== 'string' || !normalizedHex.startsWith('#')) {
+      return `rgba(0, 0, 0, ${opacity})`;
+    }
+    const r = parseInt(normalizedHex.slice(1, 3), 16);
+    const g = parseInt(normalizedHex.slice(3, 5), 16);
+    const b = parseInt(normalizedHex.slice(5, 7), 16);
     return `rgba(${r}, ${g}, ${b}, ${opacity})`;
-  }
-  
-  function formatWebsiteUrl(url: string | undefined): string {
-    if (!url) return 'www.reallygreatsite.com';
-    const trimmed = url.replace(/^https?:\/\//i, '').replace(/\/$/, '');
-    return trimmed || 'www.reallygreatsite.com';
-  }
-  
-  function pickImageSource(entry: any): string | null {
-    if (!entry) return null;
-    if (typeof entry === 'string') return entry;
-    return entry.url || entry.src || entry.image || entry.path || null;
-  }
-  
-  function extractImageSources(data: any): string[] {
-    if (!data) return [];
-    const candidates = [
-      data?.moodboardImages,
-      data?.moodboard?.images,
-      data?.inspirationImages,
-      data?.inspiration?.images,
-      data?.imagery?.photos,
-      data?.photos,
-      data?.media
-    ];
-    for (const candidate of candidates) {
-      if (Array.isArray(candidate)) {
-        const images = candidate
-          .map(pickImageSource)
-          .filter((src): src is string => Boolean(src));
-        if (images.length) return images;
-      }
-    }
-    return [];
-  }
-  
-  function ensureHexColor(value: string | undefined, fallback: string): string {
-    if (!value || typeof value !== 'string') return fallback;
-    return value.startsWith('#') ? value : `#${value}`;
-  }
-
-  function normalizeColorValue(value: any, fallback: string): string {
-    const safeFallback = ensureHexColor(fallback, '#000000');
-    if (!value) return safeFallback;
-    if (typeof value === 'string') return ensureHexColor(value, safeFallback);
-    if (typeof value === 'object') {
-      if (typeof value.hex === 'string') return ensureHexColor(value.hex, safeFallback);
-      if (typeof value.value === 'string') return ensureHexColor(value.value, safeFallback);
-    }
-    return safeFallback;
-  }
-
-  const coreStepIds = new Set([
-    'brand-introduction',
-    'brand-positioning',
-    'logo-guidelines',
-    'logo-dos',
-    'logo-donts',
-    'color-palette',
-    'typography',
-    'iconography',
-    'photography',
-    'applications',
-    'thank-you',
-    'generated-slides'
-  ]);
-
-  function buildSectionSlides(data: any): SectionSlide[] {
-    if (!data?.stepHistory || !Array.isArray(data.stepHistory)) return [];
-    return data.stepHistory
-      .map((entry: any, index: number) => normalizeSectionSlide(entry, index))
-      .filter((slide): slide is SectionSlide => Boolean(slide));
-  }
-
-  function normalizeSectionSlide(entry: any, index: number): SectionSlide | null {
-    if (!entry) return null;
-    const stepId = String(entry.step || entry.stepId || `custom-${index}`);
-    if (coreStepIds.has(stepId)) return null;
-    const content = entry.content;
-    if (!content) return null;
-    const title = entry.title || entry.stepTitle || toTitleCase(stepId.replace(/[-_]/g, ' '));
-    const partLabel = entry.part || entry.description || entry.subtitle;
-    const sections = extractSectionsFromContent(content);
-    if (!sections.length) return null;
-    return {
-      id: stepId,
-      stepId,
-      title,
-      partLabel,
-      sections
-    };
-  }
-
-  function extractSectionsFromContent(content: any): SectionSlide['sections'] {
-    if (!content) return [];
-    if (typeof content === 'object') {
-      if (Array.isArray(content.sections) && content.sections.length) {
-        return content.sections.map((section: any, index: number) => normalizeSectionEntry(section, index));
-      }
-      if (Array.isArray(content) && content.length) {
-        return content.map((section: any, index: number) => normalizeSectionEntry(section, index));
-      }
-      const keys = Object.keys(content).filter((key) => {
-        const value = content[key];
-        return typeof value === 'string' || Array.isArray(value) || (typeof value === 'object' && value);
-      });
-      if (keys.length) {
-        return keys.map((key, index) => normalizeSectionEntry({
-          title: toTitleCase(key.replace(/[-_]/g, ' ')),
-          description: typeof content[key] === 'string' ? content[key] : '',
-          points: Array.isArray(content[key]) ? content[key] : undefined
-        }, index));
-      }
-    }
-    if (typeof content === 'string') {
-      return stringToSections(content);
-    }
-    return [];
-  }
-
-  function normalizeSectionEntry(section: any, index: number) {
-    if (typeof section === 'string') {
-      const blocks = stringToSections(section);
-      return blocks[0] || { title: `Section ${index + 1}`, description: section };
-    }
-    const title = section?.title || section?.heading || `Section ${index + 1}`;
-    const description = section?.description || section?.text || '';
-    const points = Array.isArray(section?.points)
-      ? section.points.map((point: any) => String(point).trim()).filter(Boolean)
-      : undefined;
-    const examples = Array.isArray(section?.examples)
-      ? section.examples.map((example: any) => String(example).trim()).filter(Boolean)
-      : undefined;
-    return { title, description, points, examples };
-  }
-
-  function stringToSections(text: string): SectionSlide['sections'] {
-    if (!text) return [];
-    const blocks = text.split(/\n{2,}/).map((block) => block.trim()).filter(Boolean);
-    return blocks.map((block, index) => {
-      const headingMatch = block.match(/^\s*\*\*(.+?)\*\*[:\-]\s*(.+)$/) || block.match(/^\s*([^:\n]+)[:\-]\s*(.+)$/);
-      let title = headingMatch ? headingMatch[1] : `Section ${index + 1}`;
-      let body = headingMatch ? headingMatch[2] : block;
-      title = title.trim();
-      const { description, points } = splitDescriptionAndPoints(body);
-      return {
-        title,
-        description,
-        points
-      };
-    });
-  }
-
-  function splitDescriptionAndPoints(text: string): { description: string; points?: string[] } {
-    const lines = text.split('\n').map((line) => line.trim()).filter(Boolean);
-    const points: string[] = [];
-    const descriptionLines: string[] = [];
-    for (const line of lines) {
-      if (/^[-•*]\s+/.test(line)) {
-        points.push(line.replace(/^[-•*]\s+/, '').trim());
-      } else {
-        descriptionLines.push(line);
-      }
-    }
-    return {
-      description: descriptionLines.join(' ').trim(),
-      points: points.length ? points : undefined
-    };
-  }
-
-  function toTitleCase(input: string): string {
-    return input
-      .split(' ')
-      .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
-      .join(' ');
-  }
-  
-  const minimalistContentsDefaults = [
-    'Brand Guidelines',
-    'Logo and Design',
-    'Typography',
-    'Color Palette',
-    'Design & Social Media',
-    'Inspiration & Moodboard'
-  ];
-  
-  function buildMinimalistPalette(): Array<{ hex: string; label: string }> {
-    if (colors.length >= 4) {
-      return colors.slice(0, 4).map((color, index) => ({
-        hex: color.hex,
-        label: color.name || `Color ${index + 1}`
-      }));
-    }
-    return [
-      { hex: color1Hex, label: 'Primary' },
-      { hex: color2Hex, label: 'Accent' },
-      { hex: color3Hex, label: 'Secondary' },
-      { hex: color4Hex, label: 'Highlight' }
-    ].map((item) => ({
-      hex: ensureHexColor(item.hex, '#333333'),
-      label: item.label
-    }));
-  }
-  
-  function buildMinimalistUsage(): Array<{ hex: string; label: string; usage: string }> {
-    const palette = buildMinimalistPalette();
-    const usageLabels = ['Background', 'Background', 'Font', 'Pattern'];
-    return palette.map((item, index) => ({
-      hex: item.hex,
-      label: item.hex.toUpperCase(),
-      usage: colors[index]?.usage || usageLabels[index] || 'Brand color'
-    }));
-  }
-  
-  function buildFunkyTheme(): FunkyTheme {
-    return {
-      backgroundColor: ensureHexColor(color4Hex, defaultFunkyTheme.backgroundColor),
-      accentOrange: ensureHexColor(color3Hex, defaultFunkyTheme.accentOrange),
-      accentPink: ensureHexColor(color2Hex, defaultFunkyTheme.accentPink),
-      accentGreen: ensureHexColor(color1Hex, defaultFunkyTheme.accentGreen),
-      accentLavender: lightenColor(ensureHexColor(color2Hex, defaultFunkyTheme.accentLavender), 0.4),
-      accentBeige: ensureHexColor(color4Hex, defaultFunkyTheme.accentBeige),
-      textColor: defaultFunkyTheme.textColor,
-      bodyColor: defaultFunkyTheme.bodyColor,
-      dividerColor: defaultFunkyTheme.dividerColor
-    };
-  }
-  
-  function ensureImageCount(source: string[], desired: number, fallbacks: string[]): string[] {
-    const result = [...source];
-    let fallbackIndex = 0;
-    while (result.length < desired && fallbackIndex < fallbacks.length) {
-      const candidate = fallbacks[fallbackIndex++];
-      if (!result.includes(candidate)) {
-        result.push(candidate);
-      }
-    }
-    if (result.length < desired) {
-      return fallbacks.slice(0, desired);
-    }
-    return result;
-  }
-  
-  function buildFunkyPaletteColors(): Array<{ hex: string; label: string }> {
-    if (colors.length) {
-      return colors.slice(0, 4).map((color, index) => ({
-        hex: ensureHexColor(color.hex, defaultFunkyTheme.accentOrange),
-        label: color.name || `Color ${index + 1}`
-      }));
-    }
-    return [
-      { hex: '#65AF70', label: 'Organic Green' },
-      { hex: '#EBAFD3', label: 'Candy Pink' },
-      { hex: '#FF7B4A', label: 'Tangerine' },
-      { hex: '#FFE5C9', label: 'Peach' }
-    ];
-  }
-  
-  function getLogoImageSource(): string | null {
-    if (logoData) {
-      return logoData.startsWith('data:image')
-        ? logoData
-        : `data:image/png;base64,${logoData.replace(/^data:image\/\w+;base64,/, '')}`;
-    }
-    if (logoUrl) return logoUrl;
-    if (brandData?.logo?.url) return brandData.logo.url;
-    return null;
-  }
-  
-  function extractTeamMembers(data: any): Array<{ name: string; role: string; photo: string }> {
-    if (!data) return [];
-    const candidates =
-      (Array.isArray(data?.teamMembers) && data.teamMembers) ||
-      (Array.isArray(data?.team) && data.team) ||
-      (Array.isArray(data?.team?.members) && data.team.members);
-    if (Array.isArray(candidates)) {
-      return candidates
-        .map((member: any) => {
-          const photo =
-            pickImageSource(member?.photo) ||
-            pickImageSource(member?.image) ||
-            pickImageSource(member?.avatar) ||
-            pickImageSource(member) ||
-            '';
-          return {
-            name: member.name || member.fullName || member.title || 'Team Member',
-            role: member.role || member.position || 'Role',
-            photo: photo || funkyFallbackImages[3]
-          };
-        })
-        .filter((member) => Boolean(member.name));
-    }
-    return [];
-  }
-  
-  function initialsFromFont(font: string, fallback: string): string {
-    if (!font) return fallback;
-    return font.trim().charAt(0).toUpperCase() || fallback;
   }
   
   function nextSlide() {
@@ -2423,72 +2074,6 @@
       elements: positioningElements
     });
     
-    if (effectiveSlideVibe === 'minimalist') {
-      const minimalistGenerators = [
-        () => minimalistCoverRef?.getSlideData(),
-        () => minimalistBrandIntroductionRef?.getSlideData(),
-        () => minimalistBrandPositioningRef?.getSlideData(),
-        () => minimalistContentsRef?.getSlideData(),
-        () => minimalistLogoOverviewRef?.getSlideData(),
-        () => minimalistLogoShowcaseRef?.getSlideData(),
-        () => minimalistTypographyHeroRef?.getSlideData(),
-        () => minimalistTypographyDetailsRef?.getSlideData(),
-        () => minimalistColorPaletteRef?.getSlideData(),
-        () => minimalistColorUsageRef?.getSlideData(),
-        () => minimalistSocialMediaRef?.getSlideData(),
-        () => minimalistInspirationRef?.getSlideData(),
-        () => minimalistMoodboardRef?.getSlideData(),
-        () => minimalistThankYouRef?.getSlideData()
-      ];
-      return minimalistGenerators
-        .map((generator, index) => {
-          try {
-            const slide = generator();
-            if (slide && slide.elements?.length) {
-              return slide;
-            }
-            console.warn(`Minimalist slide ${index} returned empty data.`);
-            return null;
-          } catch (error) {
-            console.error(`Error generating minimalist slide ${index}:`, error);
-            return null;
-          }
-        })
-        .filter((slide): slide is SlideData => Boolean(slide));
-    }
-    
-    if (effectiveSlideVibe === 'funky') {
-      const funkyGenerators = [
-        () => funkyCoverRef?.getSlideData(),
-        () => funkyBrandStoryRef?.getSlideData(),
-        () => funkyBrandPositioningRef?.getSlideData(),
-        () => funkyTableOfContentsRef?.getSlideData(),
-        () => funkyMoodboardRef?.getSlideData(),
-        () => funkyPlanRef?.getSlideData(),
-        () => funkyProductRef?.getSlideData(),
-        () => funkyTeamRef?.getSlideData(),
-        () => funkyPaletteRef?.getSlideData(),
-        () => funkyLogoVariationsRef?.getSlideData(),
-        () => funkyTypographyRef?.getSlideData(),
-        () => funkyContactRef?.getSlideData()
-      ];
-      return funkyGenerators
-        .map((generator, index) => {
-          try {
-            const slide = generator();
-            if (slide && slide.elements?.length) {
-              return slide;
-            }
-            console.warn(`Funky slide ${index} returned empty data.`);
-            return null;
-          } catch (error) {
-            console.error(`Error generating funky slide ${index}:`, error);
-            return null;
-          }
-        })
-        .filter((slide): slide is SlideData => Boolean(slide));
-    }
-    
     // Continue with other slides... (Logo Guidelines, Color Palette, Typography, etc.)
     // For now, try to get data from refs if available, otherwise create from props
     const slideGenerators = [
@@ -2532,745 +2117,226 @@
     return finalSlides;
   }
   
-  // Function to collect all slide data
-  async function collectAllSlideData(): Promise<SlideData[]> {
-    const allSlideData: SlideData[] = [];
-    
-    // Collect data from all slide components in correct order
-    const slideRefs = effectiveSlideVibe === 'minimalist'
-      ? [
-          minimalistCoverRef,
-          minimalistBrandIntroductionRef,
-          minimalistBrandPositioningRef,
-          minimalistContentsRef,
-          minimalistLogoOverviewRef,
-          minimalistLogoShowcaseRef,
-          minimalistTypographyHeroRef,
-          minimalistTypographyDetailsRef,
-          minimalistColorPaletteRef,
-          minimalistColorUsageRef,
-          minimalistSocialMediaRef,
-          minimalistInspirationRef,
-          minimalistMoodboardRef,
-          minimalistThankYouRef
-        ]
-      : effectiveSlideVibe === 'funky'
-        ? [
-            funkyCoverRef,
-            funkyBrandStoryRef,
-            funkyBrandPositioningRef,
-            funkyTableOfContentsRef,
-            funkyMoodboardRef,
-            funkyPlanRef,
-            funkyProductRef,
-            funkyTeamRef,
-            funkyPaletteRef,
-            funkyLogoVariationsRef,
-            funkyTypographyRef,
-            funkyContactRef
-          ]
-        : [
-            coverSlideRef,
-            brandIntroRef,
-            brandPositioningRef,
-            logoGuidelinesRef,
-            logoDosRef,
-            logoDontsRef,
-            colorPaletteRef,
-            typographyRef,
-            iconographyRef,
-            photographyRef,
-            applicationsRef,
-            thankYouRef
-          ];
-    
-    for (const ref of slideRefs) {
-      if (ref && typeof ref.getSlideData === 'function') {
-        try {
-          let slideData: SlideData;
-          
-          // Special handling for iconography slide - convert text icons to image icons
-          if (ref === iconographyRef && typeof (ref as any).getSlideDataWithIcons === 'function') {
-            try {
-              console.log('🔄 [SlideManager] Calling getSlideDataWithIcons() for iconography slide...');
-              slideData = await (ref as any).getSlideDataWithIcons();
-              console.log('✅ [SlideManager] Converted iconography icons to images');
-              
-              // Verify the conversion worked
-              const textIcons = slideData.elements.filter(e => 
-                e.id.startsWith('icon-symbol-') || e.id === 'demo-icon-symbol'
-              );
-              const imageIcons = slideData.elements.filter(e => 
-                e.id.startsWith('icon-image-') || e.id === 'demo-icon-image'
-              );
-              console.log(`📊 [SlideManager] Iconography slide: ${imageIcons.length} image icons, ${textIcons.length} text icons`);
-              
-              if (textIcons.length > 0) {
-                console.warn(`⚠️ [SlideManager] WARNING: ${textIcons.length} text icon elements still present!`);
-              }
-            } catch (iconError) {
-              console.error('❌ [SlideManager] Failed to convert icons to images:', iconError);
-              // Fallback to regular slideData with text icons
-              slideData = ref.getSlideData();
-            }
-          } else {
-            slideData = ref.getSlideData();
-          }
-          
-          if (slideData && slideData.elements && slideData.elements.length > 0) {
-            allSlideData.push(slideData);
-          }
-        } catch (error) {
-          console.error('❌ Error getting slide data:', error);
-        }
-      }
-    }
-    
-    return allSlideData;
-  }
   
   // Note: Svelte slides are automatically saved server-side when HTML slides are generated
   // via the /api/preview-slides-html endpoint. No client-side saving is needed.
   
-  // Export dropdown state
-  let showExportDropdown = false;
-  let exportDropdownRef: HTMLDivElement;
-  
-  async function downloadAllSlidesPPTX() {
-    if (isDownloading) return;
-    
-    isDownloading = true;
-    showExportDropdown = false; // Close dropdown
-    try {
-      console.log('🔄 Collecting slide data from all components...');
-      
-      const allSlideData = await collectAllSlideData();
-      
-      console.log(`📊 Collected ${allSlideData.length} slides, converting to PPTX...`);
-      
-      if (allSlideData.length === 0) {
-        throw new Error('No slide data available to export');
-      }
-      
-      const blob = await convertSvelteSlidesToPptx({
-        slides: allSlideData,
-        brandName: brandName,
-        onProgress: (current, total) => {
-          downloadProgress = { current, total };
-        }
-      });
-      
-      // Download the file
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `${brandName.replace(/[^a-zA-Z0-9]/g, '-')}-Brand-Guidelines.pptx`;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
-      
-      console.log('✅ PPTX downloaded successfully');
-    } catch (error) {
-      console.error('❌ Error generating PPTX:', error);
-      alert('Failed to generate PPTX file. Please try again.');
-    } finally {
-      isDownloading = false;
-      downloadProgress = { current: 0, total: 0 };
-    }
-  }
-  
-  async function downloadAllSlidesPDF() {
-    if (isDownloading) return;
-    
-    isDownloading = true;
-    showExportDropdown = false; // Close dropdown
-    try {
-      console.log('🔄 Generating PDF from Svelte slides...');
-      
-      // Convert Svelte slide data to HTML slides for PDF generation
-      // We'll use the brand data to generate HTML slides via the API
-      const allSlideData = await collectAllSlideData();
-      
-      if (allSlideData.length === 0) {
-        throw new Error('No slide data available to export');
-      }
-      
-      // Convert SlideData to HTML format for PDF generation
-      // The PDF API expects HTML slides, so we need to convert SlideData to HTML
-      // For now, we'll use the brand data to regenerate HTML slides
-      const response = await fetch('/api/generate-pdf', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          brandName: brandName,
-          brandDomain: brandData?.brand_domain || brandData?.brandDomain || '',
-          shortDescription: brandData?.short_description || brandData?.shortDescription || '',
-          contact: brandData?.contact || {},
-          stepHistory: brandData?.stepHistory || [],
-          logoFiles: brandData?.logoFiles || [],
-          logoUrl: brandData?.logoUrl,
-          logo: brandData?.logo,
-          // Pass brand data for HTML slide generation
-          selectedMood: brandData?.selectedMood,
-          selectedAudience: brandData?.selectedAudience,
-          brandValues: brandData?.brandValues,
-          customPrompt: brandData?.customPrompt
-        })
-      });
-      
-      if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(errorText || 'Failed to generate PDF');
-      }
-      
-      // Download the PDF file
-      const blob = await response.blob();
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `${brandName.replace(/[^a-zA-Z0-9]/g, '-')}-Brand-Guidelines.pdf`;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
-      
-      console.log('✅ PDF downloaded successfully');
-    } catch (error) {
-      console.error('❌ Error generating PDF:', error);
-      alert('Failed to generate PDF file. Please try again.');
-    } finally {
-      isDownloading = false;
-      downloadProgress = { current: 0, total: 0 };
-    }
-  }
-  
-  async function exportToGoogleSlides() {
-    if (isDownloading) return;
-    
-    isDownloading = true;
-    showExportDropdown = false; // Close dropdown
-    try {
-      console.log('🔄 Exporting to Google Slides...');
-      
-      // Prepare brand data and steps
-      if (!brandData || !brandData.stepHistory || brandData.stepHistory.length === 0) {
-        throw new Error('No brand data or steps available to export');
-      }
-      
-      // Convert stepHistory to StepData format
-      const allSteps = brandData.stepHistory.map((step: any) => ({
-        step: step.step || step.stepId || '',
-        title: step.title || step.stepTitle || '',
-        content: step.content || '',
-        approved: step.approved !== false
-      }));
-      
-      // Determine vibe from brandData
-      const vibe = brandData.selectedMood || brandData.style || 'default';
-      const normalizedVibe = ['minimalist', 'funky', 'maximalist', 'default'].includes(vibe.toLowerCase())
-        ? vibe.toLowerCase()
-        : 'default';
-      
-      const response = await fetch('/api/export-google-slides', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          brandData: {
-            brandName: brandName,
-            brandDomain: brandData.brand_domain || brandData.brandDomain || '',
-            stepHistory: brandData.stepHistory || [],
-            logoFiles: brandData.logoFiles || []
-          },
-          allSteps: allSteps,
-          vibe: normalizedVibe
-        })
-      });
-      
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({ error: 'Failed to export to Google Slides' }));
-        throw new Error(errorData.error || errorData.details || 'Failed to export to Google Slides');
-      }
-      
-      const result = await response.json();
-      
-      if (result.success && result.url) {
-        // Open Google Slides in new tab
-        window.open(result.url, '_blank');
-        alert(`✅ Google Slides presentation created!\n\nYou can view and edit it here:\n${result.url}`);
-      } else {
-        throw new Error('Invalid response from server');
-      }
-      
-      console.log('✅ Google Slides export successful');
-    } catch (error: any) {
-      console.error('❌ Error exporting to Google Slides:', error);
-      alert(`Failed to export to Google Slides: ${error.message || 'Unknown error'}\n\nMake sure Google Slides API is configured in your .env file.`);
-    } finally {
-      isDownloading = false;
-      downloadProgress = { current: 0, total: 0 };
-    }
-  }
-  
-  // Handle clicks outside dropdown to close it
-  let clickOutsideHandler: ((e: MouseEvent) => void) | null = null;
-  
-  $: if (showExportDropdown && typeof document !== 'undefined') {
-    if (!clickOutsideHandler) {
-      clickOutsideHandler = (e: MouseEvent) => {
-        if (exportDropdownRef && !exportDropdownRef.contains(e.target as Node)) {
-          showExportDropdown = false;
-        }
-      };
-      document.addEventListener('click', clickOutsideHandler);
-    }
-  } else {
-    if (clickOutsideHandler) {
-      document.removeEventListener('click', clickOutsideHandler);
-      clickOutsideHandler = null;
-    }
-  }
-  
-  onDestroy(() => {
-    if (clickOutsideHandler && typeof document !== 'undefined') {
-      document.removeEventListener('click', clickOutsideHandler);
-    }
-  });
 </script>
 
 <div class="slide-manager">
+  <div class="presentation-header">
+    <div class="presentation-title">
+      <div class="icon-circle">
+        <PresentationIcon class="h-5 w-5" />
+      </div>
+      <div class="title-text">
+        <p class="title-label">Presentation</p>
+        <span class="title-subtext">Slides overview</span>
+      </div>
+    </div>
+    <div class="presentation-actions">
+      <div class="theme-toggle-chip">
+        <ThemeToggle />
+      </div>
+      <div class="btn-group">
+        {#if onGoToBrands}
+          <a
+            href="/dashboard/my-brands"
+            class="btn secondary large"
+            onclick={() => onGoToBrands?.()}
+          >
+            <Folder class="h-4 w-4" />
+            Go to My Brands
+          </a>
+        {/if}
+
+        {#if onBuildMockWebpage}
+          {#if !hasMockWebpage}
+            <button
+              class="btn large btn-build"
+              class:loading={isBuildingMockWebpage}
+              disabled={isBuildingMockWebpage}
+              onclick={() => onBuildMockWebpage?.()}
+            >
+              {#if isBuildingMockWebpage}
+                <Loader2 class="h-4 w-4 animate-spin" />
+                Building Mock Webpage...
+              {:else}
+                <Globe class="h-4 w-4" />
+                Build Mock Webpage
+              {/if}
+            </button>
+          {:else}
+            {#if onVisitMockWebpage}
+              <button
+                class="btn large btn-visit"
+                onclick={() => onVisitMockWebpage?.()}
+              >
+                <Globe class="h-4 w-4" />
+                Visit Mock Webpage
+              </button>
+            {/if}
+
+            {#if onDownloadMockWebpage}
+              <button
+                class="btn navigation"
+                onclick={() => onDownloadMockWebpage?.()}
+              >
+                <Download class="h-4 w-4" />
+                Download HTML
+              </button>
+            {/if}
+
+            {#if onDeleteMockWebpage}
+              <button
+                class="btn btn-delete"
+                onclick={() => onDeleteMockWebpage?.()}
+              >
+                <Trash2 class="h-4 w-4" />
+                Delete
+              </button>
+            {/if}
+          {/if}
+        {/if}
+      </div>
+    </div>
+  </div>
   <!-- Controls -->
   <div class="controls-bar">
     <div class="controls-left">
       <button
         onclick={() => {
-          isEditable = !isEditable;
           if (isEditable) {
+            isEditable = false;
+            showEditingPanel = false;
+          } else {
+            isEditable = true;
             showEditingPanel = true;
             updateEditingPanelData();
-          } else {
-            showEditingPanel = false;
           }
         }}
         class="btn"
         class:active={isEditable}
       >
-        {isEditable ? '🔒 Lock Editing' : '✏️ Edit Slides'}
+        <Pencil class="h-4 w-4" />
+        <span>{isEditable ? 'Editing Mode' : 'Edit Slides'}</span>
       </button>
       
       {#if isEditable}
         <button
-          onclick={toggleEditingPanel}
-          class="btn"
-          class:active={showEditingPanel}
+          class="btn secondary"
+          onclick={async () => {
+            if (isSavingSlides || !onSaveSlides) return;
+            await onSaveSlides({
+              brandDataSnapshot: getBrandDataSnapshot(),
+              slidesHtml: getSlidesHtmlSnapshot()
+            });
+            isEditable = false;
+            showEditingPanel = false;
+          }}
+          disabled={isSavingSlides}
         >
-          {showEditingPanel ? '📋 Hide Panel' : '📋 Show Panel'}
+          {#if isSavingSlides}
+            <Loader2 class="h-4 w-4 animate-spin" />
+            Saving Slides...
+          {:else}
+            <SaveIcon class="h-4 w-4" />
+            Save Slides
+          {/if}
         </button>
+      {:else}
+        <div class="export-controls" bind:this={exportDropdownRef}>
+          <button
+            class="btn"
+            class:active={showExportDropdown}
+            disabled={isDownloading || (!onDownloadPPTX && !onDownloadPDF)}
+            onclick={() => {
+              if (isDownloading || (!onDownloadPPTX && !onDownloadPDF)) return;
+              showExportDropdown = !showExportDropdown;
+            }}
+          >
+            <FileDown class="h-4 w-4" />
+            <span>{isDownloading ? 'Exporting…' : 'Export Slides'}</span>
+          </button>
+
+          {#if showExportDropdown}
+            <div class="export-dropdown">
+              {#if onDownloadPPTX}
+                <button
+                  class="dropdown-item"
+                  onclick={() => {
+                    onDownloadPPTX?.();
+                    showExportDropdown = false;
+                  }}
+                  disabled={isDownloading}
+                >
+                  <FileDown class="h-4 w-4" />
+                  <span>PPTX</span>
+                </button>
+              {/if}
+              {#if onDownloadPDF}
+                <button
+                  class="dropdown-item"
+                  onclick={() => {
+                    onDownloadPDF?.();
+                    showExportDropdown = false;
+                  }}
+                  disabled={isDownloading}
+                >
+                  <FileDown class="h-4 w-4" />
+                  <span>PDF</span>
+                </button>
+              {/if}
+            </div>
+          {/if}
+        </div>
       {/if}
       
-      <!-- Export Dropdown -->
-      <div class="relative inline-block" bind:this={exportDropdownRef}>
-        <button
-          onclick={() => showExportDropdown = !showExportDropdown}
-          disabled={isDownloading}
-          class="btn btn-primary flex items-center gap-2"
-        >
-          {#if isDownloading}
-            ⏳ Generating... ({downloadProgress.current}/{downloadProgress.total})
-          {:else}
-            📥 Export As
-            <span class="text-xs">▼</span>
-          {/if}
-        </button>
-        
-        {#if showExportDropdown}
-          <div class="absolute left-0 mt-1 w-56 bg-white rounded-lg shadow-lg border border-gray-200 z-50">
-            <button
-              class="w-full text-left px-4 py-2 hover:bg-gray-100 rounded-t-lg flex items-center gap-2 text-sm border-b border-gray-200"
-              onclick={downloadAllSlidesPPTX}
-              disabled={isDownloading}
-            >
-              📄 PPTX (Editable)
-            </button>
-            <button
-              class="w-full text-left px-4 py-2 hover:bg-gray-100 flex items-center gap-2 text-sm border-b border-gray-200"
-              onclick={exportToGoogleSlides}
-              disabled={isDownloading}
-            >
-              📊 Google Slides
-            </button>
-            <button
-              class="w-full text-left px-4 py-2 hover:bg-gray-100 rounded-b-lg flex items-center gap-2 text-sm"
-              onclick={downloadAllSlidesPDF}
-              disabled={isDownloading}
-            >
-              📄 PDF
-            </button>
-          </div>
-        {/if}
+    </div>
+  </div>
+  
+  <div class="slide-workspace">
+    <div class="slide-stage" class:panel-open={showEditingPanel && isEditable}>
+      <!-- Slide Navigation -->
+      <div class="slide-navigation">
+        {#each slides as slide, index}
+          <button
+            onclick={() => goToSlide(index)}
+            class="nav-card"
+            class:active={currentSlideIndex === index}
+          >
+            <span class="slide-index">{index + 1}</span>
+            <div class="slide-meta">
+              <p class="slide-name">{slide.name}</p>
+              <p class="slide-hint">Click to focus</p>
+            </div>
+          </button>
+        {/each}
       </div>
-    </div>
-    
-    <div class="controls-right">
-      <button onclick={prevSlide} disabled={currentSlideIndex === 0} class="btn">
-        ← Previous
-      </button>
-      <span class="slide-counter">
-        Slide {currentSlideIndex + 1} of {slides.length}
-      </span>
-      <button onclick={nextSlide} disabled={currentSlideIndex === slides.length - 1} class="btn">
-        Next →
-      </button>
-    </div>
-  </div>
-  
-  <!-- Slide Navigation -->
-  <div class="slide-navigation">
-    {#each slides as slide, index}
-      <button
-        onclick={() => goToSlide(index)}
-        class="nav-item"
-        class:active={currentSlideIndex === index}
+
+      <!-- Slide Viewer -->
+      <div class="slide-viewer">
+        <div class="slide-nav-overlay">
+          <button onclick={prevSlide} disabled={currentSlideIndex === 0} class="btn navigation">
+            <ChevronLeft class="h-4 w-4" />
+            Previous
+          </button>
+          <span class="slide-counter">
+            Slide {currentSlideIndex + 1} of {slides.length}
+          </span>
+          <button onclick={nextSlide} disabled={currentSlideIndex === slides.length - 1} class="btn navigation">
+            Next
+            <ChevronRight class="h-4 w-4" />
+          </button>
+        </div>
+        <div class="slide-container">
+      <!-- Render all slides but hide non-visible ones -->
+      <!-- This ensures all refs are available for PPTX export -->
+      <div
+        class="slide-wrapper"
+        use:trackSlideWrapper={0}
+        class:hidden={currentSlideIndex !== 0}
       >
-        {slide.name}
-      </button>
-    {/each}
-  </div>
-  
-  <!-- Slide Viewer -->
-  <div class="slide-viewer">
-    <div class="slide-container">
-      {#if effectiveSlideVibe === 'minimalist'}
-        <div class="slide-wrapper" class:hidden={currentSlideIndex !== 0}>
-          <MinimalistCoverSlide
-            bind:this={minimalistCoverRef}
-            titlePrimary={minimalistCoverProps.titlePrimary}
-            titleSecondary={minimalistCoverProps.titleSecondary}
-            subtitle={minimalistCoverProps.subtitle}
-            website={minimalistCoverProps.website}
-            backgroundColor={minimalistCoverProps.backgroundColor}
-            textColor={minimalistCoverProps.textColor}
-            accentLineColor={minimalistCoverProps.accentLineColor}
-            accentCircleColor={minimalistCoverProps.accentCircleColor}
-          />
-        </div>
-        <div class="slide-wrapper" class:hidden={currentSlideIndex !== 1}>
-          <MinimalistBrandIntroductionSlide
-            bind:this={minimalistBrandIntroductionRef}
-            brandName={brandName || 'Brand Name'}
-            tagline={tagline || 'Brand Guidelines'}
-            positioningStatement={positioningStatement}
-            primaryColor={color1Hex}
-            secondaryColor={color2Hex}
-            accentColor={color3Hex}
-            {isEditable}
-          />
-        </div>
-        <div class="slide-wrapper" class:hidden={currentSlideIndex !== 2}>
-          <MinimalistBrandPositioningSlide
-            bind:this={minimalistBrandPositioningRef}
-            mission={mission}
-            vision={vision}
-            values={values}
-            targetAudience={targetAudience}
-            primaryColor={color1Hex}
-            secondaryColor={color2Hex}
-            accentColor={color3Hex}
-            {isEditable}
-          />
-        </div>
-        <div class="slide-wrapper" class:hidden={currentSlideIndex !== 3}>
-          <MinimalistContentsSlide
-            bind:this={minimalistContentsRef}
-            sections={minimalistContentsSections}
-            imageSrc={minimalistImageSources[0] || ''}
-            textColor={minimalistTextColor}
-            accentCircleColor={minimalistAccentCircleColor}
-            imagePlaceholderColor={minimalistPlaceholderColor}
-            backgroundColor={MINIMALIST_BACKGROUND}
-            brandName={brandName || ''}
-          />
-        </div>
-        <div class="slide-wrapper" class:hidden={currentSlideIndex !== 4}>
-          <MinimalistLogoOverviewSlide
-            bind:this={minimalistLogoOverviewRef}
-            title="Logo"
-            description={minimalistLogoOverviewDescription}
-            textColor={minimalistTextColor}
-            accentCircleColor={minimalistAccentCircleColor}
-            backgroundColor={MINIMALIST_BACKGROUND}
-            brandName={brandName || ''}
-          />
-        </div>
-        <div class="slide-wrapper" class:hidden={currentSlideIndex !== 5}>
-          <MinimalistLogoShowcaseSlide
-            bind:this={minimalistLogoShowcaseRef}
-            primaryImageSrc={logoData || logoUrl}
-            secondaryImageSrc={logoUrl}
-            primaryDescription={minimalistLogoPrimaryDescription}
-            secondaryDescription={minimalistLogoSecondaryDescription}
-            textColor={minimalistTextColor}
-            backgroundColor={MINIMALIST_BACKGROUND}
-            swatchBackground={minimalistPlaceholderColor}
-            brandName={brandName || ''}
-          />
-        </div>
-        <div class="slide-wrapper" class:hidden={currentSlideIndex !== 6}>
-          <MinimalistTypographyHeroSlide
-            bind:this={minimalistTypographyHeroRef}
-            title="Typography"
-            description={`${primaryFont || 'Primary Font'} + ${secondaryFont || 'Secondary Font'} pairing`}
-            primaryLetter={initialsFromFont(primaryFont, 'B')}
-            secondaryLetter={initialsFromFont(secondaryFont, 'b')}
-            textColor={minimalistTextColor}
-            accentCircleColor={minimalistAccentCircleColor}
-            backgroundColor={MINIMALIST_BACKGROUND}
-            brandName={brandName || ''}
-          />
-        </div>
-        <div class="slide-wrapper" class:hidden={currentSlideIndex !== 7}>
-          <MinimalistTypographyDetailsSlide
-            bind:this={minimalistTypographyDetailsRef}
-            columns={minimalistTypographyColumns}
-            textColor={minimalistTextColor}
-            accentCircleColor={minimalistAccentCircleColor}
-            backgroundColor={MINIMALIST_BACKGROUND}
-            brandName={brandName || ''}
-          />
-        </div>
-        <div class="slide-wrapper" class:hidden={currentSlideIndex !== 8}>
-          <MinimalistColorPaletteSlide
-            bind:this={minimalistColorPaletteRef}
-            colors={minimalistPalette}
-            description={positioningStatement || values || 'Brand color system'}
-            textColor={minimalistTextColor}
-            backgroundColor={MINIMALIST_BACKGROUND}
-            brandName={brandName || ''}
-          />
-        </div>
-        <div class="slide-wrapper" class:hidden={currentSlideIndex !== 9}>
-          <MinimalistColorUsageSlide
-            bind:this={minimalistColorUsageRef}
-            swatches={minimalistUsage}
-            description={personality || 'Color usage guidance'}
-            textColor={minimalistTextColor}
-            backgroundColor={MINIMALIST_BACKGROUND}
-            brandName={brandName || ''}
-          />
-        </div>
-        <div class="slide-wrapper" class:hidden={currentSlideIndex !== 10}>
-          <MinimalistSocialMediaSlide
-            bind:this={minimalistSocialMediaRef}
-            description={minimalistSocialDescription}
-            imageSrc={minimalistImageSources[3] || minimalistImageSources[0] || ''}
-            textColor={minimalistTextColor}
-            accentCircleColor={minimalistAccentCircleColor}
-            backgroundColor={MINIMALIST_BACKGROUND}
-            placeholderColor={minimalistPlaceholderColor}
-            brandName={brandName || ''}
-          />
-        </div>
-        <div class="slide-wrapper" class:hidden={currentSlideIndex !== 11}>
-          <MinimalistInspirationSlide
-            bind:this={minimalistInspirationRef}
-            description={values || mission || 'Inspiration references'}
-            mainImageSrc={minimalistInspirationImages.main}
-            secondaryImageSrc={minimalistInspirationImages.secondary}
-            tertiaryImageSrc={minimalistInspirationImages.tertiary}
-            textColor={minimalistTextColor}
-            accentCircleColor={minimalistAccentCircleColor}
-            backgroundColor={MINIMALIST_BACKGROUND}
-            placeholderColor={minimalistPlaceholderColor}
-            brandName={brandName || ''}
-          />
-        </div>
-        <div class="slide-wrapper" class:hidden={currentSlideIndex !== 12}>
-          <MinimalistMoodboardSlide
-            bind:this={minimalistMoodboardRef}
-            images={minimalistMoodboardImages}
-            textColor={minimalistTextColor}
-            backgroundColor={MINIMALIST_BACKGROUND}
-            placeholderColor={minimalistPlaceholderColor}
-            brandName={brandName || ''}
-          />
-        </div>
-        <div class="slide-wrapper" class:hidden={currentSlideIndex !== 13}>
-          <MinimalistThankYouSlide
-            bind:this={minimalistThankYouRef}
-            title={thankYouText || 'Thanks!'}
-            description={minimalistThankYouDescription}
-            imageSrc={minimalistImageSources[4] || minimalistImageSources[0] || ''}
-            textColor={minimalistTextColor}
-            accentCircleColor={minimalistAccentCircleColor}
-            backgroundColor={MINIMALIST_BACKGROUND}
-            placeholderColor={minimalistPlaceholderColor}
-            brandName={brandName || ''}
-          />
-        </div>
-      {:else if effectiveSlideVibe === 'funky'}
-        <div class="slide-wrapper" class:hidden={currentSlideIndex !== 0}>
-          <FunkyCoverSlide
-            bind:this={funkyCoverRef}
-            brandName={brandName || 'Reallygreatsite'}
-            heading={`${brandName || 'Brand'} Guidelines`}
-            subheading={funkySubheading}
-            loopLabel={funkyLoopLabel}
-            pageLabel={funkyPageLabels[0]}
-            theme={funkyTheme}
-            {isEditable}
-          />
-        </div>
-        <div class="slide-wrapper" class:hidden={currentSlideIndex !== 1}>
-          <FunkyBrandStorySlide
-            bind:this={funkyBrandStoryRef}
-            brandName={brandName || 'Reallygreatsite'}
-            pageLabel={funkyPageLabels[1]}
-            title="Brand Introduction"
-            description={positioningStatement || mission || values || 'Presentation tools that tell your story.'}
-            heroImage={funkyHeroImage}
-            insetImage={funkyInsetImage}
-            stampText={funkyLoopLabel}
-            theme={funkyTheme}
-            {isEditable}
-          />
-        </div>
-        <div class="slide-wrapper" class:hidden={currentSlideIndex !== 2}>
-          <FunkyBrandPositioningSlide
-            bind:this={funkyBrandPositioningRef}
-            brandName={brandName || 'Reallygreatsite'}
-            pageLabel={funkyPageLabels[2]}
-            mission={mission}
-            vision={vision}
-            values={values}
-            targetAudience={targetAudience}
-            theme={funkyTheme}
-            {isEditable}
-          />
-        </div>
-        <div class="slide-wrapper" class:hidden={currentSlideIndex !== 3}>
-          <FunkyTableOfContentsSlide
-            bind:this={funkyTableOfContentsRef}
-            brandName={brandName || 'Reallygreatsite'}
-            pageLabel={funkyPageLabels[3]}
-            title="Table of Contents"
-            items={funkyContentsItems}
-            featuredImage={funkyHeroImage}
-            theme={funkyTheme}
-            {isEditable}
-          />
-        </div>
-        <div class="slide-wrapper" class:hidden={currentSlideIndex !== 4}>
-          <FunkyMoodboardSlide
-            bind:this={funkyMoodboardRef}
-            brandName={brandName || 'Reallygreatsite'}
-            pageLabel={funkyPageLabels[4]}
-            title="Mood Board"
-            description={personality || positioningStatement || 'Presentation tools for demonstrations, lectures, and more.'}
-            images={funkyMoodboardImages}
-            colorDots={funkyColorDots}
-            theme={funkyTheme}
-            {isEditable}
-          />
-        </div>
-        <div class="slide-wrapper" class:hidden={currentSlideIndex !== 5}>
-          <FunkyPlanSlide
-            bind:this={funkyPlanRef}
-            brandName={brandName || 'Reallygreatsite'}
-            pageLabel={funkyPageLabels[5]}
-            title="Our Plan"
-            vision={vision || mission || 'Communicate clearly across every touchpoint.'}
-            mission={mission || vision || 'Enable consistent storytelling for your brand.'}
-            theme={funkyTheme}
-            {isEditable}
-          />
-        </div>
-        <div class="slide-wrapper" class:hidden={currentSlideIndex !== 6}>
-          <FunkyProductSlide
-            bind:this={funkyProductRef}
-            brandName={brandName || 'Reallygreatsite'}
-            pageLabel={funkyPageLabels[6]}
-            title="The Product"
-            description={funkyProductDescription}
-            gallery={funkyGalleryImages}
-            theme={funkyTheme}
-            {isEditable}
-          />
-        </div>
-        <div class="slide-wrapper" class:hidden={currentSlideIndex !== 7}>
-          {#if funkyTeamMembers.length}
-            <FunkyTeamSlide
-              bind:this={funkyTeamRef}
-              brandName={brandName || 'Reallygreatsite'}
-              pageLabel={funkyPageLabels[7]}
-              members={funkyTeamMembers}
-              theme={funkyTheme}
-              {isEditable}
-            />
-          {:else}
-            <FunkyTeamSlide
-              bind:this={funkyTeamRef}
-              brandName={brandName || 'Reallygreatsite'}
-              pageLabel={funkyPageLabels[7]}
-              theme={funkyTheme}
-              {isEditable}
-            />
-          {/if}
-        </div>
-        <div class="slide-wrapper" class:hidden={currentSlideIndex !== 8}>
-          <FunkyPaletteSlide
-            bind:this={funkyPaletteRef}
-            brandName={brandName || 'Reallygreatsite'}
-            pageLabel={funkyPageLabels[8]}
-            title="Palette"
-            colors={funkyPaletteColors}
-            theme={funkyTheme}
-            {isEditable}
-          />
-        </div>
-        <div class="slide-wrapper" class:hidden={currentSlideIndex !== 9}>
-          <FunkyLogoVariationsSlide
-            bind:this={funkyLogoVariationsRef}
-            brandName={brandName || 'Reallygreatsite'}
-            pageLabel={funkyPageLabels[9]}
-            title="Logo Variation"
-            variations={funkyLogoVariations}
-            theme={funkyTheme}
-            {isEditable}
-          />
-        </div>
-        <div class="slide-wrapper" class:hidden={currentSlideIndex !== 10}>
-          <FunkyTypographySlide
-            bind:this={funkyTypographyRef}
-            brandName={brandName || 'Reallygreatsite'}
-            pageLabel={funkyPageLabels[10]}
-            title="Typeface"
-            description={funkyTypographyDescription}
-            fontFamily={funkyTypographyFont}
-            primarySample={primaryWeights || 'Aa Bb Cc 123'}
-            secondarySample={secondaryWeights || 'Aa Bb Cc 123'}
-            supportingCopy="Typography"
-            theme={funkyTheme}
-            {isEditable}
-          />
-        </div>
-        <div class="slide-wrapper" class:hidden={currentSlideIndex !== 11}>
-          <FunkyContactSlide
-            bind:this={funkyContactRef}
-            brandName={brandName || 'Reallygreatsite'}
-            pageLabel={funkyPageLabels[11]}
-            title={thankYouText || 'Contact Us'}
-            website={funkyWebsiteDisplay}
-            email={email || 'hello@reallygreatsite.com'}
-            phone={phone || '123-456-7890'}
-            contactImage={funkyContactImage}
-            theme={funkyTheme}
-            {isEditable}
-          />
-        </div>
-      {:else}
-        <!-- Render all slides but hide non-visible ones -->
-        <!-- This ensures all refs are available for PPTX export -->
-      <div class="slide-wrapper" class:hidden={currentSlideIndex !== 0}>
         <CoverSlide
           bind:this={coverSlideRef}
           bind:brandName
@@ -3289,7 +2355,11 @@
           {isEditable}
         />
       </div>
-      <div class="slide-wrapper" class:hidden={currentSlideIndex !== 1}>
+      <div
+        class="slide-wrapper"
+        use:trackSlideWrapper={1}
+        class:hidden={currentSlideIndex !== 1}
+      >
         <BrandIntroductionSlide
           bind:this={brandIntroRef}
           bind:positioningStatement
@@ -3303,14 +2373,17 @@
           {isEditable}
         />
       </div>
-      <div class="slide-wrapper" class:hidden={currentSlideIndex !== 2}>
+      <div
+        class="slide-wrapper"
+        use:trackSlideWrapper={2}
+        class:hidden={currentSlideIndex !== 2}
+      >
         <BrandPositioningSlide
           bind:this={brandPositioningRef}
           bind:mission
           bind:vision
           bind:values
-          bind:targetAudience
-          personality={personality}
+          bind:personality
           color1Hex={color1Hex}
           color2Hex={color2Hex}
           color3Hex={color3Hex}
@@ -3325,7 +2398,11 @@
           {isEditable}
         />
       </div>
-      <div class="slide-wrapper" class:hidden={currentSlideIndex !== 3}>
+      <div
+        class="slide-wrapper"
+        use:trackSlideWrapper={3}
+        class:hidden={currentSlideIndex !== 3}
+      >
         <LogoGuidelinesSlide
           bind:this={logoGuidelinesRef}
           bind:brandName
@@ -3340,7 +2417,11 @@
           {isEditable}
         />
       </div>
-      <div class="slide-wrapper" class:hidden={currentSlideIndex !== 4}>
+      <div
+        class="slide-wrapper"
+        use:trackSlideWrapper={4}
+        class:hidden={currentSlideIndex !== 4}
+      >
         <LogoDosSlide
           bind:this={logoDosRef}
           bind:brandName
@@ -3358,7 +2439,11 @@
           {isEditable}
         />
       </div>
-      <div class="slide-wrapper" class:hidden={currentSlideIndex !== 5}>
+      <div
+        class="slide-wrapper"
+        use:trackSlideWrapper={5}
+        class:hidden={currentSlideIndex !== 5}
+      >
         <LogoDontsSlide
           bind:this={logoDontsRef}
           bind:brandName
@@ -3375,7 +2460,11 @@
           {isEditable}
         />
       </div>
-      <div class="slide-wrapper" class:hidden={currentSlideIndex !== 6}>
+      <div
+        class="slide-wrapper"
+        use:trackSlideWrapper={6}
+        class:hidden={currentSlideIndex !== 6}
+      >
         <ColorPaletteSlide
           bind:this={colorPaletteRef}
           bind:colors
@@ -3391,7 +2480,11 @@
           {isEditable}
         />
       </div>
-      <div class="slide-wrapper" class:hidden={currentSlideIndex !== 7}>
+      <div
+        class="slide-wrapper"
+        use:trackSlideWrapper={7}
+        class:hidden={currentSlideIndex !== 7}
+      >
         <TypographySlide
           bind:this={typographyRef}
           bind:primaryFont
@@ -3409,7 +2502,11 @@
           {isEditable}
         />
       </div>
-      <div class="slide-wrapper" class:hidden={currentSlideIndex !== 8}>
+      <div
+        class="slide-wrapper"
+        use:trackSlideWrapper={8}
+        class:hidden={currentSlideIndex !== 8}
+      >
         <IconographySlide
           bind:this={iconographyRef}
           bind:icons
@@ -3424,7 +2521,11 @@
           {isEditable}
         />
       </div>
-      <div class="slide-wrapper" class:hidden={currentSlideIndex !== 9}>
+      <div
+        class="slide-wrapper"
+        use:trackSlideWrapper={9}
+        class:hidden={currentSlideIndex !== 9}
+      >
         <PhotographySlide
           bind:this={photographyRef}
           color1Hex={color1Hex}
@@ -3451,7 +2552,11 @@
           {isEditable}
         />
       </div>
-      <div class="slide-wrapper" class:hidden={currentSlideIndex !== 10}>
+      <div
+        class="slide-wrapper"
+        use:trackSlideWrapper={10}
+        class:hidden={currentSlideIndex !== 10}
+      >
         <ApplicationsSlide
           bind:this={applicationsRef}
           bind:applications
@@ -3468,7 +2573,11 @@
           {isEditable}
         />
       </div>
-      <div class="slide-wrapper" class:hidden={currentSlideIndex !== 11}>
+      <div
+        class="slide-wrapper"
+        use:trackSlideWrapper={11}
+        class:hidden={currentSlideIndex !== 11}
+      >
         <ThankYouSlide
           bind:this={thankYouRef}
           bind:thankYouText
@@ -3487,105 +2596,324 @@
           {isEditable}
         />
       </div>
-      {#each sectionSlides as dynamicSlide, sectionIndex}
-        <div class="slide-wrapper" class:hidden={currentSlideIndex !== defaultSlideCount + sectionIndex}>
-          <div class="dynamic-section-slide">
-            <div class="dynamic-section-header">
-              <div>
-                <h2>{dynamicSlide.title}</h2>
-                {#if dynamicSlide.partLabel}
-                  <p class="dynamic-section-label">{dynamicSlide.partLabel}</p>
-                {/if}
-              </div>
-              <span class="dynamic-section-pill">Guideline {sectionIndex + 1}</span>
-            </div>
-            <div class="dynamic-section-body">
-              {#each dynamicSlide.sections as section}
-                <div class="dynamic-section-card">
-                  <h3>{section.title}</h3>
-                  {#if section.description}
-                    <p>{section.description}</p>
-                  {/if}
-                  {#if section.points && section.points.length}
-                    <ul>
-                      {#each section.points as point}
-                        <li>{point}</li>
-                      {/each}
-                    </ul>
-                  {/if}
-                  {#if section.examples && section.examples.length}
-                    <div class="dynamic-section-examples">
-                      {#each section.examples as example}
-                        <span class="example-chip">{example}</span>
-                      {/each}
-                    </div>
-                  {/if}
-                </div>
-              {/each}
-            </div>
-          </div>
         </div>
-      {/each}
-      {/if}
+      </div>
     </div>
+
+    <!-- Editing Panel -->
+    <EditingPanel
+      isOpen={showEditingPanel && isEditable}
+      slideType={currentSlideName}
+      editableData={editingPanelData}
+      on:update={handleEditingPanelUpdate}
+      on:close={() => {
+        showEditingPanel = false;
+        isEditable = false;
+      }}
+    />
   </div>
-  
-  <!-- Editing Panel -->
-  <EditingPanel
-    isOpen={showEditingPanel && isEditable}
-    slideType={currentSlideName}
-    editableData={editingPanelData}
-    on:update={handleEditingPanelUpdate}
-    on:close={() => showEditingPanel = false}
-  />
 </div>
 
 <style>
   .slide-manager {
     display: flex;
     flex-direction: column;
-    min-height: 600px;
-    max-height: 90vh;
-    background: #f5f5f5;
-    border-radius: 8px;
-    overflow: hidden;
+    gap: 1rem;
+    width: 100%;
+    background: transparent;
+  }
+  
+  .presentation-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    flex-wrap: wrap;
+    padding: 0 0.5rem 0 0.5rem;
+    background: transparent;
+  }
+  
+  .presentation-title {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+  }
+  
+  .icon-circle {
+    width: 52px;
+    height: 52px;
+    border-radius: 999px;
+    background: #f59e0b;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #111827;
+    box-shadow: inset 0 -2px 0 rgba(0, 0, 0, 0.12);
+    margin-top: 0.15rem;
+  }
+  
+  .dark .icon-circle {
+    background: #f59e0b;
+    color: #111827;
+    box-shadow: inset 0 -2px 0 rgba(0, 0, 0, 0.2);
+  }
+  
+  .title-text {
+    display: flex;
+    flex-direction: column;
+  }
+  
+  .title-label {
+    font-size: 1.35rem;
+    font-weight: 600;
+    color: #111827;
+  }
+  
+  :global(.dark) .title-label,
+  .dark .title-label {
+    color: #ffffff !important;
+  }
+  
+  .title-subtext {
+    font-size: 0.95rem;
+    color: #6b7280;
+    display: block;
+  }
+  
+  .dark .title-subtext {
+    color: #d1d5db;
+  }
+  
+  .presentation-actions {
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
   }
   
   .controls-bar {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 1rem 2rem;
-    background: white;
-    border-bottom: 1px solid #e5e7eb;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    padding: 0.5rem 0 0.5rem 0;
+    background: transparent;
+    border-bottom: none;
+    box-shadow: none;
   }
   
   .controls-left,
   .controls-right {
     display: flex;
+    gap: 0.75rem;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+  
+  .controls-right {
+    justify-content: flex-end;
+  }
+  
+  .btn-group {
+    display: flex;
     gap: 0.5rem;
     align-items: center;
+    flex-wrap: wrap;
+  }
+  
+  .export-controls {
+    position: relative;
+  }
+  
+  .export-dropdown {
+    position: absolute;
+    top: calc(100% + 0.35rem);
+    right: 0;
+    min-width: 200px;
+    background: #ffffff;
+    border: 1px solid rgba(15, 23, 42, 0.08);
+    border-radius: 12px;
+    box-shadow: 0 20px 45px rgba(15, 23, 42, 0.12);
+    z-index: 20;
+    padding: 0.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+  }
+  
+  .dark .export-dropdown {
+    background: oklch(var(--popover));
+    border: 1px solid oklch(var(--border));
+    box-shadow: var(--shadow-lg);
+  }
+  
+  .dropdown-item {
+    width: 100%;
+    padding: 0.5rem 0.75rem;
+    text-align: left;
+    border: none;
+    background: transparent;
+    border-radius: 9999px;
+    cursor: pointer;
+    font-size: 0.85rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: #92400e;
+    font-weight: 600;
+  }
+  
+  .dark .dropdown-item {
+    color: #111827;
+  }
+
+  .dropdown-item:hover:not(:disabled) {
+    background: #fff7ed;
+  }
+  
+  .dark .dropdown-item:hover:not(:disabled) {
+    background: #fef3c7;
+    color: #111827;
   }
   
   .btn {
-    padding: 0.5rem 1rem;
-    border: 1px solid #ccc;
-    border-radius: 6px;
-    background: white;
+    padding: 0.55rem 1.25rem;
+    border: 1px solid rgba(245, 158, 11, 0.4);
+    border-radius: 9999px;
+    background: #fff7ed;
+    color: #92400e;
     cursor: pointer;
     font-size: 0.9rem;
+    font-weight: 600;
     transition: all 0.2s;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.4rem;
   }
   
-  .btn:hover:not(:disabled) {
-    background: #f5f5f5;
+  .dark .btn {
+    border: 1px solid rgba(249, 115, 22, 0.8); /* orange border */
+    background: #6b7280; /* grey background */
+    color: white; /* white text */
   }
   
-  .btn.active {
-    background: #007bff;
+  .dark .btn svg {
     color: white;
-    border-color: #007bff;
+  }
+  
+  .dark .btn svg path,
+  .dark .btn svg circle,
+  .dark .btn svg rect {
+    fill: white;
+    stroke: white;
+  }
+
+  .btn:hover:not(:disabled) {
+    background: #fde68a;
+    border-color: rgba(217, 119, 6, 0.9);
+  }
+  
+  .dark .btn:hover:not(:disabled) {
+    background: #4b5563; /* darker grey on hover */
+    border-color: rgba(249, 115, 22, 1); /* brighter orange border on hover */
+    color: white;
+  }
+
+  .btn.active {
+    background: #f59e0b;
+    color: #111827;
+    border-color: #d97706;
+  }
+  
+  .dark .btn.active {
+    background: #4b5563; /* grey background */
+    color: white;
+    border-color: rgba(249, 115, 22, 1); /* orange border */
+  }
+  
+  .btn.secondary {
+    background: #f59e0b;
+    color: #111827;
+    border-color: #d97706;
+  }
+
+  /* Mock webpage buttons */
+  .btn-build {
+    background: #f97316; /* orange */
+    color: #111827;
+    border-color: #ea580c;
+  }
+
+  .btn-build.loading {
+    background: #ea580c; /* darker orange while building */
+    border-color: #c2410c;
+    color: #111827;
+  }
+
+  .btn-build:hover:not(:disabled):not(.loading) {
+    background: #ea580c;
+    border-color: #c2410c;
+  }
+
+  .btn-visit {
+    background: #16a34a; /* green */
+    color: #ffffff;
+    border-color: #16a34a;
+  }
+
+  .btn-visit:hover:not(:disabled) {
+    background: #15803d;
+    border-color: #15803d;
+  }
+
+  .btn-delete {
+    background: #ef4444; /* red */
+    color: #ffffff;
+    border-color: #dc2626;
+  }
+
+  .btn-delete:hover:not(:disabled) {
+    background: #dc2626;
+    border-color: #b91c1c;
+  }
+  
+  .dark .btn.secondary {
+    background: #6b7280; /* grey background */
+    color: white;
+    border-color: rgba(249, 115, 22, 0.8); /* orange border */
+  }
+  
+  .btn.large {
+    min-width: 170px;
+    justify-content: center;
+    font-size: 0.95rem;
+  }
+  
+  .btn.navigation {
+    background: #fff7ed;
+  }
+  
+  .dark .btn.navigation {
+    background: #6b7280; /* grey background */
+    color: white;
+    border-color: rgba(249, 115, 22, 0.8); /* orange border */
+  }
+  
+  .theme-toggle-chip {
+    width: 48px;
+    height: 48px;
+    border-radius: 999px;
+    border: 1px solid rgba(245, 158, 11, 0.35);
+    background: #fff7ed;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: inset 0 -1px 0 rgba(0, 0, 0, 0.06);
+  }
+  
+  .dark .theme-toggle-chip {
+    border: 1px solid rgba(245, 158, 11, 0.35);
+    background: #fef3c7; /* yellow background */
+    box-shadow: var(--shadow-xs);
   }
   
   .btn-primary {
@@ -3594,8 +2922,19 @@
     border-color: #28a745;
   }
   
+  .dark .btn-primary {
+    background: #6b7280; /* grey background */
+    color: white;
+    border-color: rgba(249, 115, 22, 0.8); /* orange border */
+  }
+  
   .btn-primary:hover:not(:disabled) {
     background: #218838;
+  }
+  
+  .dark .btn-primary:hover:not(:disabled) {
+    background: #4b5563; /* darker grey on hover */
+    border-color: rgba(249, 115, 22, 1); /* brighter orange border on hover */
   }
   
   .btn:disabled {
@@ -3609,13 +2948,127 @@
     color: #666;
   }
   
-  .slide-navigation {
+  .dark .slide-counter {
+    color: #d1d5db;
+  }
+  
+  .slide-workspace {
+    position: relative;
+    min-height: 720px;
+    width: 100%;
+  }
+
+  .slide-stage {
     display: flex;
-    gap: 0.5rem;
-    padding: 1rem 2rem;
+    gap: 1.5rem;
+    margin-top: 0.5rem;
+    transition: margin 0.3s ease, transform 0.3s ease;
+  }
+  
+  .slide-stage.panel-open {
+    margin-right: 380px;
+    transform: translateX(-12px);
+  }
+
+  .slide-navigation {
+    width: 260px;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    padding: 0.5rem 0;
+  }
+
+  .nav-card {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.85rem 1rem;
+    border-radius: 16px;
+    border: 1px solid rgba(251, 191, 36, 0.35);
     background: white;
-    border-bottom: 1px solid #e5e7eb;
-    overflow-x: auto;
+    cursor: pointer;
+    transition: all 0.2s;
+    text-align: left;
+  }
+  
+  .dark .nav-card {
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: #1f2937;
+  }
+
+  .nav-card:hover {
+    border-color: #f59e0b;
+    box-shadow: 0 6px 16px rgba(245, 158, 11, 0.25);
+  }
+  
+  .dark .nav-card:hover {
+    border-color: oklch(var(--ring));
+    box-shadow: var(--shadow-md);
+  }
+
+  .nav-card.active {
+    border-color: #f59e0b;
+    box-shadow: 0 12px 24px rgba(245, 158, 11, 0.3);
+  }
+  
+  .dark .nav-card.active {
+    border-color: #ca8a04;
+    box-shadow: 0 12px 24px rgba(202, 138, 4, 0.3);
+    background: #374151;
+  }
+
+  .slide-index {
+    width: 36px;
+    height: 36px;
+    border-radius: 999px;
+    background: #fef3c7;
+    color: #b45309;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 0.95rem;
+  }
+  
+  .dark .slide-index {
+    background: #4b5563;
+    color: #d1d5db;
+  }
+
+  .nav-card.active .slide-index {
+    background: #f59e0b;
+    color: #111827;
+  }
+  
+  .dark .nav-card.active .slide-index {
+    background: #ca8a04;
+    color: #fef3c7;
+  }
+
+  .slide-meta {
+    display: flex;
+    flex-direction: column;
+    line-height: 1.2;
+  }
+
+  .slide-name {
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: #0f172a;
+    margin-bottom: 0.2rem;
+  }
+  
+  .dark .slide-name {
+    color: #ffffff;
+  }
+
+  .slide-hint {
+    font-size: 0.75rem;
+    color: #6b7280;
+  }
+  
+  .dark .slide-hint {
+    color: #d1d5db;
   }
   
   .nav-item {
@@ -3629,9 +3082,21 @@
     transition: all 0.2s;
   }
   
+  .dark .nav-item {
+    border: 1px solid oklch(var(--border));
+    background: oklch(var(--card));
+    color: oklch(var(--foreground));
+  }
+  
   .nav-item:hover {
     background: #f5f5f5;
     border-color: #007bff;
+  }
+  
+  .dark .nav-item:hover {
+    background: oklch(var(--accent));
+    color: oklch(var(--accent-foreground));
+    border-color: oklch(var(--ring));
   }
   
   .nav-item.active {
@@ -3640,14 +3105,21 @@
     border-color: #007bff;
   }
   
+  .dark .nav-item.active {
+    background: oklch(var(--primary));
+    color: oklch(var(--primary-foreground));
+    border-color: oklch(var(--primary));
+  }
+  
   .slide-viewer {
+    position: relative;
     flex: 1;
-    overflow: auto;
+    overflow: visible;
     display: flex;
     justify-content: center;
     align-items: flex-start;
-    background: #f9fafb;
-    padding: 2rem;
+    background: transparent;
+    padding: 2.5rem 0 0;
   }
   
   .slide-container {
@@ -3655,104 +3127,20 @@
     align-items: center;
     justify-content: center;
     width: 100%;
-    min-height: 760px;
-    padding: 20px;
-    background: #f9fafb;
+    padding: 0;
+    background: transparent;
     position: relative;
   }
-
-  .dynamic-section-slide {
-    background: #ffffff;
-    border-radius: 24px;
-    padding: 2rem;
-    box-shadow: 0 12px 40px rgba(15, 23, 42, 0.12);
-    border: 1px solid #e4e7ec;
-    width: 100%;
-    max-width: 1100px;
-    display: flex;
-    flex-direction: column;
-    gap: 1.5rem;
-  }
-
-  .dynamic-section-header {
-    display: flex;
-    justify-content: space-between;
+  
+  .slide-nav-overlay {
+    position: absolute;
+    top: -2rem;
+    left: 50%;
+    transform: translateX(-50%);
+    display: inline-flex;
     align-items: center;
-    gap: 1rem;
-  }
-
-  .dynamic-section-header h2 {
-    margin: 0;
-    font-size: 1.75rem;
-    color: #111827;
-  }
-
-  .dynamic-section-label {
-    margin: 0.2rem 0 0;
-    color: #6b7280;
-    font-size: 0.95rem;
-  }
-
-  .dynamic-section-pill {
-    padding: 0.35rem 0.9rem;
-    background: #eef2ff;
-    color: #4338ca;
-    border-radius: 999px;
-    font-weight: 600;
-    font-size: 0.85rem;
-  }
-
-  .dynamic-section-body {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-    gap: 1.25rem;
-  }
-
-  .dynamic-section-card {
-    border: 1px solid #e4e7ec;
-    border-radius: 18px;
-    padding: 1.2rem;
-    background: #fdfdfd;
-    min-height: 160px;
-    display: flex;
-    flex-direction: column;
-    gap: 0.6rem;
-  }
-
-  .dynamic-section-card h3 {
-    margin: 0;
-    font-size: 1.1rem;
-    color: #0f172a;
-  }
-
-  .dynamic-section-card p {
-    margin: 0;
-    color: #475467;
-    line-height: 1.4;
-  }
-
-  .dynamic-section-card ul {
-    padding-left: 1.2rem;
-    margin: 0;
-    color: #475467;
-  }
-
-  .dynamic-section-card li {
-    margin-bottom: 0.25rem;
-  }
-
-  .dynamic-section-examples {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.4rem;
-  }
-
-  .example-chip {
-    padding: 0.25rem 0.8rem;
-    background: #f4f8ff;
-    color: #1d4ed8;
-    border-radius: 999px;
-    font-size: 0.8rem;
+    gap: 0.75rem;
+    z-index: 5;
   }
   
   .slide-wrapper {
@@ -3767,4 +3155,3 @@
     display: none;
   }
 </style>
-

@@ -706,5 +706,3 @@ function buildDefaultNarrative(brandName: string) {
 		}
 	};
 }
-
-

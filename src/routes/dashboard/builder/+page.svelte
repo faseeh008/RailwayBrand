@@ -1188,6 +1188,11 @@ ${customPrompt}`;
 			sessionStorage.setItem('preview_brand_data', JSON.stringify(minimalData));
 			console.log('[builder] ✅ Saved minimal preview data to sessionStorage');
 		}
+		// Set current_guideline_id so preview page knows which one to load
+		if (guidelineId) {
+			sessionStorage.setItem('current_guideline_id', guidelineId);
+			console.log('[builder] ✅ Set current_guideline_id in sessionStorage:', guidelineId);
+		}
 		sessionStorage.setItem('preview_brand_saved', 'false');
 
 		const contactSnapshot = {
@@ -1203,7 +1208,6 @@ ${customPrompt}`;
 		const remoteChatId =
 			activeChatStorageKey && activeChatStorageKey !== LOCAL_CHAT_ID ? activeChatStorageKey : undefined;
 
-		const guidelineId = data.savedGuidelines?.id;
 		console.log('[builder] Creating previewBrandData with guidelineId:', guidelineId);
 
 		const previewBrandData = {

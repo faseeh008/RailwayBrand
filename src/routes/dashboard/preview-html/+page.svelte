@@ -214,8 +214,23 @@ onMount(async () => {
 					url: `/api/brand-guidelines/${guidelineIdToFetch}`
 				});
 				// Try to fetch brand data from database
-				const response = await fetch(`/api/brand-guidelines/${guidelineIdToFetch}`);
+				let response = await fetch(`/api/brand-guidelines/${guidelineIdToFetch}`);
 				console.log('[preview-html] API response status:', response.status);
+				
+				// If specific ID not found, fallback to most recent guideline
+				if (!response.ok && response.status === 404) {
+					console.warn('[preview-html] Specific guideline not found, fetching most recent guideline');
+					response = await fetch('/api/brand-guidelines?limit=1');
+					if (response.ok) {
+						const recentResult = await response.json();
+						if (recentResult.success && recentResult.guidelines && recentResult.guidelines.length > 0) {
+							console.log('[preview-html] Using most recent guideline:', recentResult.guidelines[0].id);
+							guidelineIdToFetch = recentResult.guidelines[0].id;
+							// Retry with the most recent ID
+							response = await fetch(`/api/brand-guidelines/${guidelineIdToFetch}`);
+						}
+					}
+				}
 				
 				if (!response.ok) {
 					const errorData = await response.json().catch(() => ({}));
@@ -345,7 +360,99 @@ onMount(async () => {
 					console.error('[preview-html] Failed to fetch brand guidelines, status:', response.status);
 				}
 			} else {
-				console.warn('[preview-html] No guidelineId available to fetch from database');
+				console.warn('[preview-html] No guidelineId available, fetching most recent guideline');
+				// Fallback: Get the most recent guideline for the user
+				try {
+					const response = await fetch('/api/brand-guidelines?limit=1');
+					if (response.ok) {
+						const result = await response.json();
+						if (result.success && result.guidelines && result.guidelines.length > 0) {
+							const mostRecentGuideline = result.guidelines[0];
+							console.log('[preview-html] Found most recent guideline:', mostRecentGuideline.id);
+							
+							// Fetch full guideline data
+							const fullResponse = await fetch(`/api/brand-guidelines/${mostRecentGuideline.id}`);
+							if (fullResponse.ok) {
+								const fullResult = await fullResponse.json();
+								if (fullResult.success && fullResult.guideline) {
+									const guideline = fullResult.guideline;
+									
+									// Build brandData from guideline (same logic as above)
+									let stepHistory: any[] = [];
+									try {
+										if (guideline.structuredData) {
+											const structuredData = typeof guideline.structuredData === 'string' 
+												? JSON.parse(guideline.structuredData) 
+												: guideline.structuredData;
+											stepHistory = structuredData?.stepHistory || [];
+										}
+									} catch (e) {
+										console.warn('[preview-html] Failed to parse structuredData for stepHistory:', e);
+									}
+									
+									const brandDataFromDb: any = {
+										brandName: guideline.brandName,
+										brand_name: guideline.brandName,
+										brandDomain: guideline.brandDomain || guideline.industry || '',
+										brand_domain: guideline.brandDomain || guideline.industry || '',
+										shortDescription: guideline.shortDescription || '',
+										short_description: guideline.shortDescription || '',
+										selectedMood: guideline.mood || '',
+										selectedAudience: guideline.audience || '',
+										guidelineId: guideline.id,
+										stepHistory: stepHistory
+									};
+
+									try {
+										if (guideline.structuredData) {
+											const structuredData = typeof guideline.structuredData === 'string' 
+												? JSON.parse(guideline.structuredData) 
+												: guideline.structuredData;
+											Object.assign(brandDataFromDb, structuredData);
+										}
+									} catch (e) {
+										console.warn('[preview-html] Failed to parse structuredData:', e);
+									}
+
+									if (guideline.logoFiles) {
+										try {
+											brandDataFromDb.logoFiles = typeof guideline.logoFiles === 'string' 
+												? JSON.parse(guideline.logoFiles) 
+												: guideline.logoFiles;
+										} catch (e) {
+											brandDataFromDb.logoFiles = [];
+										}
+									}
+
+									if (fullResult.logo) {
+										brandDataFromDb.logoUrl = fullResult.logo;
+										brandDataFromDb.logo_url = fullResult.logo;
+										brandDataFromDb.logoFiles = [{ fileData: fullResult.logo }];
+										brandDataFromDb.logo = {
+											primaryLogoUrl: fullResult.logo,
+											primary: fullResult.logo
+										};
+									}
+
+									saveTempBrandData({
+										userInput: {},
+										selectedTheme: inferThemeFromMood(guideline.mood || ''),
+										brandData: brandDataFromDb,
+										slides: []
+									});
+									stored = loadTempBrandData();
+									console.log('[preview-html] ✅ Loaded most recent guideline from database:', {
+										hasStored: !!stored,
+										guidelineId: stored?.brandData?.guidelineId,
+										brandName: stored?.brandData?.brandName
+									});
+								}
+							}
+						}
+					}
+				} catch (e) {
+					console.error('[preview-html] Failed to fetch most recent guideline:', e);
+				}
 			}
 		}
 
@@ -704,10 +811,9 @@ async function handleDeleteMockWebpage() {
 			{#if brandData}
 				<SlideManager
 					{brandData}
-					{slides}
-	onGoToBrands={() => {
-		clearTempBrandData();
-	}}
+					onGoToBrands={() => {
+						clearTempBrandData();
+					}}
 					onBuildMockWebpage={handleBuildMockWebpage}
 					onVisitMockWebpage={handleVisitMockWebpage}
 					onDownloadMockWebpage={handleDownloadMockWebpage}
@@ -730,5 +836,3 @@ async function handleDeleteMockWebpage() {
 		</div>
 	</div>
 {/if}
-
-

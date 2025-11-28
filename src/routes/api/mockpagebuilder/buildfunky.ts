@@ -308,14 +308,13 @@ function buildGoogleFontImport(fontName: string) {
 	return `https://fonts.googleapis.com/css2?family=${encoded}:wght@400;500;600;700&display=swap`;
 }
 
-function extractColors(markup: string, brandData?: Record<string, any>) {
+function extractColors(markup: string, brandData?: Record<string, any>): string[] {
 	const brandPalette = collectBrandPalette(brandData);
-	const slideMatches = Array.from(new Set(markup.match(HEX_COLOR_REGEX) || [])).map((value) =>
-		normalizeHex(value)
-	);
+	const slideMatches = Array.from(new Set(markup.match(HEX_COLOR_REGEX) || []))
+		.map((value) => normalizeHex(value))
+		.filter((color): color is string => color !== null);
 
 	const palette = [...brandPalette, ...slideMatches]
-		.filter(Boolean)
 		.filter((color, index, arr) => arr.indexOf(color) === index);
 
 	return palette.length ? palette : DEFAULT_COLORS;
@@ -464,13 +463,13 @@ async function fetchBrandImages(insights: BrandInsights, count: number) {
 	const results: string[] = [];
 	const query = [insights.industry, insights.vibe, insights.brandName].filter(Boolean).join(' ');
 
-	if (env.UNSPLASH_ACCESS_KEY) {
+	if ((env as any).UNSPLASH_ACCESS_KEY) {
 		try {
 			const res = await fetch(
 				`https://api.unsplash.com/search/photos?per_page=${count}&orientation=landscape&query=${encodeURIComponent(query)}`,
 				{
 					headers: {
-						Authorization: `Client-ID ${env.UNSPLASH_ACCESS_KEY}`
+						Authorization: `Client-ID ${(env as any).UNSPLASH_ACCESS_KEY}`
 					}
 				}
 			);
@@ -488,13 +487,13 @@ async function fetchBrandImages(insights: BrandInsights, count: number) {
 		}
 	}
 
-	if (results.length < count && env.PEXELS_API_KEY) {
+	if (results.length < count && (env as any).PEXELS_API_KEY) {
 		try {
 			const res = await fetch(
 				`https://api.pexels.com/v1/search?per_page=${count}&orientation=landscape&query=${encodeURIComponent(query)}`,
 				{
 					headers: {
-						Authorization: env.PEXELS_API_KEY
+						Authorization: (env as any).PEXELS_API_KEY
 					}
 				}
 			);

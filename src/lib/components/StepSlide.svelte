@@ -1058,91 +1058,217 @@ function getIconAccent(index: number): string {
 									}
 								})()}
 								
-								{#if parsedData}
-									<!-- Display JSON structured colors -->
-									{#each parsedData.primary || [] as color}
+								{#if parsedData?.colors}
+									<!-- New structure: primary, secondary, accent1, accent2, optional (ONLY 5 colors max) -->
+									{#if parsedData.colors.primary}
 										<div class="color-swatch">
-											<div class="color-preview" style="background-color: {color.hex}"></div>
+											<div class="color-preview" style="background-color: {parsedData.colors.primary.hex}"></div>
 											<div class="color-info">
-												<div class="color-name">{color.name}</div>
-												<div class="color-hex">{color.hex}</div>
-												<div class="color-usage">{color.usage || ''}</div>
+												<div class="color-name">{parsedData.colors.primary.name}</div>
+												<div class="color-hex">{parsedData.colors.primary.hex}</div>
+												<div class="color-usage">{parsedData.colors.primary.usage || ''}</div>
 											</div>
-										</div>
-									{/each}
-									{#each parsedData.secondary || [] as color}
-										<div class="color-swatch">
-											<div class="color-preview" style="background-color: {color.hex}"></div>
-											<div class="color-info">
-												<div class="color-name">{color.name}</div>
-												<div class="color-hex">{color.hex}</div>
-												<div class="color-usage">{color.usage || ''}</div>
-											</div>
-										</div>
-									{/each}
-									{#each parsedData.accent || [] as color}
-										<div class="color-swatch">
-											<div class="color-preview" style="background-color: {color.hex}"></div>
-											<div class="color-info">
-												<div class="color-name">{color.name}</div>
-												<div class="color-hex">{color.hex}</div>
-												<div class="color-usage">{color.usage || ''}</div>
-											</div>
-										</div>
-									{/each}
-									{#each parsedData.neutrals || [] as color}
-										<div class="color-swatch">
-											<div class="color-preview" style="background-color: {color.hex}"></div>
-											<div class="color-info">
-												<div class="color-name">{color.name}</div>
-												<div class="color-hex">{color.hex}</div>
-												<div class="color-usage">{color.usage || ''}</div>
-											</div>
-										</div>
-									{/each}
-									{#each parsedData.background || [] as color}
-										<div class="color-swatch">
-											<div class="color-preview" style="background-color: {color.hex}"></div>
-											<div class="color-info">
-												<div class="color-name">{color.name}</div>
-												<div class="color-hex">{color.hex}</div>
-												<div class="color-usage">{color.usage || ''}</div>
-											</div>
-										</div>
-									{/each}
-								{:else}
-									<!-- Fallback: Extract colors from markdown text -->
-									{@const extractedColors = extractColorsFromText(stepData)}
-									{#each extractedColors as color}
-										<div class="color-swatch">
-											<div class="color-preview" style="background-color: {color.hex}"></div>
-											<div class="color-info">
-												<div class="color-name">{color.name}</div>
-												<div class="color-hex">{color.hex}</div>
-											</div>
-										</div>
-									{/each}
-									{#if extractedColors.length === 0}
-										<div class="no-colors-message">
-											<p>No colors found in response</p>
 										</div>
 									{/if}
+									{#if parsedData.colors.secondary}
+										<div class="color-swatch">
+											<div class="color-preview" style="background-color: {parsedData.colors.secondary.hex}"></div>
+											<div class="color-info">
+												<div class="color-name">{parsedData.colors.secondary.name}</div>
+												<div class="color-hex">{parsedData.colors.secondary.hex}</div>
+												<div class="color-usage">{parsedData.colors.secondary.usage || ''}</div>
+											</div>
+										</div>
+									{/if}
+									{#if parsedData.colors.accent1}
+										<div class="color-swatch">
+											<div class="color-preview" style="background-color: {parsedData.colors.accent1.hex}"></div>
+											<div class="color-info">
+												<div class="color-name">{parsedData.colors.accent1.name}</div>
+												<div class="color-hex">{parsedData.colors.accent1.hex}</div>
+												<div class="color-usage">{parsedData.colors.accent1.usage || ''}</div>
+											</div>
+										</div>
+									{/if}
+									{#if parsedData.colors.accent2}
+										<div class="color-swatch">
+											<div class="color-preview" style="background-color: {parsedData.colors.accent2.hex}"></div>
+											<div class="color-info">
+												<div class="color-name">{parsedData.colors.accent2.name}</div>
+												<div class="color-hex">{parsedData.colors.accent2.hex}</div>
+												<div class="color-usage">{parsedData.colors.accent2.usage || ''}</div>
+											</div>
+										</div>
+									{/if}
+									{#if parsedData.colors.optional}
+										<div class="color-swatch">
+											<div class="color-preview" style="background-color: {parsedData.colors.optional.hex}"></div>
+											<div class="color-info">
+												<div class="color-name">{parsedData.colors.optional.name}</div>
+												<div class="color-hex">{parsedData.colors.optional.hex}</div>
+												<div class="color-usage">{parsedData.colors.optional.usage || ''}</div>
+											</div>
+										</div>
+									{/if}
+								{:else}
+									<!-- No valid color structure found -->
+									<div class="no-colors-message">
+										<p>No colors found in response. Please regenerate the color palette step.</p>
+									</div>
 								{/if}
 							{:else}
-								{#each stepData.colors?.core_palette || [] as color}
-									<div class="color-swatch">
-										<div class="color-preview" style="background-color: {color.hex}"></div>
-										<div class="color-info">
-											<div class="color-name">{color.name}</div>
-											<div class="color-hex">{color.hex}</div>
+								<!-- When stepData is an object -->
+								{#if stepData.colors?.primary || stepData.colors?.secondary || stepData.colors?.accent1 || stepData.colors?.accent2 || stepData.colors?.optional}
+									<!-- New structure: primary, secondary, accent1, accent2, optional (ONLY 5 colors max) -->
+									{#if stepData.colors.primary}
+										<div class="color-swatch">
+											<div class="color-preview" style="background-color: {stepData.colors.primary.hex}"></div>
+											<div class="color-info">
+												<div class="color-name">{stepData.colors.primary.name}</div>
+												<div class="color-hex">{stepData.colors.primary.hex}</div>
+												<div class="color-usage">{stepData.colors.primary.usage || ''}</div>
+											</div>
 										</div>
+									{/if}
+									{#if stepData.colors.secondary}
+										<div class="color-swatch">
+											<div class="color-preview" style="background-color: {stepData.colors.secondary.hex}"></div>
+											<div class="color-info">
+												<div class="color-name">{stepData.colors.secondary.name}</div>
+												<div class="color-hex">{stepData.colors.secondary.hex}</div>
+												<div class="color-usage">{stepData.colors.secondary.usage || ''}</div>
+											</div>
+										</div>
+									{/if}
+									{#if stepData.colors.accent1}
+										<div class="color-swatch">
+											<div class="color-preview" style="background-color: {stepData.colors.accent1.hex}"></div>
+											<div class="color-info">
+												<div class="color-name">{stepData.colors.accent1.name}</div>
+												<div class="color-hex">{stepData.colors.accent1.hex}</div>
+												<div class="color-usage">{stepData.colors.accent1.usage || ''}</div>
+											</div>
+										</div>
+									{/if}
+									{#if stepData.colors.accent2}
+										<div class="color-swatch">
+											<div class="color-preview" style="background-color: {stepData.colors.accent2.hex}"></div>
+											<div class="color-info">
+												<div class="color-name">{stepData.colors.accent2.name}</div>
+												<div class="color-hex">{stepData.colors.accent2.hex}</div>
+												<div class="color-usage">{stepData.colors.accent2.usage || ''}</div>
+											</div>
+										</div>
+									{/if}
+									{#if stepData.colors.optional}
+										<div class="color-swatch">
+											<div class="color-preview" style="background-color: {stepData.colors.optional.hex}"></div>
+											<div class="color-info">
+												<div class="color-name">{stepData.colors.optional.name}</div>
+												<div class="color-hex">{stepData.colors.optional.hex}</div>
+												<div class="color-usage">{stepData.colors.optional.usage || ''}</div>
+											</div>
+										</div>
+									{/if}
+								{:else}
+									<!-- No valid color structure found -->
+									<div class="no-colors-message">
+										<p>No colors found in response. Please regenerate the color palette step.</p>
 									</div>
-								{/each}
+								{/if}
 							{/if}
-						</div>
+					</div>
 
-						<!-- Color Combinations Preview -->
-						{#if typeof stepData === 'string'}
+					<!-- Color Combinations Preview -->
+					{#if true}
+						{@const colorData = (() => {
+							if (typeof stepData === 'string') {
+								try {
+									const parsed = JSON.parse(stepData.replace(/^```json\s*/, '').replace(/\s*```$/, '').trim());
+									return parsed?.colors || null;
+								} catch {
+									return null;
+								}
+							} else {
+								return stepData?.colors || null;
+							}
+						})()}
+						
+						{#if colorData}
+							{#if (colorData.primary && colorData.secondary) || (colorData.core_palette && colorData.core_palette.length >= 2)}
+								<div class="color-combinations">
+									<h4 class="section-subtitle">Color Combinations</h4>
+									<div class="combination-examples">
+										{#if colorData.primary && colorData.secondary}
+											<!-- New structure -->
+											<div class="combination-example">
+												<div
+													class="combo-primary"
+													style="background-color: {colorData.primary.hex}"
+												></div>
+												<div
+													class="combo-secondary"
+													style="background-color: {colorData.secondary.hex}"
+												></div>
+												<span class="combo-label">Primary + Secondary</span>
+											</div>
+											{#if colorData.accent1}
+												<div class="combination-example">
+													<div
+														class="combo-primary"
+														style="background-color: {colorData.primary.hex}"
+													></div>
+													<div
+														class="combo-neutral"
+														style="background-color: {colorData.accent1.hex}"
+													></div>
+													<span class="combo-label">Primary + Accent 1</span>
+												</div>
+											{/if}
+											{#if colorData.accent2}
+												<div class="combination-example">
+													<div
+														class="combo-primary"
+														style="background-color: {colorData.secondary.hex}"
+													></div>
+													<div
+														class="combo-neutral"
+														style="background-color: {colorData.accent2.hex}"
+													></div>
+													<span class="combo-label">Secondary + Accent 2</span>
+												</div>
+											{/if}
+										{:else if colorData.core_palette && colorData.core_palette.length >= 2}
+											<!-- Legacy structure -->
+											<div class="combination-example">
+												<div
+													class="combo-primary"
+													style="background-color: {colorData.core_palette[0].hex}"
+												></div>
+												<div
+													class="combo-secondary"
+													style="background-color: {colorData.core_palette[1].hex}"
+												></div>
+												<span class="combo-label">Primary + Secondary</span>
+											</div>
+											{#if colorData.accent_palette && colorData.accent_palette.length > 0}
+												<div class="combination-example">
+													<div
+														class="combo-primary"
+														style="background-color: {colorData.core_palette[0].hex}"
+													></div>
+													<div
+														class="combo-neutral"
+														style="background-color: {colorData.accent_palette[0].hex}"
+													></div>
+													<span class="combo-label">Primary + Accent</span>
+												</div>
+											{/if}
+										{/if}
+									</div>
+								</div>
+							{/if}
+						{:else if typeof stepData === 'string'}
 							{@const extractedColors = extractColorsFromText(stepData)}
 							{#if extractedColors.length >= 2}
 								<div class="color-combinations">
@@ -1176,6 +1302,7 @@ function getIconAccent(index: number): string {
 								</div>
 							{/if}
 						{/if}
+					{/if}
 					</div>
 				{:else if stepId === 'typography'}
 					<div class="typography-slide">

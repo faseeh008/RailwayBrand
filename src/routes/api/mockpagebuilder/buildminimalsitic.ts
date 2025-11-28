@@ -110,7 +110,7 @@ const DEFAULT_FONT = 'Inter, sans-serif';
 const SYSTEM_FONTS = new Set(['inter', 'system-ui', 'arial', 'helvetica', 'georgia', 'verdana', 'tahoma', 'times new roman', 'serif', 'sans-serif', 'monospace']);
 
 let geminiModel: ReturnType<GoogleGenerativeAI['getGenerativeModel']> | null = null;
-const envRecord = env as Record<string, string | undefined>;
+const envRecord = env as unknown as Record<string, string | undefined>;
 
 export async function buildMinimalisticFromSlides(options: MinimalisticBuildOptions): Promise<MinimalisticBuildResult> {
 	if (!options.slides?.length) {
@@ -307,14 +307,13 @@ function buildGoogleFontImport(fontName: string) {
 	return `https://fonts.googleapis.com/css2?family=${encoded}:wght@400;500;600;700&display=swap`;
 }
 
-function extractColors(markup: string, brandData?: Record<string, any>) {
+function extractColors(markup: string, brandData?: Record<string, any>): string[] {
 	const brandPalette = collectBrandPalette(brandData);
-	const slideMatches = Array.from(new Set(markup.match(HEX_COLOR_REGEX) || [])).map((value) =>
-		normalizeHex(value)
-	);
+	const slideMatches = Array.from(new Set(markup.match(HEX_COLOR_REGEX) || []))
+		.map((value) => normalizeHex(value))
+		.filter((color): color is string => color !== null);
 
 	const palette = [...brandPalette, ...slideMatches]
-		.filter(Boolean)
 		.filter((color, index, arr) => arr.indexOf(color) === index);
 
 	return palette.length ? palette : DEFAULT_COLORS;
@@ -407,16 +406,17 @@ function buildNavigation(copy: MinimalisticCopy): BrandConfig['navigation'] {
 }
 
 function buildServices(copy: MinimalisticCopy): BrandConfig['servicesContent'] {
+	const iconOptions = ['Sofa', 'Armchair', 'Table2', 'Lamp', 'Bed', 'ShoppingBag'] as const;
 	const items = copy.services?.length
 		? copy.services.slice(0, 6).map((service, index) => ({
 				title: service.title,
 				description: service.description,
-				icon: ['Sofa', 'Armchair', 'Table2', 'Lamp', 'Bed', 'ShoppingBag'][index % 6]
+				icon: iconOptions[index % 6] as BrandConfig['servicesContent']['items'][0]['icon']
 		  }))
 		: [
-				{ title: 'Service One', description: 'Measured, detail-driven offering.', icon: 'Lamp' },
-				{ title: 'Service Two', description: 'Partnerships rooted in craft.', icon: 'Table2' },
-				{ title: 'Service Three', description: 'Support that stays with you.', icon: 'ShoppingBag' }
+				{ title: 'Service One', description: 'Measured, detail-driven offering.', icon: 'Lamp' as BrandConfig['servicesContent']['items'][0]['icon'] },
+				{ title: 'Service Two', description: 'Partnerships rooted in craft.', icon: 'Table2' as BrandConfig['servicesContent']['items'][0]['icon'] },
+				{ title: 'Service Three', description: 'Support that stays with you.', icon: 'ShoppingBag' as BrandConfig['servicesContent']['items'][0]['icon'] }
 		  ];
 
 	return {
@@ -724,4 +724,3 @@ function getEnvFallback(key: string) {
 	}
 	return envRecord?.[key];
 }
-

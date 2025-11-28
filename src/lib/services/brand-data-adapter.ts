@@ -85,8 +85,131 @@ function parseBrandPositioning(content: string | any): any {
  * Parse color palette from text/markdown
  */
 function parseColorPalette(content: string | any): any {
+	// If it's a string, try to parse as JSON first (enhanced generator outputs JSON)
+	if (typeof content === 'string') {
+		try {
+			const parsed = JSON.parse(content);
+			if (typeof parsed === 'object' && parsed !== null) {
+				content = parsed;
+			}
+		} catch {
+			// Not JSON, continue with parsing below
+		}
+	}
+	
 	// If already an object, return formatted
 	if (typeof content === 'object' && content !== null) {
+		// Handle NEW structure: colors.primary, colors.secondary, colors.accent1, colors.accent2, colors.optional (objects, not arrays)
+		if (content.colors && typeof content.colors === 'object') {
+			const allColors: any[] = [];
+			
+			// New structure: primary, secondary, accent1, accent2, optional as objects
+			if (content.colors.primary && typeof content.colors.primary === 'object') {
+				const c = content.colors.primary;
+				allColors.push({
+					...c,
+					category: 'Primary',
+					rgb: typeof c.rgb === 'string' ? c.rgb : (Array.isArray(c.rgb) ? `RGB(${c.rgb.join(', ')})` : hexToRgb(c.hex || '#000000'))
+				});
+			}
+			
+			if (content.colors.secondary && typeof content.colors.secondary === 'object') {
+				const c = content.colors.secondary;
+				allColors.push({
+					...c,
+					category: 'Secondary',
+					rgb: typeof c.rgb === 'string' ? c.rgb : (Array.isArray(c.rgb) ? `RGB(${c.rgb.join(', ')})` : hexToRgb(c.hex || '#000000'))
+				});
+			}
+			
+			if (content.colors.accent1 && typeof content.colors.accent1 === 'object') {
+				const c = content.colors.accent1;
+				allColors.push({
+					...c,
+					category: 'Accent',
+					rgb: typeof c.rgb === 'string' ? c.rgb : (Array.isArray(c.rgb) ? `RGB(${c.rgb.join(', ')})` : hexToRgb(c.hex || '#000000'))
+				});
+			}
+			
+			if (content.colors.accent2 && typeof content.colors.accent2 === 'object') {
+				const c = content.colors.accent2;
+				allColors.push({
+					...c,
+					category: 'Accent',
+					rgb: typeof c.rgb === 'string' ? c.rgb : (Array.isArray(c.rgb) ? `RGB(${c.rgb.join(', ')})` : hexToRgb(c.hex || '#000000'))
+				});
+			}
+			
+			if (content.colors.optional && typeof content.colors.optional === 'object') {
+				const c = content.colors.optional;
+				allColors.push({
+					...c,
+					category: 'Optional',
+					rgb: typeof c.rgb === 'string' ? c.rgb : (Array.isArray(c.rgb) ? `RGB(${c.rgb.join(', ')})` : hexToRgb(c.hex || '#000000'))
+				});
+			}
+			
+			if (allColors.length > 0) {
+				const palette = allColors.slice(0, 8);
+				return {
+					primary: allColors[0] || null,
+					secondary: allColors[1] || null,
+					accent: allColors[2] || null,
+					neutral: allColors[3] || null,
+					allColors: palette,
+					original: content
+				};
+			}
+			
+			// Handle LEGACY enhanced generator structure: colors.core_palette, colors.accent_palette, colors.neutral_palette (arrays)
+			const legacyColors: any[] = [];
+			
+			// Collect from core_palette
+			if (Array.isArray(content.colors.core_palette)) {
+				content.colors.core_palette.forEach((c: any) => {
+					legacyColors.push({
+						...c,
+						category: 'Primary',
+						rgb: Array.isArray(c.rgb) ? `RGB(${c.rgb.join(', ')})` : (c.rgb || hexToRgb(c.hex || '#000000'))
+					});
+				});
+			}
+			
+			// Collect from accent_palette
+			if (Array.isArray(content.colors.accent_palette)) {
+				content.colors.accent_palette.forEach((c: any) => {
+					legacyColors.push({
+						...c,
+						category: 'Accent',
+						rgb: Array.isArray(c.rgb) ? `RGB(${c.rgb.join(', ')})` : (c.rgb || hexToRgb(c.hex || '#000000'))
+					});
+				});
+			}
+			
+			// Collect from neutral_palette
+			if (Array.isArray(content.colors.neutral_palette)) {
+				content.colors.neutral_palette.forEach((c: any) => {
+					legacyColors.push({
+						...c,
+						category: 'Neutral',
+						rgb: Array.isArray(c.rgb) ? `RGB(${c.rgb.join(', ')})` : (c.rgb || hexToRgb(c.hex || '#000000'))
+					});
+				});
+			}
+			
+			if (legacyColors.length > 0) {
+				const palette = legacyColors.slice(0, 8);
+				return {
+					primary: legacyColors[0] || null,
+					secondary: legacyColors[1] || null,
+					accent: legacyColors[2] || null,
+					neutral: legacyColors[3] || null,
+					allColors: palette,
+					original: content
+				};
+			}
+		}
+		
 		// Check for new JSON structure with arrays (primary, secondary, accent, neutrals, background)
 		if (content.primary && Array.isArray(content.primary)) {
 			// New structure: flatten all color arrays into a single palette
@@ -220,11 +343,69 @@ function parseTypography(content: string | any): any {
 		contentPreview: typeof content === 'string' ? content.substring(0, 300) : content
 	});
 
+	// If it's a string, try to parse as JSON first (enhanced generator outputs JSON)
+	if (typeof content === 'string') {
+		try {
+			const parsed = JSON.parse(content);
+			if (typeof parsed === 'object' && parsed !== null) {
+				content = parsed;
+			}
+		} catch {
+			// Not JSON, continue with parsing below
+		}
+	}
+
 	// If already an object, return formatted
 	if (typeof content === 'object' && content !== null) {
+		// Handle enhanced generator structure: primary_font, secondary_font (with underscores)
+		const primaryFontObj = content.primary_font || content.primaryFont || content.primary;
+		const secondaryFontObj = content.secondary_font || content.secondaryFont || content.supporting || content.secondary;
+		
+		// Extract font hierarchy if available
+		let primaryWeights = ['Regular', 'Bold'];
+		let secondaryWeights = ['Regular'];
+		let primaryUsage = 'Headlines';
+		let secondaryUsage = 'Body';
+		
+		if (Array.isArray(content.font_hierarchy)) {
+			const primaryHierarchy = content.font_hierarchy.find((h: any) => 
+				h.font && primaryFontObj && typeof primaryFontObj === 'string' && 
+				h.font.toLowerCase().includes(primaryFontObj.toLowerCase())
+			);
+			if (primaryHierarchy) {
+				primaryWeights = [primaryHierarchy.weight || 'Bold'];
+				primaryUsage = primaryHierarchy.label || 'Headlines';
+			}
+			
+			const secondaryHierarchy = content.font_hierarchy.find((h: any) => 
+				h.font && secondaryFontObj && typeof secondaryFontObj === 'string' && 
+				h.font.toLowerCase().includes(secondaryFontObj.toLowerCase())
+			);
+			if (secondaryHierarchy) {
+				secondaryWeights = [secondaryHierarchy.weight || 'Regular'];
+				secondaryUsage = secondaryHierarchy.label || 'Body';
+			}
+		}
+		
 		return {
-			primaryFont: content.primary || content.primaryFont || { name: 'Inter', weights: ['Regular', 'Bold'], usage: 'Headlines' },
-			secondaryFont: content.supporting || content.secondaryFont || { name: 'Arial', weights: ['Regular'], usage: 'Body' }
+			primaryFont: primaryFontObj ? {
+				name: typeof primaryFontObj === 'string' ? primaryFontObj : (primaryFontObj.name || 'Inter'),
+				weights: typeof primaryFontObj === 'object' && primaryFontObj.weights 
+					? primaryFontObj.weights 
+					: primaryWeights,
+				usage: typeof primaryFontObj === 'object' && primaryFontObj.usage 
+					? primaryFontObj.usage 
+					: (content.primary_usage || primaryUsage)
+			} : { name: 'Inter', weights: primaryWeights, usage: primaryUsage },
+			secondaryFont: secondaryFontObj ? {
+				name: typeof secondaryFontObj === 'string' ? secondaryFontObj : (secondaryFontObj.name || 'Arial'),
+				weights: typeof secondaryFontObj === 'object' && secondaryFontObj.weights 
+					? secondaryFontObj.weights 
+					: secondaryWeights,
+				usage: typeof secondaryFontObj === 'object' && secondaryFontObj.usage 
+					? secondaryFontObj.usage 
+					: (content.secondary_usage || secondaryUsage)
+			} : { name: 'Arial', weights: secondaryWeights, usage: secondaryUsage }
 		};
 	}
 	

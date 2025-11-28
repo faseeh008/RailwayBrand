@@ -17,10 +17,10 @@
   export let color3Rgba10: string = 'rgba(96, 165, 250, 0.1)';
   export let isEditable: boolean = false;
   
-  // Ensure we have at least 8 colors
-  $: displayColors = colors.length >= 8 ? colors.slice(0, 8) : [
+  // Show only 5 colors max (4 mandatory + 1 optional)
+  $: displayColors = colors.length >= 5 ? colors.slice(0, 5) : [
     ...colors,
-    ...Array(8 - colors.length).fill(null).map((_, i) => ({
+    ...Array(5 - colors.length).fill(null).map((_, i) => ({
       name: `Color ${colors.length + i + 1}`,
       hex: '#CCCCCC',
       usage: 'Brand color'
@@ -56,16 +56,17 @@
       }
     ];
     
-    // Add color swatches in 4x2 grid
+    // Add color swatches in 3x2 grid (3 columns, 2 rows) for 5 colors max
     const startX = 0.47;
     const startY = 1.11;
-    const swatchWidth = 2.1;
+    const swatchWidth = 2.8;
     const swatchHeight = 1.04;
     const gap = 0.16;
+    const colsPerRow = 3;
     
     displayColors.forEach((color, index) => {
-      const col = index % 4;
-      const row = Math.floor(index / 4);
+      const col = index % colsPerRow;
+      const row = Math.floor(index / colsPerRow);
       const x = startX + col * (swatchWidth + gap);
       const y = startY + row * (swatchHeight + gap);
       
@@ -113,10 +114,7 @@
   }
 </script>
 
-<div
-  class="color-palette-slide"
-  style={`background: linear-gradient(135deg, ${color1Lighter} 0%, ${color2Lighter} 20%, #FFFFFF 40%, ${color3Lighter} 60%, ${color4Lighter} 80%, #FFFFFF 100%); --primary-color: ${primaryColor}; --color1-hex: ${color1Hex}; --color1-rgba15: ${color1Rgba15}; --color2-rgba15: ${color2Rgba15}; --color3-rgba10: ${color3Rgba10};`}
->
+<div class="color-palette-slide" style="background: linear-gradient(135deg, {color1Lighter} 0%, {color2Lighter} 20%, #FFFFFF 40%, {color3Lighter} 60%, {color4Lighter} 80%, #FFFFFF 100%);">
   <div class="radial-overlay"></div>
   
   <div class="slide">
@@ -126,7 +124,7 @@
     <div class="color-grid">
       {#each displayColors as color, index}
         <div class="color-item">
-          <div class="color-swatch" style={`background-color: ${color.hex};`}></div>
+          <div class="color-swatch" style="background-color: {color.hex};"></div>
           {#if isEditable}
             <input type="text" bind:value={color.name} class="color-name-input" />
             <input type="text" bind:value={color.hex} class="color-hex-input" />
@@ -158,9 +156,9 @@
     right: 0;
     bottom: 0;
     background: 
-      radial-gradient(circle at 15% 30%, var(--color1-rgba15) 0%, transparent 45%),
-      radial-gradient(circle at 85% 70%, var(--color2-rgba15) 0%, transparent 45%),
-      radial-gradient(circle at 50% 50%, var(--color3-rgba10) 0%, transparent 60%);
+      radial-gradient(circle at 15% 30%, {color1Rgba15} 0%, transparent 45%),
+      radial-gradient(circle at 85% 70%, {color2Rgba15} 0%, transparent 45%),
+      radial-gradient(circle at 50% 50%, {color3Rgba10} 0%, transparent 60%);
     pointer-events: none;
     z-index: 1;
   }
@@ -176,20 +174,20 @@
   .title {
     font-size: 42px;
     font-weight: bold;
-    color: var(--primary-color);
+    color: {primaryColor};
     margin-bottom: 15px;
   }
   
   .divider {
     width: 100%;
     height: 3px;
-    background: var(--color1-hex);
+    background: {color1Hex};
     margin-bottom: 30px;
   }
   
   .color-grid {
     display: grid;
-    grid-template-columns: repeat(4, 1fr);
+    grid-template-columns: repeat(3, 1fr);
     gap: 20px;
     margin-bottom: 30px;
     max-width: 100%;

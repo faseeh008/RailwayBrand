@@ -8,33 +8,38 @@ import { iconNameToBase64Image } from '$lib/utils/icon-to-image';
 export async function buildFilledSvelteSlides(brandInput: any): Promise<SlideData[]> {
 	const slides: SlideData[] = [];
 	
-	// Extract colors
+	// Extract colors - NEW structure: primary, secondary, accent1, accent2, optional
 	const colors = brandInput.colors || {};
-	const primary = colors.primary || { hex: '#2563EB', name: 'Primary', rgb: 'RGB(37, 99, 235)', usage: 'Main' };
-	const secondary = colors.secondary || { hex: '#7C3AED', name: 'Secondary', rgb: 'RGB(124, 58, 237)', usage: 'Accent' };
-	const accent = colors.accent || { hex: '#10B981', name: 'Accent', rgb: 'RGB(16, 185, 129)', usage: 'Highlights' };
-	const neutral = colors.neutral || { hex: '#6B7280', name: 'Neutral', rgb: 'RGB(107, 114, 128)', usage: 'Text' };
+	const primary = colors.primary || colors.primary_color || { hex: '#2563EB', name: 'Primary', rgb: 'RGB(37, 99, 235)', usage: 'Main brand color' };
+	const secondary = colors.secondary || colors.secondary_color || { hex: '#7C3AED', name: 'Secondary', rgb: 'RGB(124, 58, 237)', usage: 'Secondary brand color' };
+	const accent1 = colors.accent1 || colors.accent_1 || { hex: '#10B981', name: 'Accent 1', rgb: 'RGB(16, 185, 129)', usage: 'Accent color 1' };
+	const accent2 = colors.accent2 || colors.accent_2 || { hex: '#F59E0B', name: 'Accent 2', rgb: 'RGB(245, 158, 11)', usage: 'Accent color 2' };
+	const optional = colors.optional || colors.optional_color || null;
 	
-	// Extract all colors array (for color palette slide)
-	const allColors = colors.allColors || colors.core_palette || [
-		primary,
-		secondary,
-		accent,
-		neutral
-	];
+	// Build display colors array (max 5: 4 mandatory + 1 optional)
+	const displayColors: Array<{ name: string; hex: string; usage?: string }> = [];
+	if (primary) displayColors.push(primary);
+	if (secondary) displayColors.push(secondary);
+	if (accent1) displayColors.push(accent1);
+	if (accent2) displayColors.push(accent2);
+	if (optional) displayColors.push(optional);
 	
-	// Fill to 8 colors if needed (matching HTML generator logic)
-	const displayColors = [...allColors];
-	if (displayColors.length < 8) {
-		const defaultColors = [
-			{ name: 'Color 5', hex: '#F59E0B', usage: 'Brand color' },
-			{ name: 'Color 6', hex: '#EF4444', usage: 'Brand color' },
-			{ name: 'Color 7', hex: '#8B5CF6', usage: 'Brand color' },
-			{ name: 'Color 8', hex: '#06B6D4', usage: 'Brand color' }
+	// Fallback to legacy structure if new structure not available
+	if (displayColors.length === 0) {
+		const legacyPrimary = colors.primary || { hex: '#2563EB', name: 'Primary', usage: 'Main' };
+		const legacySecondary = colors.secondary || { hex: '#7C3AED', name: 'Secondary', usage: 'Accent' };
+		const legacyAccent = colors.accent || { hex: '#10B981', name: 'Accent', usage: 'Highlights' };
+		const legacyNeutral = colors.neutral || { hex: '#6B7280', name: 'Neutral', usage: 'Text' };
+		
+		const allColors = colors.allColors || colors.core_palette || [
+			legacyPrimary,
+			legacySecondary,
+			legacyAccent,
+			legacyNeutral
 		];
-		for (let i = displayColors.length; i < 8; i++) {
-			displayColors.push(defaultColors[i - 4] || defaultColors[0]);
-		}
+		
+		// Take only first 5 colors from legacy structure
+		displayColors.push(...allColors.slice(0, 5));
 	}
 	
 	// Helper to clean hex color
@@ -56,13 +61,14 @@ export async function buildFilledSvelteSlides(brandInput: any): Promise<SlideDat
 	
 	const color1Hex = cleanHex(primary.hex);
 	const color2Hex = cleanHex(secondary.hex);
-	const color3Hex = cleanHex(accent.hex);
-	const color4Hex = cleanHex(neutral.hex);
+	const color3Hex = cleanHex(accent1.hex);
+	const color4Hex = cleanHex(accent2.hex);
 	const color1Lighter = lightenColor(primary.hex, 20);
 	const color2Lighter = lightenColor(secondary.hex, 20);
-	const color3Lighter = lightenColor(accent.hex, 20);
-	const color4Lighter = lightenColor(neutral.hex, 20);
-	const color5Lighter = lightenColor(displayColors[4]?.hex || '#F59E0B', 20);
+	const color3Lighter = lightenColor(accent1.hex, 20);
+	const color4Lighter = lightenColor(accent2.hex, 20);
+	// Keep color5-8 lighters for other slides that might use them (but not for color palette slide)
+	const color5Lighter = lightenColor(optional?.hex || displayColors[4]?.hex || accent2.hex, 20);
 	const color6Lighter = lightenColor(displayColors[5]?.hex || '#EF4444', 20);
 	const color7Lighter = lightenColor(displayColors[6]?.hex || '#8B5CF6', 20);
 	const color8Lighter = lightenColor(displayColors[7]?.hex || '#06B6D4', 20);
@@ -437,16 +443,16 @@ export async function buildFilledSvelteSlides(brandInput: any): Promise<SlideDat
 	if (selectedMood) {
 		const moodIndex = slides[slides.length - 1].elements.findIndex((e: any) => e.id === 'audience-card');
 		if (moodIndex !== -1) {
-			const moodCard = {
-				id: 'mood-card',
-				type: 'shape' as const,
-				position: { x: 0.47, y: 3.31, w: 4.4, h: 0.6 },
-				shapeType: 'rect',
-				fillColor: color4Lighter,
-				lineColor: color4Hex,
-				lineWidth: 2,
-				zIndex: 1
-			};
+		const moodCard = {
+			id: 'mood-card',
+			type: 'shape' as const,
+			position: { x: 0.47, y: 3.31, w: 4.4, h: 0.6 },
+			shapeType: 'rect' as const,
+			fillColor: color4Lighter,
+			lineColor: color4Hex,
+			lineWidth: 2,
+			zIndex: 1
+		};
 			const moodTitle = {
 				id: 'mood-title',
 				type: 'text' as const,
@@ -904,23 +910,26 @@ export async function buildFilledSvelteSlides(brandInput: any): Promise<SlideDat
 		}
 	];
 	
-	// Add color swatches in 4x2 grid
+	// Add color swatches in 3x2 grid (3 columns, 2 rows) for max 5 colors
 	const startX = 0.6;
 	const startY = 1.2;
 	const availableWidth = 10 - (startX * 2);
 	const availableHeight = 5.625 - startY - 0.4;
 	const gapX = 0.22;
 	const gapY = 0.24;
-	const swatchWidth = (availableWidth - (gapX * 3)) / 4;
+	const colsPerRow = 3;
+	const swatchWidth = (availableWidth - (gapX * (colsPerRow - 1))) / colsPerRow;
 	const swatchHeight = (availableHeight - gapY) / 2;
 	const maxSwatchWidth = swatchHeight * 2.0;
 	const finalSwatchWidth = Math.min(swatchWidth, maxSwatchWidth);
-	const actualTotalWidth = (finalSwatchWidth * 4) + (gapX * 3);
+	const actualTotalWidth = (finalSwatchWidth * colsPerRow) + (gapX * (colsPerRow - 1));
 	const adjustedStartX = (10 - actualTotalWidth) / 2;
 	
-	displayColors.forEach((color, index) => {
-		const col = index % 4;
-		const row = Math.floor(index / 4);
+	// Only show first 5 colors
+	const colorsToDisplay = displayColors.slice(0, 5);
+	colorsToDisplay.forEach((color, index) => {
+		const col = index % colsPerRow;
+		const row = Math.floor(index / colsPerRow);
 		const x = adjustedStartX + col * (finalSwatchWidth + gapX);
 		const y = startY + row * (swatchHeight + gapY);
 		

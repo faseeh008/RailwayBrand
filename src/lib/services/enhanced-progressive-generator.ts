@@ -115,62 +115,6 @@ ${groundingData.websites.map(w => `- ${w.title} (${w.url}): ${w.extractedFacts.s
 CRITICAL: Use these real-world industry insights to inform your brand guideline generation. These findings are based on actual analysis of successful brands in this industry. Reference these patterns and best practices when creating guidelines.
 ` : '';
 	
-	// Check if feedback indicates partial modification (default) or complete replacement
-	const isCompleteReplacement = feedback && (
-		feedback.toLowerCase().includes('completely regenerate') ||
-		feedback.toLowerCase().includes('completely remake') ||
-		feedback.toLowerCase().includes('completely redo') ||
-		feedback.toLowerCase().includes('entirely regenerate') ||
-		feedback.toLowerCase().includes('start over') ||
-		feedback.toLowerCase().includes('change everything') ||
-		feedback.toLowerCase().includes('replace everything') ||
-		feedback.toLowerCase().includes('start from scratch')
-	);
-	
-	// Extract current step content from stepHistory if available (for partial modifications)
-	let currentStepContent = '';
-	if (!isCompleteReplacement && feedback && previousSteps && (previousSteps as any).stepHistory) {
-		const stepHistory = (previousSteps as any).stepHistory;
-		const currentStepData = stepHistory.find((s: any) => s.step === step && s.content);
-		if (currentStepData) {
-			currentStepContent = typeof currentStepData.content === 'string'
-				? currentStepData.content
-				: typeof currentStepData.content === 'object'
-					? JSON.stringify(currentStepData.content)
-					: String(currentStepData.content || '');
-		}
-	}
-	
-	// Build feedback section with appropriate instructions
-	let feedbackSection = '';
-	if (feedback) {
-		if (isCompleteReplacement) {
-			// Complete replacement
-			feedbackSection = `\n\n🚨 USER REQUEST (COMPLETE REPLACEMENT): "${feedback}"\nPlease completely regenerate this step with the following requirements.`;
-		} else if (currentStepContent) {
-			// Partial modification with existing content
-			feedbackSection = `\n\n🚨 USER REQUEST (PARTIAL MODIFICATION): "${feedback}"
-
-CRITICAL INSTRUCTIONS FOR PARTIAL MODIFICATION:
-1. Read the CURRENT STEP CONTENT below carefully
-2. Analyze the user's request to identify EXACTLY what they want to change
-3. Make ONLY the specific change mentioned - do NOT change anything else
-4. Preserve ALL other existing content exactly as it is
-5. Do NOT regenerate or rewrite the entire step
-6. Do NOT add new content unless the user explicitly asked to add something
-7. Do NOT remove content unless the user explicitly asked to remove something
-8. Keep the same structure, format, and style as the current content
-
-CURRENT STEP CONTENT (PRESERVE THIS EXCEPT FOR THE SPECIFIC CHANGE):
-${currentStepContent.substring(0, 3000)}${currentStepContent.length > 3000 ? '\n\n[... content truncated ...]' : ''}
-
-Now make ONLY the specific change requested: "${feedback}"`;
-		} else {
-			// Partial modification without existing content (shouldn't happen, but handle gracefully)
-			feedbackSection = `\n\n🚨 USER REQUEST: "${feedback}"\nPlease modify this step while preserving most of the existing content. Only make the specific changes requested.`;
-		}
-	}
-	
 	// Build context string - PRIORITY: Industry + Vibe are PRIMARY, everything else is secondary
 	const contextInfo = `
 🎯 PRIMARY DRIVERS (MANDATORY - NON-NEGOTIABLE):
@@ -184,25 +128,26 @@ ${description ? `- Description: "${description}"` : ''}
 ${values ? `- Brand Values: "${values}"` : ''}
 ${industrySpecificInfo ? `- Industry-Specific Info: ${JSON.stringify(industrySpecificInfo)}` : ''}
 ${previousSteps?.short_description ? `- Previous Context: ${previousSteps.short_description}` : ''}
-${groundingSection}${feedbackSection}
+${groundingSection}
+${feedback ? `\n\n🚨 USER FEEDBACK: "${feedback}"\nIMPORTANT: Incorporate this feedback ONLY if it aligns with ${industry} industry and ${style} vibe.` : ''}
 `;
 
 	// Get step-specific prompt
 	// Common steps (first 5)
 	if (step === 'brand-positioning') {
-		return createBrandPositioningPrompt(contextInfo, brandName, industry, style, audience, description, values, feedback, currentStepContent, isCompleteReplacement);
+		return createBrandPositioningPrompt(contextInfo, brandName, industry, style, audience, description, values);
 	}
 	if (step === 'logo-guidelines') {
-		return createLogoGuidelinesPrompt(contextInfo, brandName, industry, style, feedback, currentStepContent, isCompleteReplacement);
+		return createLogoGuidelinesPrompt(contextInfo, brandName, industry, style);
 	}
 	if (step === 'color-palette') {
-		return createColorPalettePrompt(contextInfo, brandName, industry, style, extractedColors, feedback, currentStepContent, isCompleteReplacement);
+		return createColorPalettePrompt(contextInfo, brandName, industry, style, extractedColors, feedback);
 	}
 	if (step === 'typography') {
-		return createTypographyPrompt(contextInfo, brandName, industry, style, extractedTypography, feedback, currentStepContent, isCompleteReplacement);
+		return createTypographyPrompt(contextInfo, brandName, industry, style, extractedTypography, feedback);
 	}
 	if (step === 'iconography') {
-		return createIconographyPrompt(contextInfo, brandName, industry, style, feedback, currentStepContent, isCompleteReplacement);
+		return createIconographyPrompt(contextInfo, brandName, industry, style);
 	}
 	
 	// Industry-specific steps - use generic handler which will adapt to industry
@@ -214,8 +159,8 @@ ${groundingSection}${feedbackSection}
 		return createApplicationsPrompt(contextInfo, brandName, industry, style, industrySpecificInfo);
 	}
 	
-	// All other industry-specific steps use generic handler with grounding data and previous steps
-	return createGenericStepPrompt(contextInfo, step, brandName, industry, style, request.groundingData, request.previousSteps);
+	// All other industry-specific steps use generic handler
+	return createGenericStepPrompt(contextInfo, step, brandName, industry, style);
 }
 
 function createBrandPositioningPrompt(
@@ -225,42 +170,14 @@ function createBrandPositioningPrompt(
 	style: string,
 	audience?: string,
 	description?: string,
-	values?: string,
-	feedback?: string,
-	currentStepContent?: string,
-	isCompleteReplacement?: boolean
+	values?: string
 ): string {
 	// Get vibe-specific messaging guidelines
 	const vibeGuidelines = getVibeMessagingGuidelines(style);
 	
-	// Build feedback context for partial modifications
-	let feedbackContext = '';
-	if (feedback) {
-		if (isCompleteReplacement) {
-			feedbackContext = `\n\n🚨 USER REQUEST (COMPLETE REPLACEMENT): "${feedback}"\nPlease completely regenerate this brand positioning with the following requirements.`;
-		} else if (currentStepContent) {
-			feedbackContext = `\n\n🚨 USER REQUEST (PARTIAL MODIFICATION): "${feedback}"
-
-CRITICAL INSTRUCTIONS FOR PARTIAL MODIFICATION:
-1. Read the CURRENT BRAND POSITIONING below carefully
-2. Analyze the user's request to identify EXACTLY what they want to change
-3. Make ONLY the specific change mentioned - do NOT change anything else
-4. Preserve ALL other content exactly as it is
-5. Keep the same structure and format
-6. Do NOT regenerate the entire positioning
-
-CURRENT BRAND POSITIONING (PRESERVE THIS EXCEPT FOR THE SPECIFIC CHANGE):
-${currentStepContent.substring(0, 2000)}${currentStepContent.length > 2000 ? '\n\n[... content truncated ...]' : ''}
-
-Now make ONLY the specific change requested: "${feedback}"`;
-		} else {
-			feedbackContext = `\n\n🚨 USER REQUEST: "${feedback}"\nPlease modify this brand positioning while preserving most of the existing content. Only make the specific changes requested.`;
-		}
-	}
-	
 	return `You are a brand strategy expert. Generate brand positioning content for "${brandName}" in the ${industry} industry with a ${style} aesthetic.
 
-${contextInfo}${feedbackContext}
+${contextInfo}
 
 ${vibeGuidelines}
 
@@ -406,39 +323,11 @@ function createLogoGuidelinesPrompt(
 	contextInfo: string,
 	brandName: string,
 	industry: string,
-	style: string,
-	feedback?: string,
-	currentStepContent?: string,
-	isCompleteReplacement?: boolean
+	style: string
 ): string {
-	// Build feedback context for partial modifications
-	let feedbackContext = '';
-	if (feedback) {
-		if (isCompleteReplacement) {
-			feedbackContext = `\n\n🚨 USER REQUEST (COMPLETE REPLACEMENT): "${feedback}"\nPlease completely regenerate this logo guidelines with the following requirements.`;
-		} else if (currentStepContent) {
-			feedbackContext = `\n\n🚨 USER REQUEST (PARTIAL MODIFICATION): "${feedback}"
-
-CRITICAL INSTRUCTIONS FOR PARTIAL MODIFICATION:
-1. Read the CURRENT LOGO GUIDELINES below carefully
-2. Analyze the user's request to identify EXACTLY what they want to change
-3. Make ONLY the specific change mentioned - do NOT change anything else
-4. Preserve ALL other content exactly as it is
-5. Keep the same structure and format
-6. Do NOT regenerate the entire guidelines
-
-CURRENT LOGO GUIDELINES (PRESERVE THIS EXCEPT FOR THE SPECIFIC CHANGE):
-${currentStepContent.substring(0, 2000)}${currentStepContent.length > 2000 ? '\n\n[... content truncated ...]' : ''}
-
-Now make ONLY the specific change requested: "${feedback}"`;
-		} else {
-			feedbackContext = `\n\n🚨 USER REQUEST: "${feedback}"\nPlease modify this logo guidelines while preserving most of the existing content. Only make the specific changes requested.`;
-		}
-	}
-	
 	return `You are a logo design expert. Generate logo guidelines for "${brandName}" in the ${industry} industry with a ${style} aesthetic.
 
-${contextInfo}${feedbackContext}
+${contextInfo}
 
 🎯 PRIMARY REQUIREMENTS (MANDATORY):
 - Logo concept MUST be generated based on ${industry} industry FIRST
@@ -535,182 +424,90 @@ function createColorPalettePrompt(
 	industry: string,
 	style: string,
 	extractedColors?: string,
-	feedback?: string,
-	currentStepContent?: string,
-	isCompleteReplacement?: boolean
+	feedback?: string
 ): string {
-	// Build color guidance based on industry and style (same as logo generation)
-	let logoColorGuidance = '';
-	if (industry && style) {
-		logoColorGuidance = `\n\n🎨 LOGO COLOR REQUIREMENTS (MUST MATCH):\n`;
-		logoColorGuidance += `The logo was generated using colors based on:\n`;
-		logoColorGuidance += `- Industry: ${industry} - Colors appropriate for this industry\n`;
-		logoColorGuidance += `- Style/Vibe: ${style} - Colors matching this aesthetic\n`;
-		logoColorGuidance += `\n⚠️ CRITICAL: The color palette MUST use the SAME colors that were used in the logo generation.\n`;
-		logoColorGuidance += `If extracted colors from logo are provided, use them as the PRIMARY source.\n`;
-		logoColorGuidance += `If no extracted colors, generate colors based on ${industry} industry + ${style} style (same logic as logo).\n`;
-	}
-	
 	const colorContext = extractedColors
-		? `\n\n🎨 EXTRACTED COLORS FROM LOGO (PRIMARY SOURCE - USE THESE):\n${extractedColors}\n\n${logoColorGuidance}\n⚠️ These colors were extracted from the logo and MUST be used as the primary color palette. Ensure they align with ${style} vibe and ${industry} industry.`
-		: `\n\n${logoColorGuidance}\n⚠️ Since no logo colors were extracted, generate colors based on ${industry} industry + ${style} style using the SAME color logic that was used for logo generation.`;
+		? `\n\n🎨 EXTRACTED COLORS FROM LOGO:\n${extractedColors}\n\n⚠️ REFERENCE ONLY: Use these extracted colors as inspiration if they align with the ${industry} industry. Analyze the grounding search data to determine if these colors are appropriate for this industry.`
+		: '';
 
-	let feedbackContext = '';
-	if (feedback) {
-		if (isCompleteReplacement) {
-			feedbackContext = `\n\n🚨 USER REQUEST (COMPLETE REPLACEMENT): "${feedback}"\nPlease completely regenerate this color palette with the following requirements.`;
-		} else if (currentStepContent) {
-			feedbackContext = `\n\n🚨 USER REQUEST (PARTIAL MODIFICATION): "${feedback}"
+	const feedbackContext = feedback
+		? `\n\n🚨 USER FEEDBACK: "${feedback}"\nIncorporate this feedback while ensuring colors remain appropriate for the ${industry} industry.`
+		: '';
 
-CRITICAL INSTRUCTIONS FOR PARTIAL MODIFICATION:
-1. Read the CURRENT COLOR PALETTE below carefully
-2. Analyze the user's request to identify EXACTLY what they want to change (e.g., "make colors brighter" = only adjust brightness, "change primary color" = only change primary color)
-3. Make ONLY the specific change mentioned - do NOT change anything else
-4. Preserve ALL other colors exactly as they are
-5. Keep the same structure and format
-6. Do NOT regenerate the entire palette
-
-CURRENT COLOR PALETTE (PRESERVE THIS EXCEPT FOR THE SPECIFIC CHANGE):
-${currentStepContent.substring(0, 2000)}${currentStepContent.length > 2000 ? '\n\n[... content truncated ...]' : ''}
-
-Now make ONLY the specific change requested: "${feedback}"`;
-		} else {
-			feedbackContext = `\n\n🚨 USER REQUEST: "${feedback}"\nPlease modify this color palette while preserving most of the existing content. Only make the specific changes requested.`;
-		}
-	}
-
-	// Get vibe-specific color guidelines
-	const vibeColorGuidelines = getVibeColorGuidelines(style);
-
-	return `You are a color design expert. Generate a color palette for "${brandName}" in the ${industry} industry with a ${style} aesthetic.
+	return `You are a color design expert. Generate a color palette for "${brandName}" in the ${industry} industry.
 
 ${contextInfo}${colorContext}${feedbackContext}
 
-${vibeColorGuidelines}
-
 🎯 PRIMARY REQUIREMENTS (MANDATORY):
-- Colors MUST match the colors used in the logo generation (based on ${industry} industry + ${style} style)
-- If extracted colors from logo are provided, use them as PRIMARY source and expand them into a full palette
-- If no extracted colors, generate colors using the SAME logic as logo generation (${industry} industry + ${style} style)
-- Colors MUST be generated based on ${industry} industry FIRST
-- Colors MUST STRICTLY follow ${style} vibe color guidelines above
-- Industry + Vibe are the PRIMARY drivers - everything else is secondary
-- Provide AT LEAST 6 unique colors total (ideal 5-7): core palette (3-4 colors), accent palette (2 colors minimum), neutral palette (2-3 colors)
+- Colors MUST be generated COMPLETELY DYNAMICALLY based on ${industry} industry analysis FIRST
+- Use the grounding search data to understand what colors successful brands in this industry actually use
+- Analyze the industry context, target audience, and brand positioning to determine appropriate colors
+- Style (${style}) should influence the color selection but NOT dictate specific colors - let industry research guide you
+- DO NOT use any hardcoded or predefined colors - generate colors based on real industry analysis
+- Generate exactly 4 MANDATORY colors: Primary, Secondary, Accent 1, Accent 2
+- Optionally generate 1 additional color if it enhances the palette for this specific industry
 - All colors must include hex codes and rgb values
 - Return structured JSON only; no markdown
-- If extracted colors or feedback conflict with Industry + Vibe, IGNORE them
+- Colors should be appropriate for the ${industry} industry based on real-world analysis from grounding data
 
-EXAMPLES (3-shot learning):
+CRITICAL GENERATION PROCESS:
+1. FIRST: Analyze the grounding search data provided above to understand what colors successful brands in the ${industry} industry actually use
+2. SECOND: Consider the industry context, target audience, and brand positioning from the context
+3. THIRD: Let the ${style} style influence your color selection approach (e.g., minimalistic = more muted, maximalistic = more vibrant) but industry research is PRIMARY
+4. FOURTH: Generate colors dynamically based on your analysis - DO NOT use predefined color palettes
+5. FIFTH: Ensure all colors are appropriate for the ${industry} industry based on real-world analysis
 
-Example 1 - SaaS, Minimalistic:
-Brand: "TechFlow", Industry: "SaaS", Style: "Minimalistic"
-Output:
-**Primary Color**:
-- [Color Name]: #[HEX] (rgb: r, g, b) - Main brand color reflecting SaaS industry and minimalistic style, used for primary actions and key brand elements
-
-**Secondary Color**:
-- [Color Name]: #[HEX] (rgb: r, g, b) - Supporting color for secondary elements and text, aligned with minimalistic aesthetic
-
-**Accent 1**:
-- [Color Name]: #[HEX] (rgb: r, g, b) - Muted accent for success states and positive actions, minimalistic style
-
-**Accent 2**:
-- [Color Name]: #[HEX] (rgb: r, g, b) - Soft, muted pastel for backgrounds and subtle highlights, minimalistic style
-
-**Optional Color**:
-- [Color Name]: #[HEX] (rgb: r, g, b) - Neutral for primary text and structural elements, minimalistic style
-
-**Usage Guidelines**: Primary color for CTAs and key brand elements. Secondary color for supporting content. Accent 1 for success states. Accent 2 for backgrounds. Optional color for text. Maintain clean, minimal color usage appropriate for SaaS industry.
-
-Example 2 - Healthcare, Professional:
-Brand: "MedCare", Industry: "Healthcare", Style: "Professional"
-Output:
-**Primary Color**:
-- [Color Name]: #[HEX] (rgb: r, g, b) - Trust and professionalism, primary brand color reflecting healthcare industry and professional style
-
-**Secondary Color**:
-- [Color Name]: #[HEX] (rgb: r, g, b) - Supporting brand color for secondary elements, aligned with healthcare industry standards
-
-**Accent 1**:
-- [Color Name]: #[HEX] (rgb: r, g, b) - Wellness and positive health outcomes, accent for positive messaging, healthcare-appropriate
-
-**Accent 2**:
-- [Color Name]: #[HEX] (rgb: r, g, b) - Important notices and alerts, accent for attention-grabbing elements, professional style
-
-**Optional Color**:
-- [Color Name]: #[HEX] (rgb: r, g, b) - Neutral for body text and professional elements, appropriate for healthcare industry
-
-**Usage Guidelines**: Primary color for main brand elements and trust-building. Accent 1 for positive health messaging. Maintain professional, calming color palette appropriate for healthcare industry.
-
-Example 3 - Fashion, Maximalistic:
-Brand: "VividStyle", Industry: "Fashion", Style: "Maximalistic"
-Output:
-**Primary Color**:
-- [Color Name]: #[HEX] (rgb: r, g, b) - Bold brand statement color reflecting fashion industry and maximalistic style, rich and saturated
-
-**Secondary Color**:
-- [Color Name]: #[HEX] (rgb: r, g, b) - Supporting brand color for secondary elements, fashion-appropriate with maximalistic aesthetic
-
-**Accent 1**:
-- [Color Name]: #[HEX] (rgb: r, g, b) - Energetic accent for highlights, maximalistic style with bold saturation
-
-**Accent 2**:
-- [Color Name]: #[HEX] (rgb: r, g, b) - Fresh accent with layered textures, maximalistic style
-
-**Optional Color**:
-- [Color Name]: #[HEX] (rgb: r, g, b) - Supporting color for structure and contrast, fashion industry appropriate
-
-**Usage Guidelines**: Rich, saturated colors with layered gradients and textures. Mix colors for dynamic looks. Embrace color combinations and bold statements. Visually intense palette appropriate for fashion industry and maximalistic style.
-
-Example 4 - Gaming, Futuristic:
-Brand: "NexusGames", Industry: "Gaming", Style: "Futuristic"
-Output:
-**Primary Color**:
-- [Color Name]: #[HEX] (rgb: r, g, b) - Bold primary color reflecting gaming industry and futuristic style, tech-forward
-
-**Secondary Color**:
-- [Color Name]: #[HEX] (rgb: r, g, b) - Supporting color for secondary elements, gaming industry appropriate with futuristic aesthetic
-
-**Accent 1**:
-- [Color Name]: #[HEX] (rgb: r, g, b) - High-energy accent for highlights, futuristic style with tech-inspired feel
-
-**Accent 2**:
-- [Color Name]: #[HEX] (rgb: r, g, b) - Additional accent for special elements, futuristic style
-
-**Optional Color**:
-- [Color Name]: #[HEX] (rgb: r, g, b) - Supporting color for backgrounds or contrast, gaming industry appropriate
-
-**Usage Guidelines**: Bold, tech-forward colors appropriate for gaming industry. Use accents for highlights and special elements. Maintain futuristic aesthetic with cutting-edge color combinations.
+EXAMPLE STRUCTURE (DO NOT COPY COLORS - USE AS FORMAT REFERENCE ONLY):
+{
+  "step": "color-palette",
+  "brand_name": "[Brand Name]",
+  "colors": {
+    "primary": { "name": "[Dynamically generated color name based on industry]", "hex": "#[Dynamically generated hex]", "rgb": "[Dynamically generated rgb]", "usage": "[Usage description]" },
+    "secondary": { "name": "[Dynamically generated color name based on industry]", "hex": "#[Dynamically generated hex]", "rgb": "[Dynamically generated rgb]", "usage": "[Usage description]" },
+    "accent1": { "name": "[Dynamically generated color name based on industry]", "hex": "#[Dynamically generated hex]", "rgb": "[Dynamically generated rgb]", "usage": "[Usage description]" },
+    "accent2": { "name": "[Dynamically generated color name based on industry]", "hex": "#[Dynamically generated hex]", "rgb": "[Dynamically generated rgb]", "usage": "[Usage description]" },
+    "optional": { "name": "[Dynamically generated color name based on industry]", "hex": "#[Dynamically generated hex]", "rgb": "[Dynamically generated rgb]", "usage": "[Usage description]" } OR null
+  },
+  "usage": {
+    "backgrounds": "[Guidance for background color usage based on generated colors]",
+    "text": "[Guidance for text color usage based on generated colors]",
+    "buttons": "[Guidance for button color usage based on generated colors]",
+    "gradients": ["Gradient tip 1", "Gradient tip 2"]
+  },
+  "contrast_guidelines": ["Contrast guideline 1", "Contrast guideline 2"]
+}
 
 NOW GENERATE FOR:
 ${contextInfo}${colorContext}${feedbackContext}
+
+CRITICAL INSTRUCTIONS:
+1. Analyze the grounding search data to understand what colors successful brands in the ${industry} industry actually use
+2. Consider the industry context, target audience, and brand positioning
+3. Style (${style}) should influence your color choices but industry research is PRIMARY
+4. Generate exactly 4 MANDATORY colors: primary, secondary, accent1, accent2
+5. Optionally add 1 additional color if it enhances the palette for this specific industry
+6. All colors must be appropriate for the ${industry} industry based on real-world analysis
+7. Use the grounding data insights to inform your color selection
+8. DO NOT use any hardcoded colors - generate everything dynamically based on industry analysis
 
 FORMAT AS VALID JSON (NO MARKDOWN, NO EXTRA TEXT):
 {
   "step": "color-palette",
   "brand_name": "${brandName}",
   "colors": {
-    "core_palette": [
-      { "name": "Primary One", "hex": "#000000", "rgb": "0,0,0", "usage": "Primary brand color" },
-      { "name": "Primary Two", "hex": "#111111", "rgb": "17,17,17", "usage": "Secondary headline color" },
-      { "name": "Support Tone", "hex": "#222222", "rgb": "34,34,34", "usage": "UI highlight" }
-    ],
-    "accent_palette": [
-      { "name": "Accent Highlight", "hex": "#333333", "rgb": "51,51,51", "usage": "Call-to-action buttons" },
-      { "name": "Accent Contrast", "hex": "#444444", "rgb": "68,68,68", "usage": "Badges and emphasis" }
-    ],
-    "neutral_palette": [
-      { "name": "Neutral Light", "hex": "#555555", "rgb": "85,85,85", "usage": "Backgrounds" },
-      { "name": "Neutral Dark", "hex": "#666666", "rgb": "102,102,102", "usage": "Body text" }
-    ]
+    "primary": { "name": "[Color name]", "hex": "#HEXCODE", "rgb": "R,G,B", "usage": "[Usage description]" },
+    "secondary": { "name": "[Color name]", "hex": "#HEXCODE", "rgb": "R,G,B", "usage": "[Usage description]" },
+    "accent1": { "name": "[Color name]", "hex": "#HEXCODE", "rgb": "R,G,B", "usage": "[Usage description]" },
+    "accent2": { "name": "[Color name]", "hex": "#HEXCODE", "rgb": "R,G,B", "usage": "[Usage description]" },
+    "optional": { "name": "[Color name]", "hex": "#HEXCODE", "rgb": "R,G,B", "usage": "[Usage description]" } OR null
   },
   "usage": {
-    "backgrounds": "[guidance]",
-    "text": "[guidance]",
-    "buttons": "[guidance]",
-    "gradients": ["Tip 1", "Tip 2"]
+    "backgrounds": "[Guidance for background color usage]",
+    "text": "[Guidance for text color usage]",
+    "buttons": "[Guidance for button color usage]",
+    "gradients": ["Gradient tip 1", "Gradient tip 2"]
   },
-  "contrast_guidelines": ["Guideline 1", "Guideline 2"]
+  "contrast_guidelines": ["Contrast guideline 1", "Contrast guideline 2"]
 }
 
 Return ONLY this JSON object.`;
@@ -722,37 +519,15 @@ function createTypographyPrompt(
 	industry: string,
 	style: string,
 	extractedTypography?: string,
-	feedback?: string,
-	currentStepContent?: string,
-	isCompleteReplacement?: boolean
+	feedback?: string
 ): string {
 	const typographyContext = extractedTypography
 		? `\n\n🔤 EXTRACTED TYPOGRAPHY FROM LOGO:\n${extractedTypography}\n\n⚠️ SECONDARY: Use this as reference ONLY if it aligns with ${style} vibe and ${industry} industry. If it conflicts, IGNORE it and generate typography based on Industry + Vibe ONLY.`
 		: '';
 
-	let feedbackContext = '';
-	if (feedback) {
-		if (isCompleteReplacement) {
-			feedbackContext = `\n\n🚨 USER REQUEST (COMPLETE REPLACEMENT): "${feedback}"\nPlease completely regenerate this typography with the following requirements.`;
-		} else if (currentStepContent) {
-			feedbackContext = `\n\n🚨 USER REQUEST (PARTIAL MODIFICATION): "${feedback}"
-
-CRITICAL INSTRUCTIONS FOR PARTIAL MODIFICATION:
-1. Read the CURRENT TYPOGRAPHY below carefully
-2. Analyze the user's request to identify EXACTLY what they want to change (e.g., "change primary font" = only change primary font, "make fonts bolder" = only adjust weights)
-3. Make ONLY the specific change mentioned - do NOT change anything else
-4. Preserve ALL other typography exactly as it is
-5. Keep the same structure and format
-6. Do NOT regenerate the entire typography
-
-CURRENT TYPOGRAPHY (PRESERVE THIS EXCEPT FOR THE SPECIFIC CHANGE):
-${currentStepContent.substring(0, 2000)}${currentStepContent.length > 2000 ? '\n\n[... content truncated ...]' : ''}
-
-Now make ONLY the specific change requested: "${feedback}"`;
-		} else {
-			feedbackContext = `\n\n🚨 USER REQUEST: "${feedback}"\nPlease modify this typography while preserving most of the existing content. Only make the specific changes requested.`;
-		}
-	}
+	const feedbackContext = feedback
+		? `\n\n🚨 USER FEEDBACK: "${feedback}"\n⚠️ SECONDARY: Incorporate this feedback ONLY if it aligns with ${industry} industry and ${style} vibe. Industry + Vibe take PRIORITY.`
+		: '';
 
 	// Get vibe-specific typography guidelines
 	const vibeTypographyGuidelines = getVibeTypographyGuidelines(style);
@@ -776,185 +551,56 @@ EXAMPLES (3-shot learning):
 Example 1 - SaaS, Minimalistic:
 Brand: "TechFlow", Industry: "SaaS", Style: "Minimalistic"
 Output:
-**Primary Font**: [Font Name] - Clean, modern sans-serif that embodies minimalism while maintaining excellent readability. Perfect for "${brandName}"'s streamlined approach to enterprise software, reflecting SaaS industry standards.
+**Primary Font**: Inter - Clean, modern sans-serif that embodies minimalism while maintaining excellent readability. Perfect for "${brandName}"'s streamlined approach to enterprise software.
 
-**Supporting Font**: [Font Name] - Versatile, geometric sans-serif that complements the primary font with balanced proportions. Ideal for body text and UI elements, appropriate for SaaS industry.
+**Supporting Font**: Roboto - Versatile, geometric sans-serif that complements Inter with its balanced proportions. Ideal for body text and UI elements.
 
-**Typography Hierarchy with Visual Examples**:
+**Font Hierarchy**:
+- H1 (Display): Inter Bold, 48px/700 - Main headlines
+- H2 (Heading): Inter SemiBold, 32px/600 - Section headers
+- H3 (Subheading): Inter Medium, 24px/500 - Subsections
+- Body: Roboto Regular, 16px/400 - Body text
+- UI: Roboto Medium, 14px/500 - Buttons and labels
 
-**Heading 1 (H1) - Display/Title**:
-- Font: [Primary Font Name] Bold
-- Size: [Size appropriate for SaaS minimalistic style, typically 44-52px]
-- Weight: 700
-- Line Height: 1.2
-- Usage: Main page titles, hero headlines, primary messaging for SaaS platforms
-- Visual Example: "[Example heading text]" (shown at [size]px, Bold, 700 weight)
+**Web Usage**: Load Inter and Roboto from Google Fonts. Use Inter for all headings and key messaging. Use Roboto for body text and UI elements.
 
-**Heading 2 (H2) - Section Headers**:
-- Font: [Primary Font Name] SemiBold
-- Size: [Size appropriate for SaaS minimalistic style, typically 28-36px]
-- Weight: 600
-- Line Height: 1.3
-- Usage: Major section headers, feature titles, SaaS product sections
-- Visual Example: "[Example heading text]" (shown at [size]px, SemiBold, 600 weight)
-
-**Heading 3 (H3) - Subheadings**:
-- Font: [Primary Font Name] Medium
-- Size: [Size appropriate for SaaS minimalistic style, typically 20-24px]
-- Weight: 500
-- Line Height: 1.4
-- Usage: Subsections, card titles, secondary headers, SaaS feature descriptions
-- Visual Example: "[Example heading text]" (shown at [size]px, Medium, 500 weight)
-
-**Body Text**:
-- Font: [Supporting Font Name] Regular
-- Size: [Size appropriate for SaaS minimalistic style, typically 16-18px]
-- Weight: 400
-- Line Height: 1.6
-- Usage: Paragraphs, descriptions, main content, SaaS product information
-- Visual Example: "[Example paragraph text that demonstrates how body text looks in SaaS context]" (shown at [size]px, Regular, 400 weight)
-
-**Subtext/Captions**:
-- Font: [Supporting Font Name] Regular
-- Size: [Size appropriate for SaaS minimalistic style, typically 14px]
-- Weight: 400
-- Line Height: 1.5
-- Usage: Captions, metadata, secondary information, SaaS UI metadata
-- Visual Example: "[Example subtext or caption]" (shown at [size]px, Regular, 400 weight)
-
-**UI Elements (Buttons, Labels)**:
-- Font: [Supporting Font Name] Medium
-- Size: [Size appropriate for SaaS minimalistic style, typically 14-16px]
-- Weight: 500
-- Line Height: 1.4
-- Usage: Button text, form labels, navigation items, SaaS interface elements
-- Visual Example: "[Example button or label text]" (shown at [size]px, Medium, 500 weight)
-
-**Web Usage**: Load fonts from appropriate source (Google Fonts, Adobe Fonts, etc.). Use primary font for all headings and key messaging. Use supporting font for body text and UI elements.
-
-**Print Usage**: Use primary font for headlines and supporting font for body text. Maintain consistent hierarchy with appropriate sizing for print media.
+**Print Usage**: Use Inter for headlines and Roboto for body text. Maintain consistent hierarchy with appropriate sizing for print media.
 
 Example 2 - Healthcare, Professional:
 Brand: "MedCare", Industry: "Healthcare", Style: "Professional"
 Output:
-**Primary Font**: [Font Name] - Professional, highly readable sans-serif that conveys trust and medical authority. Perfect for "${brandName}"'s patient-focused healthcare approach, reflecting healthcare industry standards.
+**Primary Font**: Source Sans Pro - Professional, highly readable sans-serif that conveys trust and medical authority. Perfect for "${brandName}"'s patient-focused healthcare approach.
 
-**Supporting Font**: [Font Name] - Warm, approachable sans-serif that maintains professionalism while feeling human and compassionate. Ideal for patient communications, appropriate for healthcare industry.
+**Supporting Font**: Open Sans - Warm, approachable sans-serif that maintains professionalism while feeling human and compassionate. Ideal for patient communications.
 
-**Typography Hierarchy with Visual Examples**:
+**Font Hierarchy**:
+- H1 (Display): Source Sans Pro Bold, 44px/700 - Main headlines
+- H2 (Heading): Source Sans Pro SemiBold, 28px/600 - Section headers
+- H3 (Subheading): Source Sans Pro Regular, 20px/400 - Subsections
+- Body: Open Sans Regular, 16px/400 - Body text and patient information
+- UI: Open Sans SemiBold, 14px/600 - Medical forms and labels
 
-**Heading 1 (H1) - Display/Title**:
-- Font: [Primary Font Name] Bold
-- Size: [Size appropriate for healthcare professional style, typically 40-48px]
-- Weight: 700
-- Line Height: 1.2
-- Usage: Main page titles, hero headlines, primary medical messaging
-- Visual Example: "[Example heading text]" (shown at [size]px, Bold, 700 weight)
+**Web Usage**: Load Source Sans Pro and Open Sans from Google Fonts. Use Source Sans Pro for medical information and headers. Use Open Sans for patient-facing content.
 
-**Heading 2 (H2) - Section Headers**:
-- Font: [Primary Font Name] SemiBold
-- Size: [Size appropriate for healthcare professional style, typically 24-32px]
-- Weight: 600
-- Line Height: 1.3
-- Usage: Major section headers, service categories, healthcare sections
-- Visual Example: "[Example heading text]" (shown at [size]px, SemiBold, 600 weight)
-
-**Heading 3 (H3) - Subheadings**:
-- Font: [Primary Font Name] Regular
-- Size: [Size appropriate for healthcare professional style, typically 18-22px]
-- Weight: 400
-- Line Height: 1.4
-- Usage: Subsections, treatment categories, secondary headers, healthcare information
-- Visual Example: "[Example heading text]" (shown at [size]px, Regular, 400 weight)
-
-**Body Text**:
-- Font: [Supporting Font Name] Regular
-- Size: [Size appropriate for healthcare professional style, typically 16-18px]
-- Weight: 400
-- Line Height: 1.6
-- Usage: Paragraphs, patient information, medical descriptions, healthcare content
-- Visual Example: "[Example paragraph text that demonstrates how body text looks in healthcare context]" (shown at [size]px, Regular, 400 weight)
-
-**Subtext/Captions**:
-- Font: [Supporting Font Name] Regular
-- Size: [Size appropriate for healthcare professional style, typically 14px]
-- Weight: 400
-- Line Height: 1.5
-- Usage: Captions, metadata, disclaimers, fine print, healthcare disclaimers
-- Visual Example: "[Example subtext or caption]" (shown at [size]px, Regular, 400 weight)
-
-**UI Elements (Buttons, Labels)**:
-- Font: [Supporting Font Name] SemiBold
-- Size: [Size appropriate for healthcare professional style, typically 14-16px]
-- Weight: 600
-- Line Height: 1.4
-- Usage: Button text, form labels, medical form fields, healthcare interface elements
-- Visual Example: "[Example button or label text]" (shown at [size]px, SemiBold, 600 weight)
-
-**Web Usage**: Load fonts from appropriate source. Use primary font for medical information and headers. Use supporting font for patient-facing content.
-
-**Print Usage**: Use primary font for medical documents and supporting font for patient materials. Ensure high readability with appropriate contrast.
+**Print Usage**: Use Source Sans Pro for medical documents and Open Sans for patient materials. Ensure high readability with appropriate contrast.
 
 Example 3 - Fashion, Maximalistic:
 Brand: "VividStyle", Industry: "Fashion", Style: "Maximalistic"
 Output:
-**Primary Font**: [Font Name] - Bold, expressive sans-serif with geometric character that matches "${brandName}"'s fearless fashion approach. Perfect for making bold statements, reflecting fashion industry standards.
+**Primary Font**: Poppins - Bold, expressive sans-serif with geometric character that matches "${brandName}"'s fearless fashion approach. Perfect for making bold statements.
 
-**Supporting Font**: [Font Name] - Versatile, modern sans-serif with distinctive character that complements the primary font. Ideal for supporting text and descriptions, appropriate for fashion industry.
+**Supporting Font**: Montserrat - Versatile, modern sans-serif with distinctive character that complements Poppins. Ideal for supporting text and descriptions.
 
-**Typography Hierarchy with Visual Examples**:
+**Font Hierarchy**:
+- H1 (Display): Poppins ExtraBold, 64px/800 - Bold headlines
+- H2 (Heading): Poppins Bold, 40px/700 - Section headers
+- H3 (Subheading): Poppins SemiBold, 28px/600 - Subsections
+- Body: Montserrat Regular, 18px/400 - Body text
+- UI: Montserrat Bold, 16px/700 - Buttons and labels
 
-**Heading 1 (H1) - Display/Title**:
-- Font: [Primary Font Name] ExtraBold or Bold
-- Size: [Size appropriate for fashion maximalistic style, typically 56-72px]
-- Weight: 800 or 700
-- Line Height: 1.1
-- Usage: Main page titles, hero headlines, bold fashion statements
-- Visual Example: "[Example heading text]" (shown at [size]px, ExtraBold/Bold, [weight] weight)
+**Web Usage**: Load Poppins and Montserrat from Google Fonts. Use Poppins for all bold statements and headlines. Use Montserrat for body text and supporting content.
 
-**Heading 2 (H2) - Section Headers**:
-- Font: [Primary Font Name] Bold
-- Size: [Size appropriate for fashion maximalistic style, typically 36-44px]
-- Weight: 700
-- Line Height: 1.2
-- Usage: Major section headers, collection titles, fashion categories
-- Visual Example: "[Example heading text]" (shown at [size]px, Bold, 700 weight)
-
-**Heading 3 (H3) - Subheadings**:
-- Font: [Primary Font Name] SemiBold
-- Size: [Size appropriate for fashion maximalistic style, typically 24-32px]
-- Weight: 600
-- Line Height: 1.3
-- Usage: Subsections, product categories, secondary headers, fashion items
-- Visual Example: "[Example heading text]" (shown at [size]px, SemiBold, 600 weight)
-
-**Body Text**:
-- Font: [Supporting Font Name] Regular
-- Size: [Size appropriate for fashion maximalistic style, typically 16-20px]
-- Weight: 400
-- Line Height: 1.6
-- Usage: Paragraphs, product descriptions, fashion content, brand stories
-- Visual Example: "[Example paragraph text that demonstrates how body text looks in fashion context]" (shown at [size]px, Regular, 400 weight)
-
-**Subtext/Captions**:
-- Font: [Supporting Font Name] Regular
-- Size: [Size appropriate for fashion maximalistic style, typically 12-14px]
-- Weight: 400
-- Line Height: 1.5
-- Usage: Captions, product codes, metadata, pricing information, fashion details
-- Visual Example: "[Example subtext or caption]" (shown at [size]px, Regular, 400 weight)
-
-**UI Elements (Buttons, Labels)**:
-- Font: [Supporting Font Name] Bold
-- Size: [Size appropriate for fashion maximalistic style, typically 14-18px]
-- Weight: 700
-- Line Height: 1.4
-- Usage: Button text, navigation items, call-to-action labels, fashion interface elements
-- Visual Example: "[Example button or label text]" (shown at [size]px, Bold, 700 weight)
-
-**Web Usage**: Load fonts from appropriate source. Use primary font for all bold statements and headlines. Use supporting font for body text and supporting content.
-
-**Print Usage**: Use primary font for fashion headlines and supporting font for descriptions. Embrace bold sizing and expressive typography in print materials.
+**Print Usage**: Use Poppins for fashion headlines and Montserrat for descriptions. Embrace bold sizing and expressive typography in print materials.
 
 NOW GENERATE FOR:
 ${contextInfo}${typographyContext}${feedbackContext}
@@ -983,42 +629,14 @@ function createIconographyPrompt(
 	contextInfo: string,
 	brandName: string,
 	industry: string,
-	style: string,
-	feedback?: string,
-	currentStepContent?: string,
-	isCompleteReplacement?: boolean
+	style: string
 ): string {
 	// Get vibe-specific iconography guidelines
 	const vibeIconGuidelines = getVibeIconGuidelines(style);
-	
-	// Build feedback context for partial modifications
-	let feedbackContext = '';
-	if (feedback) {
-		if (isCompleteReplacement) {
-			feedbackContext = `\n\n🚨 USER REQUEST (COMPLETE REPLACEMENT): "${feedback}"\nPlease completely regenerate this iconography with the following requirements.`;
-		} else if (currentStepContent) {
-			feedbackContext = `\n\n🚨 USER REQUEST (PARTIAL MODIFICATION): "${feedback}"
-
-CRITICAL INSTRUCTIONS FOR PARTIAL MODIFICATION:
-1. Read the CURRENT ICONOGRAPHY below carefully
-2. Analyze the user's request to identify EXACTLY what they want to change
-3. Make ONLY the specific change mentioned - do NOT change anything else
-4. Preserve ALL other content exactly as it is
-5. Keep the same structure and format
-6. Do NOT regenerate the entire iconography
-
-CURRENT ICONOGRAPHY (PRESERVE THIS EXCEPT FOR THE SPECIFIC CHANGE):
-${currentStepContent.substring(0, 2000)}${currentStepContent.length > 2000 ? '\n\n[... content truncated ...]' : ''}
-
-Now make ONLY the specific change requested: "${feedback}"`;
-		} else {
-			feedbackContext = `\n\n🚨 USER REQUEST: "${feedback}"\nPlease modify this iconography while preserving most of the existing content. Only make the specific changes requested.`;
-		}
-	}
 
 	return `You are an iconography expert. Generate icon guidelines for "${brandName}" in the ${industry} industry with a ${style} aesthetic.
 
-${contextInfo}${feedbackContext}
+${contextInfo}
 
 ${vibeIconGuidelines}
 
@@ -1258,102 +876,18 @@ function createGenericStepPrompt(
 	step: string,
 	brandName: string,
 	industry: string,
-	style: string,
-	groundingData?: {
-		summary: string;
-		keyFindings: string[];
-		websites: Array<{ url: string; title: string; extractedFacts: string[] }>;
-	},
-	previousSteps?: Partial<BrandGuidelinesInput> | any
+	style: string
 ): string {
-<<<<<<< HEAD
-	// Extract content from previous common steps (stepHistory)
-	let previousStepsContent = '';
-	if (previousSteps && (previousSteps as any).stepHistory && Array.isArray((previousSteps as any).stepHistory)) {
-		const stepHistory = (previousSteps as any).stepHistory;
-		const commonSteps = [
-			{ id: 'brand-positioning', name: 'Brand Positioning' },
-			{ id: 'logo-guidelines', name: 'Logo Guidelines' },
-			{ id: 'color-palette', name: 'Color Palette' },
-			{ id: 'typography', name: 'Typography' },
-			{ id: 'iconography', name: 'Iconography' }
-		];
-		
-		const previousStepsData: Array<{ name: string; content: string }> = [];
-		
-		for (const commonStep of commonSteps) {
-			const stepData = stepHistory.find((s: any) => s.step === commonStep.id && s.approved && s.content);
-			if (stepData) {
-				const content = typeof stepData.content === 'string' 
-					? stepData.content 
-					: typeof stepData.content === 'object'
-						? JSON.stringify(stepData.content)
-						: String(stepData.content || '');
-				previousStepsData.push({ name: commonStep.name, content });
-			}
-		}
-		
-		if (previousStepsData.length > 0) {
-			previousStepsContent = `
+return `Generate ${step} content for "${brandName}" in the ${industry} industry with a ${style} aesthetic.
 
-📋 PREVIOUS STEPS CONTENT (MUST USE AND REFERENCE):
-The following steps have already been generated for "${brandName}". You MUST use the same colors, fonts, logo guidelines, and brand positioning when creating this ${step} step. Maintain complete consistency.
-
-${previousStepsData.map((stepData, idx) => `
-${idx + 1}. ${stepData.name}:
-${stepData.content.substring(0, 1000)}${stepData.content.length > 1000 ? '...' : ''}
-`).join('\n')}
-
-CRITICAL CONSISTENCY REQUIREMENTS:
-- If this ${step} step mentions colors, use EXACTLY the colors from the Color Palette step above
-- If this ${step} step mentions fonts/typography, use EXACTLY the fonts from the Typography step above
-- If this ${step} step mentions logo, use EXACTLY the logo guidelines from the Logo Guidelines step above
-- If this ${step} step mentions brand positioning/voice/tone, use EXACTLY the positioning from the Brand Positioning step above
-- If this ${step} step mentions icons, use EXACTLY the iconography style from the Iconography step above
-- Maintain the same ${style} aesthetic throughout
-- Keep the same ${industry} industry context and standards
-`;
-		}
-	}
-	
-	// Build grounding data section for industry-specific steps
-	const groundingSection = groundingData ? `
-
-🔍 REAL-WORLD INDUSTRY REFERENCE:
-Based on analysis of ${groundingData.websites.length} leading ${industry} brands:
-
-INDUSTRY PATTERNS:
-${groundingData.summary}
-
-KEY PRACTICES FROM ACTUAL BRANDS:
-${groundingData.keyFindings.slice(0, 6).map((finding, i) => `${i + 1}. ${finding}`).join('\n')}
-
-BRAND EXAMPLES AND THEIR APPROACHES:
-${groundingData.websites.map((site, idx) => `
-${idx + 1}. ${site.title}:
-   ${site.extractedFacts.slice(0, 3).join('\n   ')}
-`).join('\n')}
-
-CRITICAL: For this "${step}" step, you MUST reference and incorporate actual patterns, elements, and practices found in these real ${industry} brands. Use specific examples from the analyzed brands to create guidelines that reflect what successful brands in this industry actually do. Do not create generic content - base it on real industry practices.
-` : '';
-
-	return `Generate ${step} content for "${brandName}" in the ${industry} industry with a ${style} aesthetic.
-
-${contextInfo}${previousStepsContent}${groundingSection}
+${contextInfo}
 
 CRITICAL REQUIREMENTS:
 - Content must be SPECIFIC to "${brandName}" brand
-- Must reflect ${style} style consistently with previous steps
+- Must reflect ${style} style
 - Must be appropriate for ${industry} industry
-${previousStepsContent ? '- MUST use the EXACT same colors, fonts, logo, and brand elements from the previous steps listed above' : ''}
-${groundingData ? '- MUST be based on actual patterns and practices from real industry brands (see REAL-WORLD INDUSTRY REFERENCE above)' : ''}
 - Professional and accurate
-- Use real industry examples and patterns where applicable
 - Keep descriptions brief - maximum 1-2 lines each
-- Maintain complete consistency with all previous steps
-
-${previousStepsContent ? `IMPORTANT: When referencing colors, fonts, logo, or brand elements in this ${step} step, you MUST use the exact same specifications from the previous steps. Do not create new colors, fonts, or brand elements - reuse what was already established.` : ''}
-${groundingData ? `IMPORTANT: Reference specific elements, patterns, or practices from the analyzed brands when creating this ${step} guideline. Make it reflect what successful ${industry} brands actually use.` : ''}
 
 FORMAT OUTPUT AS VALID JSON ONLY (NO MARKDOWN, NO EXTRA TEXT):
 {
@@ -1561,4 +1095,3 @@ function getVibeImageryGuidelines(style: string): string {
 - Stock Keywords: Professional keywords appropriate for the industry.
 - Impact: Feels trustworthy, reliable, professional.`;
 }
-

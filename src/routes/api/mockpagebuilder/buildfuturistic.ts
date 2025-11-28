@@ -651,4 +651,3 @@ function buildFallbackCopy(brandName: string, industry: string, vibe: string): F
 		]
 	};
 }
-

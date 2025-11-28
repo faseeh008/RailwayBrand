@@ -115,4 +115,23 @@ export function inferThemeFromBrandData(
 	return fallback;
 }
 
+/**
+ * Maps PreviewTheme to SlideVibe for use with SlideManager
+ */
+export type SlideVibe = 'default' | 'minimalist' | 'funky' | 'maximalist';
+
+export function previewThemeToSlideVibe(theme: PreviewTheme): SlideVibe {
+	switch (theme) {
+		case 'Minimalistic':
+			return 'minimalist';
+		case 'Maximalistic':
+			return 'maximalist';
+		case 'Funky':
+			return 'funky';
+		case 'Futuristic':
+		default:
+			return 'default';
+	}
+}
+
 
