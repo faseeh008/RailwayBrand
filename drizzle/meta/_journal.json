@@ -106,6 +106,13 @@
       "when": 1763980000000,
       "tag": "0014_brand_builder_chats",
       "breakpoints": true
+    },
+    {
+      "idx": 15,
+      "version": "7",
+      "when": 1764444065576,
+      "tag": "0015_lumpy_vulcan",
+      "breakpoints": true
     }
   ]
 }

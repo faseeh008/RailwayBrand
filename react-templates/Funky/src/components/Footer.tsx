@@ -7,9 +7,9 @@ interface FooterProps {
 }
 
 export function Footer({ brandConfig }: FooterProps) {
-  const { colorPalette, logoUrl, brandName, brandDescription } = brandConfig;
-  const footerGradient = `linear-gradient(to bottom right, ${colorPalette.text}dd, ${colorPalette.primary}dd, ${colorPalette.secondary}dd)`;
-  const bottomGradient = `linear-gradient(to right, ${colorPalette.primary}, ${colorPalette.secondary}, ${colorPalette.accent})`;
+  const { colors, logoUrl, brandName, brandDescription } = brandConfig;
+  const footerGradient = `linear-gradient(to bottom right, ${colors.text}dd, ${colors.primary}dd, ${colors.secondary}dd)`;
+  const bottomGradient = `linear-gradient(to right, ${colors.primary}, ${colors.secondary}, ${colors.accent})`;
   const footerLinks = {
     Shop: ["Men's Collection", "Women's Collection", "Shalwar Kameez", "Suits & Formals", "Casual Wear"],
     About: ["Our Story", "Designers", "Sustainability", "Careers", "Press"],
@@ -18,7 +18,7 @@ export function Footer({ brandConfig }: FooterProps) {
   };
 
   return (
-    <footer className="text-white pt-20 pb-10 px-6 md:px-12" style={{ background: footerGradient }}>
+    <footer className="pt-20 pb-10 px-6 md:px-12" style={{ background: footerGradient, color: colors.white }}>
       <div className="container mx-auto">
         <div className="grid md:grid-cols-5 gap-12 mb-16">
           {/* Brand Column */}
@@ -33,11 +33,11 @@ export function Footer({ brandConfig }: FooterProps) {
                 {logoUrl ? (
                   <img src={logoUrl} alt={brandName} className="h-8 w-auto" />
                 ) : (
-                  <Sparkles className="w-8 h-8" style={{ color: colorPalette.accent }} />
+                  <Sparkles className="w-8 h-8" style={{ color: colors.accent }} />
                 )}
                 <span className="tracking-wider font-bold">{brandName}</span>
               </div>
-              <p className="text-sm" style={{ color: colorPalette.background, opacity: 0.8 }}>
+              <p className="text-sm" style={{ color: colors.background, opacity: 0.8 }}>
                 {brandDescription}
               </p>
               <div className="flex gap-4">
@@ -54,7 +54,8 @@ export function Footer({ brandConfig }: FooterProps) {
                       href="#"
                       whileHover={{ scale: 1.2, rotate: 5 }}
                       whileTap={{ scale: 0.9 }}
-                      className={`w-10 h-10 bg-white/10 rounded-full flex items-center justify-center ${social.color} transition-colors`}
+                      className="w-10 h-10 rounded-full flex items-center justify-center transition-colors"
+                      style={{ backgroundColor: `${colors.white}1A` }}
                     >
                       <Icon className="w-5 h-5" />
                     </motion.a>
@@ -73,7 +74,7 @@ export function Footer({ brandConfig }: FooterProps) {
               viewport={{ once: true }}
               transition={{ delay: categoryIndex * 0.1 }}
             >
-              <h4 className="mb-4" style={{ color: colorPalette.accent }}>{category}</h4>
+              <h4 className="mb-4" style={{ color: colors.accent }}>{category}</h4>
               <ul className="space-y-2">
                 {links.map((link, index) => (
                   <motion.li
@@ -84,13 +85,13 @@ export function Footer({ brandConfig }: FooterProps) {
                     <a
                       href="#"
                       className="text-sm transition-colors"
-                      style={{ color: colorPalette.background, opacity: 0.8 }}
+                      style={{ color: colors.background, opacity: 0.8 }}
                       onMouseEnter={(e) => {
-                        e.currentTarget.style.color = 'white';
+                        e.currentTarget.style.color = colors.white;
                         e.currentTarget.style.opacity = '1';
                       }}
                       onMouseLeave={(e) => {
-                        e.currentTarget.style.color = colorPalette.background;
+                        e.currentTarget.style.color = colors.background;
                         e.currentTarget.style.opacity = '0.8';
                       }}
                     >
@@ -108,31 +109,41 @@ export function Footer({ brandConfig }: FooterProps) {
           initial={{ opacity: 0 }}
           whileInView={{ opacity: 1 }}
           viewport={{ once: true }}
-          className="border-t border-white/10 pt-8"
+          className="border-t pt-8"
+          style={{ borderColor: `${colors.white}1A` }}
         >
           <div className="flex flex-col md:flex-row justify-between items-center gap-4">
-            <p className="text-sm" style={{ color: colorPalette.background, opacity: 0.8 }}>
+            <p className="text-sm" style={{ color: colors.background, opacity: 0.8 }}>
               © 2024 {brandName}. All rights reserved.
             </p>
-            <div className="flex gap-6 text-sm" style={{ color: colorPalette.background, opacity: 0.8 }}>
+            <div className="flex gap-6 text-sm" style={{ color: colors.background, opacity: 0.8 }}>
               <motion.a
                 href="#"
                 whileHover={{ scale: 1.05 }}
-                className="hover:text-white transition-colors"
+                className="transition-colors"
+                style={{ color: colors.background, opacity: 0.8 }}
+                onMouseEnter={(e) => e.currentTarget.style.color = colors.white}
+                onMouseLeave={(e) => { e.currentTarget.style.color = colors.background; e.currentTarget.style.opacity = '0.8'; }}
               >
                 Privacy
               </motion.a>
               <motion.a
                 href="#"
                 whileHover={{ scale: 1.05 }}
-                className="hover:text-white transition-colors"
+                className="transition-colors"
+                style={{ color: colors.background, opacity: 0.8 }}
+                onMouseEnter={(e) => e.currentTarget.style.color = colors.white}
+                onMouseLeave={(e) => { e.currentTarget.style.color = colors.background; e.currentTarget.style.opacity = '0.8'; }}
               >
                 Terms
               </motion.a>
               <motion.a
                 href="#"
                 whileHover={{ scale: 1.05 }}
-                className="hover:text-white transition-colors"
+                className="transition-colors"
+                style={{ color: colors.background, opacity: 0.8 }}
+                onMouseEnter={(e) => e.currentTarget.style.color = colors.white}
+                onMouseLeave={(e) => { e.currentTarget.style.color = colors.background; e.currentTarget.style.opacity = '0.8'; }}
               >
                 Cookies
               </motion.a>

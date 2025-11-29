@@ -395,20 +395,6 @@ export const brandBuilderChats = pgTable('brand_builder_chats', {
 		.$defaultFn(() => new Date())
 });
 
-// Brand logos table - stores logo for each brand guideline (chatId = brandGuidelinesId)
-export const brandLogos = pgTable('brand_logos', {
-	id: text('id')
-		.primaryKey()
-		.references(() => brandGuidelines.id, { onDelete: 'cascade' }), // Same as brand_guidelines.id
-	logo: text('logo').notNull(), // Base64 encoded logo image data
-	createdAt: timestamp('created_at', { mode: 'date' })
-		.notNull()
-		.$defaultFn(() => new Date()),
-	updatedAt: timestamp('updated_at', { mode: 'date' })
-		.notNull()
-		.$defaultFn(() => new Date())
-});
-
 // Analysis Results Table (from audit-brand2 branch)
 export const analysisResults = pgTable('analysis_results', {
 	id: serial('id').primaryKey(),

@@ -8,7 +8,7 @@
 import { json, type RequestHandler } from '@sveltejs/kit';
 import { convertHtmlToPptx, convertHtmlToPptxFromSlides, buildFilledHtmlSlides } from '$lib/services/html-slide-generator.js';
 import { adaptBrandDataForSlides, validateAdaptedData } from '$lib/services/brand-data-adapter.js';
-import { db, generatedSlides, brandGuidelines, brandBuilderChats, brandLogos } from '$lib/db';
+import { db, generatedSlides, brandGuidelines, brandBuilderChats } from '$lib/db';
 import { eq, and, desc } from 'drizzle-orm';
 import fs from 'fs';
 
@@ -82,17 +82,77 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 		console.log('✅ Brand data adapted and validated successfully');
 		console.log(`📊 Generating slides for: ${brandInput.brandName}`);
 		
+		// Extract FULL logo data and ensure it's set in brandInput before generating slides
+		const brandName = requestData.brandName || brandInput.brandName || 'Unknown Brand';
+		const brandGuidelinesId = await findBrandGuidelinesId(session.user.id, brandName);
+		const extractedLogo = await extractLogoFromBrandData(brandInput, brandGuidelinesId);
+		
+		if (extractedLogo) {
+			// Ensure the logo is a valid base64 data URL - NO TRUNCATION!
+			let fullLogoData = extractedLogo;
+			
+			// Remove any whitespace/newlines that might have been added
+			fullLogoData = fullLogoData.trim();
+			
+			if (!fullLogoData.startsWith('data:')) {
+				// If it's just base64, add the data URL prefix
+				if (fullLogoData.startsWith('<svg') || fullLogoData.startsWith('<?xml')) {
+					// SVG XML - encode as data URL (preserve full content)
+					const svgContent = fullLogoData;
+					fullLogoData = `data:image/svg+xml;base64,${Buffer.from(svgContent).toString('base64')}`;
+				} else if (fullLogoData.startsWith('/9j/') || fullLogoData.match(/^[A-Za-z0-9+/=]+$/)) {
+					// JPEG or PNG base64 (starts with /9j/ for JPEG, or alphanumeric for PNG)
+					// Determine format from content
+					const isJpeg = fullLogoData.startsWith('/9j/');
+					fullLogoData = `data:image/${isJpeg ? 'jpeg' : 'png'};base64,${fullLogoData}`;
+				} else {
+					// Unknown format, assume PNG
+					fullLogoData = `data:image/png;base64,${fullLogoData}`;
+				}
+			}
+			
+			// Validate that the logo data is complete (check for common truncation patterns)
+			const logoSize = fullLogoData.length;
+			const isComplete = logoSize > 100 && // At least 100 chars
+				!fullLogoData.endsWith('...') && // Not truncated with ellipsis
+				!fullLogoData.includes('truncated') && // Not marked as truncated
+				(fullLogoData.includes('base64,') || fullLogoData.startsWith('data:image')); // Valid format
+			
+			if (!isComplete) {
+				console.warn('⚠️ Logo data may be incomplete:', {
+					size: logoSize,
+					endsWith: fullLogoData.substring(logoSize - 20),
+					prefix: fullLogoData.substring(0, 50)
+				});
+			}
+			
+			// Set the FULL logo in brandInput to ensure it's used in slides (NO TRUNCATION!)
+			if (!brandInput.logo) {
+				brandInput.logo = {};
+			}
+			brandInput.logo.primaryLogoUrl = fullLogoData; // Full base64, no truncation
+			
+			console.log('✅ Extracted and set FULL logo data (no truncation):', {
+				logoLength: fullLogoData.length,
+				logoPrefix: fullLogoData.substring(0, 50),
+				logoSuffix: fullLogoData.substring(fullLogoData.length - 50),
+				isDataUrl: fullLogoData.startsWith('data:'),
+				isComplete: isComplete,
+				sizeInKB: (fullLogoData.length / 1024).toFixed(2)
+			});
+		} else {
+			console.warn('⚠️ No logo found in brand data');
+		}
+		
 		// Get template set from request (if provided)
 		const templateSet = requestData.templateSet || undefined;
 		console.log('🎨 Using template set:', templateSet || 'default (root)');
 		
-		// Generate HTML slides first
+		// Generate HTML slides first (with FULL logo data)
 		const htmlSlides = buildFilledHtmlSlides(brandInput, templateSet);
 		console.log(`📄 Generated ${htmlSlides.length} HTML slides`);
 		
-		// Save HTML content to database
-		const brandName = requestData.brandName || brandInput.brandName || 'Unknown Brand';
-		const brandGuidelinesId = await findBrandGuidelinesId(session.user.id, brandName);
+		// Save HTML content to database (brandGuidelinesId already fetched above)
 		await saveSlidesToDatabase(htmlSlides, session.user.id, brandGuidelinesId, brandName, brandInput);
 		
 		// Generate PPTX
@@ -544,24 +604,40 @@ function getIconForApplication(name: string): string {
 // Validation now handled by brand-data-adapter.ts
 
 /**
- * Extract logo from brand data or fetch from brandLogos table
+ * Extract logo from brand data or fetch from brandGuidelines table
  */
 async function extractLogoFromBrandData(brandInput: any, brandGuidelinesId?: string): Promise<string | null> {
 	if (!brandInput) {
-		// If no brandInput but we have brandGuidelinesId, try to fetch from brandLogos table
+		// If no brandInput but we have brandGuidelinesId, try to fetch from brandGuidelines table
 		if (brandGuidelinesId) {
 			try {
-				const brandLogo = await db
-					.select()
-					.from(brandLogos)
-					.where(eq(brandLogos.id, brandGuidelinesId))
+				const guideline = await db
+					.select({ logoData: brandGuidelines.logoData, logoFiles: brandGuidelines.logoFiles })
+					.from(brandGuidelines)
+					.where(eq(brandGuidelines.id, brandGuidelinesId))
 					.limit(1);
 				
-				if (brandLogo.length > 0 && brandLogo[0].logo) {
-					return brandLogo[0].logo;
+				if (guideline.length > 0) {
+					// Try logoData first
+					if (guideline[0].logoData) {
+						return guideline[0].logoData;
+					}
+					// Try logoFiles
+					if (guideline[0].logoFiles) {
+						try {
+							const logoFiles = typeof guideline[0].logoFiles === 'string' 
+								? JSON.parse(guideline[0].logoFiles) 
+								: guideline[0].logoFiles;
+							if (Array.isArray(logoFiles) && logoFiles.length > 0) {
+								return logoFiles[0].fileData || logoFiles[0].file_data;
+							}
+						} catch (error) {
+							console.warn('Failed to parse logoFiles:', error);
+						}
+					}
 				}
 			} catch (error) {
-				console.warn('Failed to fetch logo from brandLogos table:', error);
+				console.warn('Failed to fetch logo from brandGuidelines table:', error);
 			}
 		}
 		return null;
@@ -581,20 +657,34 @@ async function extractLogoFromBrandData(brandInput: any, brandGuidelinesId?: str
 	// Try direct logoData
 	if (brandInput.logoData) return brandInput.logoData;
 	
-	// Fallback: try to fetch from brandLogos table if brandGuidelinesId is available
+	// Fallback: try to fetch from brandGuidelines table if brandGuidelinesId is available
 	if (brandGuidelinesId) {
 		try {
-			const brandLogo = await db
-				.select()
-				.from(brandLogos)
-				.where(eq(brandLogos.id, brandGuidelinesId))
+			const guideline = await db
+				.select({ logoData: brandGuidelines.logoData, logoFiles: brandGuidelines.logoFiles })
+				.from(brandGuidelines)
+				.where(eq(brandGuidelines.id, brandGuidelinesId))
 				.limit(1);
 			
-			if (brandLogo.length > 0 && brandLogo[0].logo) {
-				return brandLogo[0].logo;
+			if (guideline.length > 0) {
+				if (guideline[0].logoData) {
+					return guideline[0].logoData;
+				}
+				if (guideline[0].logoFiles) {
+					try {
+						const logoFiles = typeof guideline[0].logoFiles === 'string' 
+							? JSON.parse(guideline[0].logoFiles) 
+							: guideline[0].logoFiles;
+						if (Array.isArray(logoFiles) && logoFiles.length > 0) {
+							return logoFiles[0].fileData || logoFiles[0].file_data;
+						}
+					} catch (error) {
+						console.warn('Failed to parse logoFiles:', error);
+					}
+				}
 			}
 		} catch (error) {
-			console.warn('Failed to fetch logo from brandLogos table:', error);
+			console.warn('Failed to fetch logo from brandGuidelines table:', error);
 		}
 	}
 	
@@ -614,7 +704,7 @@ async function saveSlidesToDatabase(
 	try {
 		console.log(`💾 Saving ${slides.length} slides to database...`);
 		
-		// Extract logo from brand data or fetch from brandLogos table
+		// Extract logo from brand data or fetch from brandGuidelines table
 		const logoData = await extractLogoFromBrandData(brandInput, brandGuidelinesId);
 		
 		// Determine slide type and title from filename

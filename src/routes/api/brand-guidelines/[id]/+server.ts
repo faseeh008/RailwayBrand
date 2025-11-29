@@ -1,6 +1,6 @@
 import { json } from '@sveltejs/kit';
 import { db } from '$lib/db';
-import { brandGuidelines, brandLogos } from '$lib/db/schema';
+import { brandGuidelines } from '$lib/db/schema';
 import { eq, and } from 'drizzle-orm';
 import type { RequestHandler } from './$types';
 
@@ -55,33 +55,31 @@ export const GET: RequestHandler = async ({ locals, params }) => {
 			}, { status: 404 });
 		}
 
-		// Fetch logo from brandLogos table (id = brandGuidelines.id)
-		let logoFromBrandLogos = null;
-		try {
-			const brandLogo = await db
-				.select()
-				.from(brandLogos)
-				.where(eq(brandLogos.id, params.id))
-				.limit(1);
-			
-			if (brandLogo.length > 0 && brandLogo[0].logo) {
-				logoFromBrandLogos = brandLogo[0].logo;
-			}
-		} catch (error) {
-			console.warn('Failed to fetch logo from brandLogos table:', error);
-		}
-
-		// Merge logo from brandLogos into guideline response
+		// Get logo from brandGuidelines.logoData or logoFiles
 		const guidelineData = guideline[0];
-		if (logoFromBrandLogos) {
-			// Add logo to guideline data for easy access
-			guidelineData.logoFromBrandLogos = logoFromBrandLogos;
+		let logo = null;
+		
+		// First try logoData field
+		if (guidelineData.logoData) {
+			logo = guidelineData.logoData;
+		} else if (guidelineData.logoFiles) {
+			// Try to parse logoFiles JSON and get first logo
+			try {
+				const logoFiles = typeof guidelineData.logoFiles === 'string' 
+					? JSON.parse(guidelineData.logoFiles) 
+					: guidelineData.logoFiles;
+				if (Array.isArray(logoFiles) && logoFiles.length > 0) {
+					logo = logoFiles[0].fileData || logoFiles[0].file_data;
+				}
+			} catch (error) {
+				console.warn('Failed to parse logoFiles:', error);
+			}
 		}
 
 		return json({
 			success: true,
 			guideline: guidelineData,
-			logo: logoFromBrandLogos // Also return logo separately for convenience
+			logo: logo // Return logo from brandGuidelines table
 		});
 	} catch (error) {
 		console.error('Error fetching brand guideline:', error);

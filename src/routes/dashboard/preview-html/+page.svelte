@@ -34,12 +34,23 @@ let previewTheme: PreviewTheme = 'Minimalistic';
 
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
-function migrateLegacyPreviewData(): Omit<TempBrandData, 'timestamp'> | null {
+async function migrateLegacyPreviewData(): Promise<Omit<TempBrandData, 'timestamp'> | null> {
 	if (typeof sessionStorage === 'undefined') {
 		return null;
 	}
 
-	const legacyRaw = sessionStorage.getItem('preview_brand_data');
+	// Load legacy data from IndexedDB or sessionStorage
+	let legacyRaw: string | null = null;
+	try {
+		// Try IndexedDB first (for large data)
+		const { loadLargeDataAsync } = await import('$lib/services/storage-utils-async');
+		legacyRaw = await loadLargeDataAsync('preview_brand_data');
+	} catch (e) {
+		// Fallback to sessionStorage
+	}
+	if (!legacyRaw) {
+		legacyRaw = sessionStorage.getItem('preview_brand_data');
+	}
 	if (!legacyRaw) {
 		return null;
 	}
@@ -116,7 +127,7 @@ onMount(async () => {
 		
 		console.log('[preview-html] currentGuidelineId from sessionStorage:', currentGuidelineId);
 		
-		let stored = loadTempBrandData();
+		let stored = await loadTempBrandData();
 		console.log('[preview-html] Loaded temp brand data:', {
 			hasStored: !!stored,
 			hasBrandData: !!stored?.brandData,
@@ -141,7 +152,7 @@ onMount(async () => {
 
 		if (!stored) {
 			console.log('[preview-html] No stored data, trying to migrate legacy data');
-			const migrated = migrateLegacyPreviewData();
+			const migrated = await migrateLegacyPreviewData();
 			console.log('[preview-html] Migrated legacy data:', {
 				hasMigrated: !!migrated,
 				guidelineId: migrated?.brandData?.guidelineId,
@@ -157,8 +168,8 @@ onMount(async () => {
 						sessionStorage.removeItem('preview_brand_data');
 					}
 				} else {
-					saveTempBrandData(migrated);
-					stored = loadTempBrandData();
+					await saveTempBrandData(migrated);
+					stored = await loadTempBrandData();
 					console.log('[preview-html] Saved migrated data, reloaded:', {
 						hasStored: !!stored,
 						guidelineId: stored?.brandData?.guidelineId
@@ -179,10 +190,19 @@ onMount(async () => {
 				guidelineIdToFetch = currentGuidelineId;
 				console.log('[preview-html] Using currentGuidelineId from sessionStorage:', guidelineIdToFetch);
 			} else {
-				// Fallback: try to get from legacy preview_brand_data
-				const legacyRaw = typeof sessionStorage !== 'undefined' 
-					? sessionStorage.getItem('preview_brand_data') 
-					: null;
+				// Fallback: try to get from legacy preview_brand_data (from IndexedDB)
+				let legacyRaw: string | null = null;
+				if (typeof window !== 'undefined') {
+					try {
+						const { loadLargeDataAsync } = await import('$lib/services/storage-utils-async');
+						legacyRaw = await loadLargeDataAsync('preview_brand_data');
+					} catch (e) {
+						// Fallback to sessionStorage
+					}
+					if (!legacyRaw) {
+						legacyRaw = sessionStorage.getItem('preview_brand_data');
+					}
+				}
 				
 				console.log('[preview-html] Legacy preview_brand_data from sessionStorage:', {
 					hasLegacyRaw: !!legacyRaw,
@@ -262,11 +282,20 @@ onMount(async () => {
 							console.warn('[preview-html] Failed to parse structuredData for stepHistory:', e);
 						}
 						
-						// Fallback to legacy data if available
+						// Fallback to legacy data if available (from IndexedDB)
 						if (stepHistory.length === 0) {
-							const legacyRaw = typeof sessionStorage !== 'undefined' 
-								? sessionStorage.getItem('preview_brand_data') 
-								: null;
+							let legacyRaw: string | null = null;
+							if (typeof window !== 'undefined') {
+								try {
+									const { loadLargeDataAsync } = await import('$lib/services/storage-utils-async');
+									legacyRaw = await loadLargeDataAsync('preview_brand_data');
+								} catch (e) {
+									// Fallback to sessionStorage
+								}
+								if (!legacyRaw) {
+									legacyRaw = sessionStorage.getItem('preview_brand_data');
+								}
+							}
 							if (legacyRaw) {
 								try {
 									const legacyData = JSON.parse(legacyRaw);
@@ -315,7 +344,7 @@ onMount(async () => {
 							}
 						}
 
-						// Get logo from brandLogos table
+						// Store FULL logo with all base64 data - no sanitization, no quota worries
 						if (result.logo) {
 							brandDataFromDb.logoUrl = result.logo;
 							brandDataFromDb.logo_url = result.logo;
@@ -326,11 +355,20 @@ onMount(async () => {
 							};
 						}
 
-						// Try to get userInput from legacy data if available
+						// Try to get userInput from legacy data if available (from IndexedDB)
 						let userInput: any = {};
-						const legacyRaw = typeof sessionStorage !== 'undefined' 
-							? sessionStorage.getItem('preview_brand_data') 
-							: null;
+						let legacyRaw: string | null = null;
+						if (typeof window !== 'undefined') {
+							try {
+								const { loadLargeDataAsync } = await import('$lib/services/storage-utils-async');
+								legacyRaw = await loadLargeDataAsync('preview_brand_data');
+							} catch (e) {
+								// Fallback to sessionStorage
+							}
+							if (!legacyRaw) {
+								legacyRaw = sessionStorage.getItem('preview_brand_data');
+							}
+						}
 						if (legacyRaw) {
 							try {
 								const legacyData = JSON.parse(legacyRaw);
@@ -340,18 +378,19 @@ onMount(async () => {
 							}
 						}
 
-						// Save to temp storage
-						saveTempBrandData({
+						// Save FULL data including large base64 logos - no sanitization
+						await saveTempBrandData({
 							userInput: userInput,
 							selectedTheme: inferThemeFromMood(guideline.mood || ''),
-							brandData: brandDataFromDb,
+							brandData: brandDataFromDb, // Save with FULL logo data
 							slides: []
 						});
-						stored = loadTempBrandData();
+						stored = await loadTempBrandData();
 						console.log('[preview-html] ✅ Loaded brand data from database and saved to temp storage:', {
 							hasStored: !!stored,
 							guidelineId: stored?.brandData?.guidelineId,
-							brandName: stored?.brandData?.brandName
+							brandName: stored?.brandData?.brandName,
+							hasLogo: !!stored?.brandData?.logoUrl
 						});
 					} else {
 						console.error('[preview-html] API returned success but no guideline data');
@@ -424,6 +463,7 @@ onMount(async () => {
 										}
 									}
 
+									// Store FULL logo with all base64 data - no sanitization
 									if (fullResult.logo) {
 										brandDataFromDb.logoUrl = fullResult.logo;
 										brandDataFromDb.logo_url = fullResult.logo;
@@ -434,13 +474,14 @@ onMount(async () => {
 										};
 									}
 
-									saveTempBrandData({
+									// Save FULL data including large base64 logos - no sanitization
+									await saveTempBrandData({
 										userInput: {},
 										selectedTheme: inferThemeFromMood(guideline.mood || ''),
-										brandData: brandDataFromDb,
+										brandData: brandDataFromDb, // Save with FULL logo data
 										slides: []
 									});
-									stored = loadTempBrandData();
+									stored = await loadTempBrandData();
 									console.log('[preview-html] ✅ Loaded most recent guideline from database:', {
 										hasStored: !!stored,
 										guidelineId: stored?.brandData?.guidelineId,
@@ -463,6 +504,33 @@ onMount(async () => {
 		brandData = stored.brandData;
 		previewTheme = stored.selectedTheme || inferThemeFromBrandData(brandData);
 		slides = stored.slides || [];
+		
+		// ALWAYS fetch fresh FULL logo from database - no quota worries
+		if (brandData?.guidelineId) {
+			console.log('[preview-html] Fetching fresh FULL logo from database');
+			const fetchedLogo = await fetchLogoFromDatabase(brandData.guidelineId);
+			if (fetchedLogo) {
+				// Update brandData with FULL logo
+				brandData = { ...brandData, ...fetchedLogo };
+				// Save FULL logo to storage - no sanitization
+				await saveTempBrandData({
+					userInput: stored.userInput,
+					selectedTheme: stored.selectedTheme,
+					brandData: brandData, // Save with FULL logo
+					slides: slides,
+					buildData: stored.buildData
+				});
+				console.log('[preview-html] ✅ FULL logo fetched and saved:', {
+					hasLogoUrl: !!brandData.logoUrl,
+					hasLogoFiles: !!brandData.logoFiles?.[0],
+					logoUrlLength: brandData.logoUrl?.length || 0,
+					logoUrlPrefix: brandData.logoUrl?.substring(0, 50) || 'none',
+					isDataUrl: brandData.logoUrl?.startsWith('data:') || false
+				});
+			} else {
+				console.warn('[preview-html] ⚠️ No logo found in database');
+			}
+		}
 
 		// Always fetch fresh slides from database to ensure correct logo per slide
 		if (brandData?.guidelineId) {
@@ -470,11 +538,12 @@ onMount(async () => {
 			if (fetchedSlides.length) {
 				// Update slides with fresh data from database (includes correct logos)
 				slides = fetchedSlides;
-				saveTempBrandData({
+				// Save FULL slides with all data - no truncation
+				await saveTempBrandData({
 					userInput: stored.userInput,
 					selectedTheme: stored.selectedTheme,
 					brandData: stored.brandData,
-					slides: fetchedSlides,
+					slides: fetchedSlides, // Save FULL slides with all HTML and logos
 					buildData: stored.buildData
 				});
 			}
@@ -485,6 +554,7 @@ onMount(async () => {
 			// First try to get logo from slides (each slide has its own logo now)
 			const slideLogo = slides.find(s => s.logo)?.logo;
 			if (slideLogo) {
+				// Store FULL logo - no sanitization
 				brandData = { 
 					...brandData, 
 					logoUrl: slideLogo,
@@ -495,23 +565,26 @@ onMount(async () => {
 						primary: slideLogo
 					}
 				};
-				saveTempBrandData({
+				// Save FULL data including logo - no sanitization
+				await saveTempBrandData({
 					userInput: stored.userInput,
 					selectedTheme: stored.selectedTheme,
-					brandData,
-					slides: slides,
+					brandData: brandData, // Save with FULL logo
+					slides: slides, // Save FULL slides
 					buildData: stored.buildData
 				});
 			} else {
 				// Fallback to fetching from brand guidelines
 				const fetchedLogo = await fetchLogoFromDatabase(brandData.guidelineId);
 				if (fetchedLogo) {
+					// Store FULL logo - no sanitization
 					brandData = { ...brandData, ...fetchedLogo };
-					saveTempBrandData({
+					// Save FULL data including logo - no sanitization
+					await saveTempBrandData({
 						userInput: stored.userInput,
 						selectedTheme: stored.selectedTheme,
-						brandData,
-						slides: slides,
+						brandData: brandData, // Save with FULL logo
+						slides: slides, // Save FULL slides
 						buildData: stored.buildData
 					});
 				}
@@ -574,7 +647,7 @@ onMount(async () => {
 			webpageBuildComplete = true;
 
 			// Persist build data so user can revisit without rebuilding immediately
-			updateBuildData({
+			await updateBuildData({
 				...buildResult,
 				generatedAt: Date.now()
 			});
@@ -624,34 +697,71 @@ async function fetchLogoFromDatabase(guidelineId: string) {
 			const guideline = result.guideline;
 			const logoData: any = {};
 
-			// First priority: Get logo from brandLogos table (new table)
+			// First priority: Get logo from brandGuidelines table (from API response)
 			if (result.logo) {
-				logoData.logoUrl = result.logo;
-				logoData.logo_url = result.logo;
-				logoData.logoFiles = [{ fileData: result.logo }];
+				// Ensure logo is a valid base64 data URL
+				let logoUrl = result.logo;
+				// If it's base64 but missing data URL prefix, add it
+				if (logoUrl && !logoUrl.startsWith('data:')) {
+					// Check if it's SVG (common case)
+					if (logoUrl.includes('<svg') || logoUrl.trim().startsWith('<')) {
+						logoUrl = 'data:image/svg+xml;base64,' + btoa(unescape(encodeURIComponent(logoUrl)));
+					} else {
+						// Assume it's already base64, add generic image prefix
+						logoUrl = 'data:image/png;base64,' + logoUrl;
+					}
+				}
+				
+				logoData.logoUrl = logoUrl;
+				logoData.logo_url = logoUrl;
+				logoData.logoFiles = [{ fileData: logoUrl }];
 				logoData.logo = {
-					primaryLogoUrl: result.logo,
-					primary: result.logo
+					primaryLogoUrl: logoUrl,
+					primary: logoUrl
 				};
+				console.log('[preview-html] ✅ Logo fetched from API result.logo:', {
+					length: logoUrl.length,
+					prefix: logoUrl.substring(0, 50),
+					isDataUrl: logoUrl.startsWith('data:')
+				});
 				return logoData;
 			}
 
 			// Second priority: Try to get logo from logoFiles (new format)
 			if (guideline.logoFiles) {
 				try {
-					const logoFiles = JSON.parse(guideline.logoFiles);
+					const logoFiles = typeof guideline.logoFiles === 'string' 
+						? JSON.parse(guideline.logoFiles) 
+						: guideline.logoFiles;
 					if (Array.isArray(logoFiles) && logoFiles.length > 0) {
 						const firstLogo = logoFiles[0];
-						const logoUrl = firstLogo?.fileData || firstLogo?.data || firstLogo?.fileUrl || firstLogo?.filePath;
+						let logoUrl = firstLogo?.fileData || firstLogo?.data || firstLogo?.fileUrl || firstLogo?.filePath;
+						
+						// Ensure logo is a valid base64 data URL
+						if (logoUrl && !logoUrl.startsWith('data:')) {
+							if (logoUrl.includes('<svg') || logoUrl.trim().startsWith('<')) {
+								logoUrl = 'data:image/svg+xml;base64,' + btoa(unescape(encodeURIComponent(logoUrl)));
+							} else {
+								logoUrl = 'data:image/png;base64,' + logoUrl;
+							}
+						}
 						
 						if (logoUrl) {
 							logoData.logoUrl = logoUrl;
 							logoData.logo_url = logoUrl;
-							logoData.logoFiles = logoFiles;
+							logoData.logoFiles = logoFiles.map((logo: any) => ({
+								...logo,
+								fileData: logoUrl // Ensure all logos use the same format
+							}));
 							logoData.logo = {
 								primaryLogoUrl: logoUrl,
 								primary: logoUrl
 							};
+							console.log('[preview-html] ✅ Logo fetched from logoFiles:', {
+								length: logoUrl.length,
+								prefix: logoUrl.substring(0, 50),
+								isDataUrl: logoUrl.startsWith('data:')
+							});
 							return logoData;
 						}
 					}
@@ -662,12 +772,26 @@ async function fetchLogoFromDatabase(guidelineId: string) {
 
 			// Fallback to logoData (base64)
 			if (guideline.logoData) {
-				logoData.logoUrl = guideline.logoData;
-				logoData.logo_url = guideline.logoData;
+				let logoUrl = guideline.logoData;
+				// Ensure logo is a valid base64 data URL
+				if (logoUrl && !logoUrl.startsWith('data:')) {
+					if (logoUrl.includes('<svg') || logoUrl.trim().startsWith('<')) {
+						logoUrl = 'data:image/svg+xml;base64,' + btoa(unescape(encodeURIComponent(logoUrl)));
+					} else {
+						logoUrl = 'data:image/png;base64,' + logoUrl;
+					}
+				}
+				logoData.logoUrl = logoUrl;
+				logoData.logo_url = logoUrl;
 				logoData.logo = {
-					primaryLogoUrl: guideline.logoData,
-					primary: guideline.logoData
+					primaryLogoUrl: logoUrl,
+					primary: logoUrl
 				};
+				console.log('[preview-html] ✅ Logo fetched from logoData:', {
+					length: logoUrl.length,
+					prefix: logoUrl.substring(0, 50),
+					isDataUrl: logoUrl.startsWith('data:')
+				});
 				return logoData;
 			}
 
@@ -710,7 +834,7 @@ async function fetchMockPageFromDatabase(guidelineId?: string, brandName?: strin
 			setMockPageBlob(result.page.htmlContent);
 			webpageBuildComplete = true;
 
-			updateBuildData({
+			await updateBuildData({
 				...mockPageBuild,
 				generatedAt: Date.now()
 			});
@@ -778,7 +902,7 @@ async function handleDeleteMockWebpage() {
 		mockPageBlobUrl = null;
 	}
 
-	clearStoredBuildData();
+	await clearStoredBuildData();
 
 	// Refresh UI state after deletion so the Visit button resets
 	if (typeof window !== 'undefined') {

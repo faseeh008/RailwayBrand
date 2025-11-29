@@ -7,7 +7,7 @@ interface CollectionGridProps {
 }
 
 export function CollectionGrid({ brandConfig }: CollectionGridProps) {
-  const { colorPalette, images, features } = brandConfig;
+  const { colors, images, features } = brandConfig;
   
   // Create collections from features and gallery images
   const collections = features.slice(0, 3).map((feature, index) => ({
@@ -15,7 +15,7 @@ export function CollectionGrid({ brandConfig }: CollectionGridProps) {
     title: feature.title,
     description: feature.description,
     image: images.gallery[index] || images.hero || "",
-    gradient: `linear-gradient(to right, ${index === 0 ? colorPalette.primary : index === 1 ? colorPalette.secondary : colorPalette.accent}, ${index === 0 ? colorPalette.secondary : index === 1 ? colorPalette.accent : colorPalette.primary})`,
+    gradient: `linear-gradient(to right, ${index === 0 ? colors.primary : index === 1 ? colors.secondary : colors.accent}, ${index === 0 ? colors.secondary : index === 1 ? colors.accent : colors.primary})`,
   }));
   return (
     <section className="py-20 px-6 md:px-12">
@@ -26,17 +26,17 @@ export function CollectionGrid({ brandConfig }: CollectionGridProps) {
           viewport={{ once: true }}
           className="text-center mb-16"
         >
-          <h2 className="text-5xl md:text-6xl mb-4" style={{ color: colorPalette.text }}>
+          <h2 className="text-5xl md:text-6xl mb-4" style={{ color: colors.text }}>
             Featured <span
               className="bg-clip-text text-transparent"
               style={{
-                backgroundImage: `linear-gradient(to right, ${colorPalette.primary}, ${colorPalette.secondary})`,
+                backgroundImage: `linear-gradient(to right, ${colors.primary}, ${colors.secondary})`,
                 WebkitBackgroundClip: 'text',
                 WebkitTextFillColor: 'transparent',
               }}
             >Collections</span>
           </h2>
-          <p className="max-w-2xl mx-auto" style={{ color: colorPalette.text, opacity: 0.7 }}>
+          <p className="max-w-2xl mx-auto" style={{ color: colors.text, opacity: 0.7 }}>
             {brandConfig.brandDescription}
           </p>
         </motion.div>
@@ -58,10 +58,10 @@ export function CollectionGrid({ brandConfig }: CollectionGridProps) {
                   alt={collection.title}
                   className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
                 />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
+                <div className="absolute inset-0 bg-gradient-to-t to-transparent" style={{ background: `linear-gradient(to top, ${colors.black}CC, ${colors.black}33, transparent)` }} />
                 
                 {/* Content */}
-                <div className="absolute bottom-0 left-0 right-0 p-6 text-white">
+                <div className="absolute bottom-0 left-0 right-0 p-6" style={{ color: colors.white }}>
                   <motion.div
                     initial={{ x: -20, opacity: 0 }}
                     whileInView={{ x: 0, opacity: 1 }}

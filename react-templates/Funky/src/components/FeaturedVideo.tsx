@@ -10,12 +10,12 @@ interface FeaturedVideoProps {
 
 export function FeaturedVideo({ brandConfig }: FeaturedVideoProps) {
   const [isPlaying, setIsPlaying] = useState(false);
-  const { colorPalette, stats } = brandConfig;
+  const { colors, stats } = brandConfig;
   
-  const videoGradient = `linear-gradient(to bottom right, ${colorPalette.primary}dd, ${colorPalette.secondary}dd, ${colorPalette.accent}dd)`;
-  const buttonGradient = `linear-gradient(to right, ${colorPalette.primary}, ${colorPalette.secondary})`;
-  const progressGradient = `linear-gradient(to right, ${colorPalette.primary}, ${colorPalette.secondary})`;
-  const textGradient = `linear-gradient(to right, ${colorPalette.primary}, ${colorPalette.secondary})`;
+  const videoGradient = `linear-gradient(to bottom right, ${colors.primary}dd, ${colors.secondary}dd, ${colors.accent}dd)`;
+  const buttonGradient = `linear-gradient(to right, ${colors.primary}, ${colors.secondary})`;
+  const progressGradient = `linear-gradient(to right, ${colors.primary}, ${colors.secondary})`;
+  const textGradient = `linear-gradient(to right, ${colors.primary}, ${colors.secondary})`;
 
   return (
     <section className="py-20 px-6 md:px-12">
@@ -26,7 +26,7 @@ export function FeaturedVideo({ brandConfig }: FeaturedVideoProps) {
           viewport={{ once: true }}
           className="text-center mb-12"
         >
-          <h2 className="text-5xl md:text-6xl mb-4" style={{ color: colorPalette.text }}>
+          <h2 className="text-5xl md:text-6xl mb-4" style={{ color: colors.text }}>
             Behind The <span
               className="bg-clip-text text-transparent"
               style={{
@@ -36,7 +36,7 @@ export function FeaturedVideo({ brandConfig }: FeaturedVideoProps) {
               }}
             >Scenes</span>
           </h2>
-          <p className="max-w-2xl mx-auto" style={{ color: colorPalette.text, opacity: 0.7 }}>
+          <p className="max-w-2xl mx-auto" style={{ color: colors.text, opacity: 0.7 }}>
             {brandConfig.brandDescription}
           </p>
         </motion.div>
@@ -50,9 +50,10 @@ export function FeaturedVideo({ brandConfig }: FeaturedVideoProps) {
           {/* Video Container - Using a placeholder image since we can't embed actual videos */}
           <div className="relative aspect-video rounded-3xl overflow-hidden shadow-2xl">
             <div className="absolute inset-0" style={{ background: videoGradient }}>
-              <div className="w-full h-full bg-black/40 backdrop-blur-sm flex items-center justify-center">
+              <div className="w-full h-full backdrop-blur-sm flex items-center justify-center" style={{ backgroundColor: `${colors.black}66` }}>
                 <motion.div
-                  className="text-center text-white"
+                  className="text-center"
+                  style={{ color: colors.white }}
                   initial={{ scale: 0.8, opacity: 0 }}
                   animate={{ scale: 1, opacity: 1 }}
                   transition={{ delay: 0.3 }}
@@ -60,12 +61,14 @@ export function FeaturedVideo({ brandConfig }: FeaturedVideoProps) {
                   <div className="relative inline-block mb-6">
                     {/* Pulsing Rings */}
                     <motion.div
-                      className="absolute inset-0 bg-white rounded-full opacity-30"
+                      className="absolute inset-0 rounded-full opacity-30"
+                      style={{ backgroundColor: colors.white }}
                       animate={{ scale: [1, 1.5, 1], opacity: [0.3, 0, 0.3] }}
                       transition={{ duration: 2, repeat: Infinity }}
                     />
                     <motion.div
-                      className="absolute inset-0 bg-white rounded-full opacity-20"
+                      className="absolute inset-0 rounded-full opacity-20"
+                      style={{ backgroundColor: colors.white }}
                       animate={{ scale: [1, 1.8, 1], opacity: [0.2, 0, 0.2] }}
                       transition={{ duration: 2, repeat: Infinity, delay: 0.5 }}
                     />
@@ -75,29 +78,29 @@ export function FeaturedVideo({ brandConfig }: FeaturedVideoProps) {
                       whileHover={{ scale: 1.1 }}
                       whileTap={{ scale: 0.95 }}
                       onClick={() => setIsPlaying(!isPlaying)}
-                      className="relative w-20 h-20 bg-white rounded-full flex items-center justify-center transition-all duration-300"
+                      className="relative w-20 h-20 rounded-full flex items-center justify-center transition-all duration-300"
                       style={{
-                        background: 'white',
+                        background: colors.white,
                       }}
                       onMouseEnter={(e) => {
                         e.currentTarget.style.background = buttonGradient;
                       }}
                       onMouseLeave={(e) => {
-                        e.currentTarget.style.background = 'white';
+                        e.currentTarget.style.background = colors.white;
                       }}
                     >
                       <Play
                         className="w-8 h-8 ml-1"
-                        style={{ color: colorPalette.primary }}
+                        style={{ color: colors.primary }}
                         onMouseEnter={(e) => {
-                          e.currentTarget.style.color = 'white';
+                          e.currentTarget.style.color = colors.white;
                         }}
                       />
                     </motion.button>
                   </div>
 
                   <h3 className="mb-2">{brandConfig.brandName} Show 2024</h3>
-                  <p style={{ color: colorPalette.background, opacity: 0.8 }}>Click to watch the runway experience</p>
+                  <p style={{ color: colors.background, opacity: 0.8 }}>Click to watch the runway experience</p>
                 </motion.div>
               </div>
             </div>
@@ -106,46 +109,44 @@ export function FeaturedVideo({ brandConfig }: FeaturedVideoProps) {
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               whileHover={{ opacity: 1, y: 0 }}
-              className="absolute bottom-0 left-0 right-0 p-6 bg-gradient-to-t from-black/80 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"
+              className="absolute bottom-0 left-0 right-0 p-6 bg-gradient-to-t to-transparent opacity-0 group-hover:opacity-100 transition-opacity"
+              style={{ background: `linear-gradient(to top, ${colors.black}CC, transparent)` }}
             >
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-4">
                   <Button
                     size="sm"
                     variant="ghost"
-                    className="text-white"
-                    style={{ color: 'white' }}
-                    onMouseEnter={(e) => e.currentTarget.style.color = colorPalette.primary}
-                    onMouseLeave={(e) => e.currentTarget.style.color = 'white'}
+                    style={{ color: colors.white }}
+                    onMouseEnter={(e) => e.currentTarget.style.color = colors.primary}
+                    onMouseLeave={(e) => e.currentTarget.style.color = colors.white}
                   >
                     <Play className="w-4 h-4" />
                   </Button>
                   <Button
                     size="sm"
                     variant="ghost"
-                    className="text-white"
-                    style={{ color: 'white' }}
-                    onMouseEnter={(e) => e.currentTarget.style.color = colorPalette.primary}
-                    onMouseLeave={(e) => e.currentTarget.style.color = 'white'}
+                    style={{ color: colors.white }}
+                    onMouseEnter={(e) => e.currentTarget.style.color = colors.primary}
+                    onMouseLeave={(e) => e.currentTarget.style.color = colors.white}
                   >
                     <Volume2 className="w-4 h-4" />
                   </Button>
-                  <span className="text-white text-sm">0:00 / 5:23</span>
+                  <span className="text-sm" style={{ color: colors.white }}>0:00 / 5:23</span>
                 </div>
                 <Button
                   size="sm"
                   variant="ghost"
-                  className="text-white"
-                  style={{ color: 'white' }}
-                  onMouseEnter={(e) => e.currentTarget.style.color = colorPalette.primary}
-                  onMouseLeave={(e) => e.currentTarget.style.color = 'white'}
+                  style={{ color: colors.white }}
+                  onMouseEnter={(e) => e.currentTarget.style.color = colors.primary}
+                  onMouseLeave={(e) => e.currentTarget.style.color = colors.white}
                 >
                   <Maximize className="w-4 h-4" />
                 </Button>
               </div>
               
               {/* Progress Bar */}
-              <div className="mt-4 h-1 bg-white/20 rounded-full overflow-hidden">
+              <div className="mt-4 h-1 rounded-full overflow-hidden" style={{ backgroundColor: `${colors.white}33` }}>
                 <motion.div
                   className="h-full"
                   style={{ background: progressGradient }}
@@ -162,13 +163,13 @@ export function FeaturedVideo({ brandConfig }: FeaturedVideoProps) {
             animate={{ rotate: 360 }}
             transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
             className="absolute -top-8 -right-8 w-32 h-32 rounded-full blur-2xl opacity-50"
-            style={{ background: `linear-gradient(to bottom right, ${colorPalette.accent}, ${colorPalette.secondary})` }}
+            style={{ background: `linear-gradient(to bottom right, ${colors.accent}, ${colors.secondary})` }}
           />
           <motion.div
             animate={{ rotate: -360 }}
             transition={{ duration: 25, repeat: Infinity, ease: "linear" }}
             className="absolute -bottom-8 -left-8 w-40 h-40 rounded-full blur-2xl opacity-50"
-            style={{ background: `linear-gradient(to bottom right, ${colorPalette.primary}, ${colorPalette.secondary})` }}
+            style={{ background: `linear-gradient(to bottom right, ${colors.primary}, ${colors.secondary})` }}
           />
         </motion.div>
 
@@ -189,7 +190,7 @@ export function FeaturedVideo({ brandConfig }: FeaturedVideoProps) {
               transition={{ delay: 0.4 + index * 0.1 }}
               className="text-center p-6 rounded-2xl"
               style={{
-                background: `linear-gradient(to bottom right, ${colorPalette.background}, ${colorPalette.primary}15)`,
+                background: `linear-gradient(to bottom right, ${colors.background}, ${colors.primary}15)`,
               }}
             >
               <div
@@ -202,7 +203,7 @@ export function FeaturedVideo({ brandConfig }: FeaturedVideoProps) {
               >
                 {stat.value}
               </div>
-              <div style={{ color: colorPalette.text, opacity: 0.7 }}>{stat.label}</div>
+              <div style={{ color: colors.text, opacity: 0.7 }}>{stat.label}</div>
             </motion.div>
           ))}
         </motion.div>

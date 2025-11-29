@@ -1,5 +1,5 @@
 fastapi
-uvicorn[standard]
+uvicorn[standard]==0.27.1
 python-multipart
 colorthief
 webcolors
@@ -10,6 +10,5 @@ pyyaml
 onnxruntime
 numpy
 pytesseract
-torch
-torchvision
+# torch and torchvision installed separately as CPU-only version
 pydantic

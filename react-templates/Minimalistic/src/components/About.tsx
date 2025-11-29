@@ -7,15 +7,15 @@ interface AboutProps {
 }
 
 export function About({ brandConfig }: AboutProps) {
-  const palette = brandConfig.colorPalette;
+  const colors = brandConfig.colors;
   const aboutContent = brandConfig.aboutContent;
   const HighlightIcon = getIconComponent(aboutContent.highlightIcon);
-  const aboutImage = brandConfig.images.gallery[0];
+  const aboutImage = brandConfig.images.gallery && brandConfig.images.gallery.length > 0 ? brandConfig.images.gallery[0] : "";
 
   return (
     <section
       className="px-6 py-20 md:py-24"
-      style={{ backgroundColor: palette.background }}
+      style={{ backgroundColor: colors.background }}
     >
       <div className="mx-auto max-w-7xl">
         <div className="grid items-center gap-12 lg:grid-cols-2 lg:gap-16">
@@ -32,13 +32,13 @@ export function About({ brandConfig }: AboutProps) {
           <div className="order-1 lg:order-2">
             <h2
               className="mb-6 text-4xl font-bold"
-              style={{ color: palette.text, fontFamily: brandConfig.fonts.heading }}
+              style={{ color: colors.text, fontFamily: brandConfig.fonts.heading }}
             >
               {aboutContent.title}
             </h2>
             <p
               className="mb-8 text-lg"
-              style={{ color: palette.mutedText }}
+              style={{ color: colors.mutedText }}
             >
               {aboutContent.description || brandConfig.brandDescription}
             </p>
@@ -48,16 +48,16 @@ export function About({ brandConfig }: AboutProps) {
                 <div key={item} className="flex items-start gap-3">
                   <div
                     className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full"
-                    style={{ backgroundColor: palette.accent }}
+                    style={{ backgroundColor: colors.accent }}
                   >
                     {HighlightIcon && (
                       <HighlightIcon
                         className="h-4 w-4"
-                        style={{ color: palette.accentForeground }}
+                        style={{ color: colors.white }}
                       />
                     )}
                   </div>
-                  <span style={{ color: palette.text }}>
+                  <span style={{ color: colors.text }}>
                     {item}
                   </span>
                 </div>

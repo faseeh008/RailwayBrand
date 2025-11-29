@@ -2,7 +2,7 @@ import { json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 import { buildFilledHtmlSlides } from '$lib/services/html-slide-generator';
 import { adaptBrandDataForSlides } from '$lib/services/brand-data-adapter';
-import { db, generatedSlides, brandGuidelines, brandLogos } from '$lib/db';
+import { db, generatedSlides, brandGuidelines } from '$lib/db';
 import { eq, and } from 'drizzle-orm';
 
 export const POST: RequestHandler = async ({ request, locals }) => {
@@ -59,6 +59,46 @@ export const POST: RequestHandler = async ({ request, locals }) => {
             valuesCount: Array.isArray(brandInput.values) ? brandInput.values.length : 0
         });
 
+        // Extract FULL logo data and ensure it's set in brandInput before generating slides
+        const brandName = body.brandName || brandInput.brandName || 'Unknown Brand';
+        const brandGuidelinesId = await findBrandGuidelinesId(userId, brandName);
+        const extractedLogo = await extractLogoFromBrandData(brandInput, brandGuidelinesId || body.guidelineId);
+        
+        if (extractedLogo) {
+            // Ensure the logo is a valid base64 data URL - NO TRUNCATION!
+            let fullLogoData = extractedLogo.trim();
+            
+            if (!fullLogoData.startsWith('data:')) {
+                // If it's just base64, add the data URL prefix
+                if (fullLogoData.startsWith('<svg') || fullLogoData.startsWith('<?xml')) {
+                    // SVG XML - encode as data URL (preserve full content)
+                    fullLogoData = `data:image/svg+xml;base64,${Buffer.from(fullLogoData).toString('base64')}`;
+                } else if (fullLogoData.startsWith('/9j/') || fullLogoData.match(/^[A-Za-z0-9+/=]+$/)) {
+                    // JPEG or PNG base64
+                    const isJpeg = fullLogoData.startsWith('/9j/');
+                    fullLogoData = `data:image/${isJpeg ? 'jpeg' : 'png'};base64,${fullLogoData}`;
+                } else {
+                    // Unknown format, assume PNG
+                    fullLogoData = `data:image/png;base64,${fullLogoData}`;
+                }
+            }
+            
+            // Set the FULL logo in brandInput to ensure it's used in slides (NO TRUNCATION!)
+            if (!brandInput.logo) {
+                brandInput.logo = {};
+            }
+            brandInput.logo.primaryLogoUrl = fullLogoData; // Full base64, no truncation
+            
+            console.log('✅ Extracted and set FULL logo data for preview (no truncation):', {
+                logoLength: fullLogoData.length,
+                logoPrefix: fullLogoData.substring(0, 50),
+                isDataUrl: fullLogoData.startsWith('data:'),
+                sizeInKB: (fullLogoData.length / 1024).toFixed(2)
+            });
+        } else {
+            console.warn('⚠️ No logo found in brand data for preview');
+        }
+
         // Get template set from request (if provided)
         const templateSet = body.templateSet || undefined;
         console.log('🎨 Using template set:', templateSet || 'default (root)');
@@ -88,9 +128,7 @@ export const POST: RequestHandler = async ({ request, locals }) => {
             stepHistoryLength: updatedStepHistory.length
         });
 
-        // Save HTML content to generatedSlides table
-        const brandName = body.brandName || brandInput.brandName || 'Unknown Brand';
-        const brandGuidelinesId = await findBrandGuidelinesId(userId, brandName);
+        // Save HTML content to generatedSlides table (brandGuidelinesId already fetched above)
         await saveSlidesToDatabase(slides, userId, brandGuidelinesId || undefined, brandName, brandInput);
         
         // Also save Svelte slide data automatically (same way as HTML)
@@ -155,24 +193,40 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 };
 
 /**
- * Extract logo from brand data or fetch from brandLogos table
+ * Extract logo from brand data or fetch from brandGuidelines table
  */
 async function extractLogoFromBrandData(brandInput: any, brandGuidelinesId?: string): Promise<string | null> {
 	if (!brandInput) {
-		// If no brandInput but we have brandGuidelinesId, try to fetch from brandLogos table
+		// If no brandInput but we have brandGuidelinesId, try to fetch from brandGuidelines table
 		if (brandGuidelinesId) {
 			try {
-				const brandLogo = await db
-					.select()
-					.from(brandLogos)
-					.where(eq(brandLogos.id, brandGuidelinesId))
+				const guideline = await db
+					.select({ logoData: brandGuidelines.logoData, logoFiles: brandGuidelines.logoFiles })
+					.from(brandGuidelines)
+					.where(eq(brandGuidelines.id, brandGuidelinesId))
 					.limit(1);
 				
-				if (brandLogo.length > 0 && brandLogo[0].logo) {
-					return brandLogo[0].logo;
+				if (guideline.length > 0) {
+					// Try logoData first
+					if (guideline[0].logoData) {
+						return guideline[0].logoData;
+					}
+					// Try logoFiles
+					if (guideline[0].logoFiles) {
+						try {
+							const logoFiles = typeof guideline[0].logoFiles === 'string' 
+								? JSON.parse(guideline[0].logoFiles) 
+								: guideline[0].logoFiles;
+							if (Array.isArray(logoFiles) && logoFiles.length > 0) {
+								return logoFiles[0].fileData || logoFiles[0].file_data;
+							}
+						} catch (error) {
+							console.warn('Failed to parse logoFiles:', error);
+						}
+					}
 				}
 			} catch (error) {
-				console.warn('Failed to fetch logo from brandLogos table:', error);
+				console.warn('Failed to fetch logo from brandGuidelines table:', error);
 			}
 		}
 		return null;
@@ -192,20 +246,34 @@ async function extractLogoFromBrandData(brandInput: any, brandGuidelinesId?: str
 	// Try direct logoData
 	if (brandInput.logoData) return brandInput.logoData;
 	
-	// Fallback: try to fetch from brandLogos table if brandGuidelinesId is available
+	// Fallback: try to fetch from brandGuidelines table if brandGuidelinesId is available
 	if (brandGuidelinesId) {
 		try {
-			const brandLogo = await db
-				.select()
-				.from(brandLogos)
-				.where(eq(brandLogos.id, brandGuidelinesId))
+			const guideline = await db
+				.select({ logoData: brandGuidelines.logoData, logoFiles: brandGuidelines.logoFiles })
+				.from(brandGuidelines)
+				.where(eq(brandGuidelines.id, brandGuidelinesId))
 				.limit(1);
 			
-			if (brandLogo.length > 0 && brandLogo[0].logo) {
-				return brandLogo[0].logo;
+			if (guideline.length > 0) {
+				if (guideline[0].logoData) {
+					return guideline[0].logoData;
+				}
+				if (guideline[0].logoFiles) {
+					try {
+						const logoFiles = typeof guideline[0].logoFiles === 'string' 
+							? JSON.parse(guideline[0].logoFiles) 
+							: guideline[0].logoFiles;
+						if (Array.isArray(logoFiles) && logoFiles.length > 0) {
+							return logoFiles[0].fileData || logoFiles[0].file_data;
+						}
+					} catch (error) {
+						console.warn('Failed to parse logoFiles:', error);
+					}
+				}
 			}
 		} catch (error) {
-			console.warn('Failed to fetch logo from brandLogos table:', error);
+			console.warn('Failed to fetch logo from brandGuidelines table:', error);
 		}
 	}
 	
@@ -225,7 +293,7 @@ async function saveSlidesToDatabase(
 	try {
 		console.log(`💾 Saving ${slides.length} HTML slides to generatedSlides table...`);
 		
-		// Extract logo from brand data or fetch from brandLogos table
+		// Extract logo from brand data or fetch from brandGuidelines table
 		const logoData = await extractLogoFromBrandData(brandInput, brandGuidelinesId);
 		
 		// Determine slide type and title from filename
@@ -332,7 +400,7 @@ async function saveSvelteSlidesToDatabase(
 	try {
 		console.log(`💾 Saving ${slides.length} Svelte slides to generatedSlides table...`);
 		
-		// Extract logo from brand data or fetch from brandLogos table
+		// Extract logo from brand data or fetch from brandGuidelines table
 		const logoData = await extractLogoFromBrandData(brandInput, brandGuidelinesId);
 		
 		// Map slide types to titles and orders (same as HTML slides)

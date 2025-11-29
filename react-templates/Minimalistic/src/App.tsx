@@ -17,41 +17,51 @@ export default function App() {
       }
     };
 
+    const { colors } = brandConfig;
+    
+    // Set brand-specific variables
+    setVar("--brand-primary", colors.primary);
+    setVar("--brand-secondary", colors.secondary);
+    setVar("--brand-accent", colors.accent);
+    setVar("--brand-background", colors.background);
+    setVar("--brand-text", colors.text);
+    setVar("--brand-white", colors.white);
+    setVar("--brand-black", colors.black);
+    setVar("--brand-surface", colors.surface);
+    setVar("--brand-border", colors.border);
+    setVar("--brand-muted-text", colors.mutedText);
+    setVar("--overlay", `${colors.black}80`); // 50% opacity black overlay
+    setVar("--muted-border", colors.border);
+    
+    // Map to UI component variables (for backward compatibility with colorPalette)
     const palette = brandConfig.colorPalette;
-    setVar("--brand-primary", palette.primary);
     setVar("--brand-primary-foreground", palette.primaryForeground);
-    setVar("--brand-secondary", palette.secondary);
     setVar("--brand-secondary-foreground", palette.secondaryForeground);
-    setVar("--brand-accent", palette.accent);
     setVar("--brand-accent-foreground", palette.accentForeground);
-    setVar("--brand-bg", palette.background);
-    setVar("--brand-surface", palette.surface);
-    setVar("--brand-border", palette.border);
-    setVar("--brand-text", palette.text);
-    setVar("--brand-muted-text", palette.mutedText);
+    
     setVar("--font-heading", brandConfig.fonts.heading);
     setVar("--font-body", brandConfig.fonts.body);
 
-    // Sync Tailwind CSS variables with brand palette
-    setVar("--background", palette.background);
-    setVar("--foreground", palette.text);
-    setVar("--card", palette.surface);
-    setVar("--card-foreground", palette.text);
-    setVar("--primary", palette.primary);
-    setVar("--primary-foreground", palette.primaryForeground);
-    setVar("--secondary", palette.secondary);
-    setVar("--secondary-foreground", palette.secondaryForeground);
-    setVar("--accent", palette.accent);
-    setVar("--accent-foreground", palette.accentForeground);
-    setVar("--border", palette.border);
+    // Sync Tailwind CSS variables with brand colors
+    setVar("--background", colors.background);
+    setVar("--foreground", colors.text);
+    setVar("--card", colors.surface);
+    setVar("--card-foreground", colors.text);
+    setVar("--primary", colors.primary);
+    setVar("--primary-foreground", colors.white);
+    setVar("--secondary", colors.secondary);
+    setVar("--secondary-foreground", colors.white);
+    setVar("--accent", colors.accent);
+    setVar("--accent-foreground", colors.white);
+    setVar("--border", colors.border);
   }, [brandConfig]);
 
   return (
     <div
       className="min-h-screen"
       style={{
-        backgroundColor: brandConfig.colorPalette.background,
-        color: brandConfig.colorPalette.text,
+        backgroundColor: brandConfig.colors.background,
+        color: brandConfig.colors.text,
         fontFamily: brandConfig.fonts.body,
       }}
     >

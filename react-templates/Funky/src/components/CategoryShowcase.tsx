@@ -8,32 +8,33 @@ interface CategoryShowcaseProps {
 }
 
 export function CategoryShowcase({ brandConfig }: CategoryShowcaseProps) {
-  const { colorPalette, images, features, stats } = brandConfig;
+  const { colors, images, features, stats } = brandConfig;
   
   // Create categories from features
   const categories = features.slice(0, 4).map((feature, index) => {
-    const colors = [colorPalette.primary, colorPalette.secondary, colorPalette.accent, colorPalette.primary];
+    const categoryColors = [colors.primary, colors.secondary, colors.accent, colors.primary];
     const icons = [Shirt, Package, Sparkles, Star];
     return {
       icon: icons[index] || Shirt,
       title: feature.title,
       count: stats[index]?.value + " " + stats[index]?.label || `${(index + 1) * 25}+ Items`,
-      color: colors[index],
+      color: categoryColors[index],
     };
   });
 
   // Create gradient background from brand colors
-  const sectionGradient = `linear-gradient(to bottom right, ${colorPalette.primary}dd, ${colorPalette.secondary}dd, ${colorPalette.accent}dd)`;
-  const imageGradient = `linear-gradient(to right, ${colorPalette.accent}, ${colorPalette.secondary}, ${colorPalette.primary})`;
+  const sectionGradient = `linear-gradient(to bottom right, ${colors.primary}dd, ${colors.secondary}dd, ${colors.accent}dd)`;
+  const imageGradient = `linear-gradient(to right, ${colors.accent}, ${colors.secondary}, ${colors.primary})`;
 
   return (
-    <section className="py-20 px-6 md:px-12 text-white relative overflow-hidden" style={{ background: sectionGradient }}>
+    <section className="py-20 px-6 md:px-12 relative overflow-hidden" style={{ background: sectionGradient, color: colors.white }}>
       {/* Animated Background Pattern */}
       <div className="absolute inset-0 opacity-10">
         {Array.from({ length: 20 }).map((_, i) => (
           <motion.div
             key={i}
-            className="absolute w-32 h-32 border border-white rounded-full"
+            className="absolute w-32 h-32 border rounded-full"
+            style={{ borderColor: colors.white }}
             style={{
               left: `${Math.random() * 100}%`,
               top: `${Math.random() * 100}%`,
@@ -70,7 +71,7 @@ export function CategoryShowcase({ brandConfig }: CategoryShowcaseProps) {
                 className="rounded-2xl overflow-hidden shadow-2xl"
               >
                 <ImageWithFallback
-                  src={images.gallery[0] || images.hero || "https://images.unsplash.com/photo-1763558958792-85731d9b60f4?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxzdHlsaXNoJTIwc2hpcnQlMjBjb2xsZWN0aW9ufGVufDF8fHx8MTc2MzcxOTE5N3ww&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral"}
+                  src={images.gallery[0] || images.hero || ""}
                   alt={brandConfig.brandName}
                   className="w-full h-64 object-cover"
                 />
@@ -80,7 +81,7 @@ export function CategoryShowcase({ brandConfig }: CategoryShowcaseProps) {
                 className="rounded-2xl overflow-hidden shadow-2xl mt-8"
               >
                 <ImageWithFallback
-                  src={images.gallery[1] || images.hero || "https://images.unsplash.com/photo-1599012307530-d163bd04ecab?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxmYXNoaW9uJTIwY2xvdGhpbmclMjBzdG9yZXxlbnwxfHx8fDE3NjM2MzcxNDZ8MA&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral"}
+                  src={images.gallery[1] || images.hero || ""}
                   alt={brandConfig.brandName}
                   className="w-full h-64 object-cover"
                 />
@@ -97,9 +98,9 @@ export function CategoryShowcase({ brandConfig }: CategoryShowcaseProps) {
           >
             <div>
               <h2 className="text-5xl md:text-6xl mb-4">
-                Explore Our <span style={{ color: colorPalette.accent }}>Categories</span>
+                Explore Our <span style={{ color: colors.accent }}>Categories</span>
               </h2>
-              <p style={{ color: colorPalette.background, opacity: 0.8 }}>
+              <p style={{ color: colors.background, opacity: 0.8 }}>
                 {brandConfig.brandDescription}
               </p>
             </div>
@@ -115,16 +116,17 @@ export function CategoryShowcase({ brandConfig }: CategoryShowcaseProps) {
                     viewport={{ once: true }}
                     transition={{ delay: index * 0.1 }}
                     whileHover={{ scale: 1.05, y: -5 }}
-                    className="bg-white/10 backdrop-blur-lg p-6 rounded-2xl border border-white/20 cursor-pointer group"
+                    className="backdrop-blur-lg p-6 rounded-2xl cursor-pointer group"
+                    style={{ backgroundColor: `${colors.white}1A`, borderColor: `${colors.white}33`, borderWidth: '1px', borderStyle: 'solid' }}
                   >
                     <div
                       className="w-12 h-12 rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform"
                       style={{ backgroundColor: category.color }}
                     >
-                      <Icon className="w-6 h-6 text-white" />
+                      <Icon className="w-6 h-6" style={{ color: colors.white }} />
                     </div>
-                    <h3 className="text-white mb-1">{category.title}</h3>
-                    <p className="text-sm" style={{ color: colorPalette.background, opacity: 0.8 }}>{category.count}</p>
+                    <h3 className="mb-1" style={{ color: colors.white }}>{category.title}</h3>
+                    <p className="text-sm" style={{ color: colors.background, opacity: 0.8 }}>{category.count}</p>
                   </motion.div>
                 );
               })}
@@ -138,8 +140,8 @@ export function CategoryShowcase({ brandConfig }: CategoryShowcaseProps) {
               className="flex gap-4 pt-4"
             >
               {stats.slice(0, 2).map((stat, index) => (
-                <div key={index} className="bg-white/20 backdrop-blur-lg px-6 py-3 rounded-full">
-                  <span style={{ color: index === 0 ? colorPalette.accent : colorPalette.secondary }}>
+                <div key={index} className="backdrop-blur-lg px-6 py-3 rounded-full" style={{ backgroundColor: `${colors.white}33` }}>
+                  <span style={{ color: index === 0 ? colors.accent : colors.secondary }}>
                     {index === 0 ? '⭐ ' : '🎉 '}{stat.value}
                   </span> {stat.label}
                 </div>

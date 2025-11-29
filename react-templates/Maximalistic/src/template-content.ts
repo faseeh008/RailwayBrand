@@ -1,12 +1,14 @@
+import { getBrandConfig } from "./shared-brand-config";
+
 export interface TemplateContent {
   hero: {
     badgeLabel: string;
-    highlights: string[];
+    highlights: [string, string, string];
     description: string;
     primaryCta: string;
     secondaryCta: string;
     metrics: Array<{ value: string; label: string }>;
-    collageLabels: string[];
+    collageLabels: [string, string, string];
   };
   about: {
     badges: string[];
@@ -18,16 +20,16 @@ export interface TemplateContent {
     badgeLabel: string;
     headingLines: string[];
     description: string;
-    ctaLabel: string;
     items: Array<{
       name: string;
       description: string;
       price: string;
       badge: string;
-      rating: number;
-      imageIndex?: number;
       variant: "primary" | "secondary" | "accent";
+      imageIndex?: number;
+      rating: number;
     }>;
+    ctaLabel: string;
   };
   testimonials: {
     badgeLabel: string;
@@ -45,14 +47,17 @@ export interface TemplateContent {
     badgeLabel: string;
     headingLines: string[];
     description: string;
+    tiles: Array<{
+      likes: number;
+      comments: number;
+    }>;
     ctaLabel: string;
-    tiles: Array<{ likes: number; comments: number; imageIndex?: number }>;
     videoTitle: string;
     videoSubtitle: string;
     videoCta: string;
   };
   footer: {
-    brandLines: string[];
+    brandLines: [string, string];
     tagline: string;
     socialLinks: Array<{ label: string; url: string }>;
     quickLinks: Array<{ label: string; url: string }>;
@@ -62,8 +67,8 @@ export interface TemplateContent {
       email: string;
     };
     newsletter: {
-      placeholder: string;
       intro: string;
+      placeholder: string;
       ctaLabel: string;
     };
     hours: {
@@ -78,192 +83,149 @@ export interface TemplateContent {
 
 const defaultContent: TemplateContent = {
   hero: {
-    badgeLabel: "Established • 2020",
-    highlights: ["VIBRANT", "EXPERIENCES", "EVERY PLATE"],
-    description:
-      "Handcrafted menus inspired by bold palettes and generous hospitality. We design culinary memories that stay with your guests long after the last bite.",
-    primaryCta: "Plan A Tasting",
-    secondaryCta: "Browse Menu",
+    badgeLabel: "New Collection",
+    highlights: ["Bold", "Design", "Maximum Impact"],
+    description: "Experience the future of creative design with our vibrant collection.",
+    primaryCta: "Explore Now",
+    secondaryCta: "Learn More",
     metrics: [
-      { value: "500+", label: "Clients" },
-      { value: "75", label: "Signature Plates" },
-      { value: "4.9", label: "Satisfaction Score" },
+      { value: "1000+", label: "Projects" },
+      { value: "100k+", label: "Customers" },
+      { value: "24/7", label: "Support" },
     ],
-    collageLabels: ["Seasonal", "Limited", "Chef's Pick"],
+    collageLabels: ["Featured", "New", "Trending"],
   },
   about: {
-    badges: ["Award Winning", "Sustainably Sourced", "Chef Led"],
-    titleLines: ["Culinary Storytelling", "Crafted For Bold Brands"],
+    badges: ["Creative", "Innovative", "Bold"],
+    titleLines: ["We Create", "Maximum Impact"],
     paragraphs: [
-      "Born from a studio mindset, our kitchen collaborates with creative directors, brand teams, and hospitality partners to translate vision into immersive menus.",
-      "We pair local farmers with global techniques so every course layers color, texture, and flavor with intention.",
+      "Our team of creative professionals brings years of experience in design, branding, and digital innovation.",
+      "We believe in pushing boundaries and creating designs that not only look stunning but also drive results.",
     ],
     pillars: [
-      { title: "Creative Labs", description: "Immersive tastings that co-create direction with your team." },
-      { title: "Daily Harvest", description: "Produce, grains, and proteins sourced within 150 miles." },
-      { title: "Responsive Service", description: "Agile production schedules and dedicated point partners." },
-      { title: "Legacy Craft", description: "Recipes refined across generations of culinary mentors." },
+      { title: "Bold Design", description: "Stand out with vibrant aesthetics" },
+      { title: "Full Service", description: "Complete creative solutions" },
+      { title: "Fast Delivery", description: "Quick turnaround times" },
     ],
   },
   products: {
-    badgeLabel: "Menu Capsules",
-    headingLines: ["Signature Sets", "Curated For Launches"],
-    description: "Modular dishes engineered for press previews, pop-ups, and retail experiences.",
-    ctaLabel: "View Full Menu",
+    badgeLabel: "Our Products",
+    headingLines: ["Featured", "Collections"],
+    description: "Discover our carefully curated selection of premium products.",
     items: [
       {
-        name: "Layered Citrus Stack",
-        description: "Compressed fruit, citrus gel, micro herbs.",
-        price: "$18",
-        badge: "Seasonal",
+        name: "Premium Package",
+        description: "Complete solution for your creative needs",
+        price: "$299",
+        badge: "Popular",
+        variant: "primary",
+        rating: 4.8,
+      },
+      {
+        name: "Enterprise Suite",
+        description: "Advanced features for large teams",
+        price: "$599",
+        badge: "Pro",
+        variant: "secondary",
         rating: 4.9,
-        imageIndex: 0,
-        variant: "primary",
       },
       {
-        name: "Midnight Pasta Kit",
-        description: "Charred tomato sugo, hand-cut pasta, smoked salt.",
-        price: "$22",
+        name: "Starter Kit",
+        description: "Perfect for getting started",
+        price: "$99",
         badge: "New",
-        rating: 4.8,
-        imageIndex: 1,
-        variant: "secondary",
-      },
-      {
-        name: "Textured Dessert Bar",
-        description: "Three-layer mousse, sable crunch, citrus mist.",
-        price: "$14",
-        badge: "Studio Favorite",
-        rating: 5,
-        imageIndex: 2,
         variant: "accent",
-      },
-      {
-        name: "Charred Garden Platter",
-        description: "Smoked roots, fermented vinaigrette, toasted seeds.",
-        price: "$24",
-        badge: "Plant Forward",
         rating: 4.7,
-        imageIndex: 3,
-        variant: "primary",
-      },
-      {
-        name: "Heritage Broth Bowl",
-        description: "Slow steeped broth, hand-pulled noodles, aromatic oil.",
-        price: "$20",
-        badge: "Comfort",
-        rating: 4.8,
-        imageIndex: 4,
-        variant: "secondary",
-      },
-      {
-        name: "Studio Sampler",
-        description: "Chef curated bites highlighting the current collection.",
-        price: "$30",
-        badge: "Limited",
-        rating: 5,
-        imageIndex: 5,
-        variant: "accent",
       },
     ],
+    ctaLabel: "View All Products",
   },
   testimonials: {
-    badgeLabel: "Partner Feedback",
-    headingLines: ["What collaborators share", "after each activation"],
+    badgeLabel: "Testimonials",
+    headingLines: ["What Our", "Clients Say"],
     entries: [
       {
-        name: "Allison Park",
-        role: "Experiential Director",
-        quote:
-          "They translate brand language into flavor better than any culinary partner we have worked with.",
-        rating: 5,
-        imageIndex: 0,
+        name: "Sarah Johnson",
+        role: "Creative Director",
+        quote: "The design quality exceeded our expectations. Truly remarkable work!",
+        rating: 5.0,
       },
       {
-        name: "Marcus Reed",
-        role: "Hospitality Lead",
-        quote:
-          "The team is agile, thoughtful, and deeply invested in every audience touchpoint.",
-        rating: 5,
-        imageIndex: 1,
+        name: "Michael Chen",
+        role: "Brand Manager",
+        quote: "Outstanding service and incredible attention to detail. Highly recommended!",
+        rating: 4.9,
       },
       {
-        name: "Helena Cruz",
-        role: "Creative Producer",
-        quote:
-          "Every tasting feels bespoke. They are collaborators in the truest sense.",
-        rating: 5,
-        imageIndex: 2,
+        name: "Emily Rodriguez",
+        role: "Marketing Lead",
+        quote: "Transformed our brand identity completely. The results speak for themselves.",
+        rating: 5.0,
       },
     ],
     stats: [
-      { value: "92%", label: "Repeat Partnerships" },
-      { value: "48h", label: "Average Response" },
-      { value: "120+", label: "Launch Events" },
-      { value: "30", label: "Cities Served" },
+      { value: "98%", label: "Satisfaction" },
+      { value: "500+", label: "Projects" },
+      { value: "50+", label: "Awards" },
+      { value: "10+", label: "Years" },
     ],
   },
   gallery: {
-    badgeLabel: "Field Notes",
-    headingLines: ["Recent activations", "across our network"],
-    description: "A rotating feed capturing plating runs, R&D sessions, and studio drops.",
-    ctaLabel: "View live feed",
-    tiles: [
-      { likes: 1200, comments: 42, imageIndex: 0 },
-      { likes: 980, comments: 33, imageIndex: 1 },
-      { likes: 1540, comments: 61, imageIndex: 2 },
-      { likes: 860, comments: 24, imageIndex: 3 },
-      { likes: 1320, comments: 48, imageIndex: 4 },
-      { likes: 1010, comments: 29, imageIndex: 5 },
-    ],
-    videoTitle: "Studio Lab Session",
-    videoSubtitle: "A behind-the-scenes look at our iterative plating workflow.",
-    videoCta: "Play highlight reel",
+    badgeLabel: "Gallery",
+    headingLines: ["Our Work", "In Action"],
+    description: "See how we bring creative visions to life.",
+    tiles: Array.from({ length: 12 }, () => ({
+      likes: Math.floor(Math.random() * 1000) + 100,
+      comments: Math.floor(Math.random() * 100) + 10,
+    })),
+    ctaLabel: "View Full Gallery",
+    videoTitle: "Behind the Scenes",
+    videoSubtitle: "See how we create magic",
+    videoCta: "Watch Video",
   },
   footer: {
-    brandLines: ["Vibrant", "Studios"],
-    tagline: "Culinary direction for ambitious brands.",
+    brandLines: ["VIBRANT", "DESIGN"],
+    tagline: "Bold Design, Maximum Impact",
     socialLinks: [
+      { label: "Twitter", url: "#" },
       { label: "Instagram", url: "#" },
       { label: "LinkedIn", url: "#" },
-      { label: "Pinterest", url: "#" },
     ],
     quickLinks: [
       { label: "About", url: "#" },
-      { label: "Capabilities", url: "#" },
-      { label: "Studios", url: "#" },
-      { label: "Press", url: "#" },
-      { label: "Careers", url: "#" },
+      { label: "Services", url: "#" },
+      { label: "Portfolio", url: "#" },
       { label: "Contact", url: "#" },
     ],
     contact: {
-      address: "129 Spring Street, Suite 4, New York, NY",
-      phone: "+1 (212) 555-0198",
-      email: "hello@vibrant.studio",
+      address: "123 Creative St, Design City",
+      phone: "+1 (555) 123-4567",
+      email: "hello@vibrant.design",
     },
     newsletter: {
-      placeholder: "Enter email address",
-      intro: "Monthly recaps of releases, residencies, and menu drops.",
-      ctaLabel: "Join the list",
+      intro: "Stay updated with our latest designs",
+      placeholder: "Enter your email",
+      ctaLabel: "Subscribe",
     },
     hours: {
-      heading: "Studio availability",
-      details: "Mon–Fri • 9a–8p  |  Sat • 10a–4p",
+      heading: "Working Hours",
+      details: "Mon-Fri: 9AM-6PM | Sat: 10AM-4PM",
     },
-    bottomNote: "Crafted in partnership with our culinary collective.",
-    copyright: "© 2025 Vibrant Studios. All rights reserved.",
+    bottomNote: "Building creative solutions since 2015",
+    copyright: "© 2025 VIBRANT. All rights reserved.",
     legalLinks: [
       { label: "Privacy", url: "#" },
       { label: "Terms", url: "#" },
+      { label: "Cookies", url: "#" },
     ],
   },
 };
 
 export const getTemplateContent = (): TemplateContent => {
-  if (typeof window !== "undefined" && (window as any).__TEMPLATE_CONTENT__) {
-    return (window as any).__TEMPLATE_CONTENT__;
-  }
-
+  const config = getBrandConfig();
+  
+  // You can customize content based on brand config if needed
+  // For now, return default content
   return defaultContent;
 };
 

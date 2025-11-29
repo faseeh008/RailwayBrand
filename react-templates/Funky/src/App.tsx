@@ -13,25 +13,31 @@ export default function App() {
   // Inject brand config CSS variables
   useEffect(() => {
     const root = document.documentElement;
-    const { colorPalette } = brandConfig;
+    const { colors } = brandConfig;
     
     // Set brand-specific variables
-    root.style.setProperty("--brand-primary", colorPalette.primary);
-    root.style.setProperty("--brand-secondary", colorPalette.secondary);
-    root.style.setProperty("--brand-accent", colorPalette.accent);
-    root.style.setProperty("--brand-background", colorPalette.background);
-    root.style.setProperty("--brand-text", colorPalette.text);
+    root.style.setProperty("--brand-primary", colors.primary);
+    root.style.setProperty("--brand-secondary", colors.secondary);
+    root.style.setProperty("--brand-accent", colors.accent);
+    root.style.setProperty("--brand-background", colors.background);
+    root.style.setProperty("--brand-text", colors.text);
+    root.style.setProperty("--brand-white", colors.white);
+    root.style.setProperty("--brand-black", colors.black);
     
     // Map to UI component variables
-    root.style.setProperty("--primary", colorPalette.primary);
-    root.style.setProperty("--primary-foreground", colorPalette.background);
-    root.style.setProperty("--secondary", colorPalette.secondary);
-    root.style.setProperty("--secondary-foreground", colorPalette.background);
-    root.style.setProperty("--accent", colorPalette.accent);
-    root.style.setProperty("--accent-foreground", colorPalette.background);
-    root.style.setProperty("--background", colorPalette.background);
-    root.style.setProperty("--foreground", colorPalette.text);
-    root.style.setProperty("--text", colorPalette.text);
+    root.style.setProperty("--primary", colors.primary);
+    root.style.setProperty("--primary-foreground", colors.white);
+    root.style.setProperty("--secondary", colors.secondary);
+    root.style.setProperty("--secondary-foreground", colors.white);
+    root.style.setProperty("--accent", colors.accent);
+    root.style.setProperty("--accent-foreground", colors.white);
+    root.style.setProperty("--background", colors.background);
+    root.style.setProperty("--foreground", colors.text);
+    root.style.setProperty("--text", colors.text);
+    root.style.setProperty("--overlay", `${colors.black}80`); // 50% opacity black overlay
+    // Compute muted color (light gray for borders/grids) from text color
+    const mutedColor = colors.text === "#ffffff" ? "#cccccc" : "#cccccc"; // Light gray for subtle elements
+    root.style.setProperty("--muted-border", mutedColor);
     
     // Set font families
     if (brandConfig.fonts.heading) {
@@ -44,7 +50,7 @@ export default function App() {
   }, [brandConfig]);
 
   // Create gradient background from brand colors
-  const backgroundGradient = `linear-gradient(to bottom right, ${brandConfig.colorPalette.background}, ${brandConfig.colorPalette.primary}15, ${brandConfig.colorPalette.secondary}15)`;
+  const backgroundGradient = `linear-gradient(to bottom right, ${brandConfig.colors.background}, ${brandConfig.colors.primary}15, ${brandConfig.colors.secondary}15)`;
 
   return (
     <div className="min-h-screen" style={{ background: backgroundGradient }}>

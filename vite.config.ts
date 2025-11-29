@@ -7,9 +7,16 @@ export default defineConfig({
 	server: {
 		fs: {
 			allow: ['..']
+		},
+		hmr: {
+			overlay: false
 		}
 	},
 	optimizeDeps: {
-		exclude: ['@auth/sveltekit', 'playwright', 'canvas']
+		exclude: ['@auth/sveltekit', 'playwright', 'canvas'],
+		include: ['lucide-svelte']
+	},
+	ssr: {
+		noExternal: ['lucide-svelte']
 	}
 });

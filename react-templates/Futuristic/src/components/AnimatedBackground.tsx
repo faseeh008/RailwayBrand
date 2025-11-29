@@ -3,7 +3,7 @@ import type { BrandConfig } from "../shared-brand-config";
 import { RotatingSphere } from "./RotatingSphere";
 
 interface AnimatedBackgroundProps {
-  palette: BrandConfig["colorPalette"];
+  palette: BrandConfig["colors"];
 }
 
 const withOpacity = (color: string, opacity: number) => `color-mix(in srgb, ${color} ${opacity * 100}%, transparent)`;

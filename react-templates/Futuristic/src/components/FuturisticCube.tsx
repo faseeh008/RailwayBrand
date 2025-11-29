@@ -2,7 +2,7 @@ import { motion } from "motion/react";
 import type { BrandConfig } from "../shared-brand-config";
 
 interface FuturisticCubeProps {
-  palette: BrandConfig["colorPalette"];
+  palette: BrandConfig["colors"];
 }
 
 const withOpacity = (color: string, opacity: number) => `color-mix(in srgb, ${color} ${opacity * 100}%, transparent)`;

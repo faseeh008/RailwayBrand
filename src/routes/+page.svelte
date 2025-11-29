@@ -7,8 +7,23 @@
 		CardHeader,
 		CardTitle
 	} from '$lib/components/ui/card';
-	import { ArrowRight, Palette, Search, Sparkles } from 'lucide-svelte';
+	import { browser } from '$app/environment';
+	import { onMount } from 'svelte';
 	import ThemeToggle from '$lib/components/ThemeToggle.svelte';
+	
+	let ArrowRight: any;
+	let Palette: any;
+	let Search: any;
+	let Sparkles: any;
+	
+	$: if (browser && !ArrowRight) {
+		import('lucide-svelte').then((lucide) => {
+			ArrowRight = lucide.ArrowRight;
+			Palette = lucide.Palette;
+			Search = lucide.Search;
+			Sparkles = lucide.Sparkles;
+		});
+	}
 </script>
 
 <!-- Hero Section -->
@@ -26,7 +41,9 @@
 		<div class="flex justify-center gap-4">
 			<Button size="lg" class="px-8" href="/auth/signup">
 				Start Free Trial
-				<ArrowRight class="ml-2 h-5 w-5" />
+				{#if browser && ArrowRight}
+					<svelte:component this={ArrowRight} class="ml-2 h-5 w-5" />
+				{/if}
 			</Button>
 			<Button variant="outline" size="lg" href="/auth/login">Login</Button>
 		</div>
@@ -53,7 +70,9 @@
 					<div
 						class="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10"
 					>
-						<Palette class="h-6 w-6 text-primary" />
+						{#if browser && Palette}
+							<svelte:component this={Palette} class="h-6 w-6 text-primary" />
+						{/if}
 					</div>
 					<CardTitle>Brand Builder</CardTitle>
 					<CardDescription>
@@ -77,7 +96,9 @@
 					<div
 						class="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10"
 					>
-						<Search class="h-6 w-6 text-primary" />
+						{#if browser && Search}
+							<svelte:component this={Search} class="h-6 w-6 text-primary" />
+						{/if}
 					</div>
 					<CardTitle>Brand Audit</CardTitle>
 					<CardDescription>
@@ -100,7 +121,9 @@
 					<div
 						class="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-lg bg-accent/10"
 					>
-						<Sparkles class="h-6 w-6 text-accent-foreground" />
+						{#if browser && Sparkles}
+							<svelte:component this={Sparkles} class="h-6 w-6 text-accent-foreground" />
+						{/if}
 					</div>
 					<CardTitle>Creative Generator</CardTitle>
 					<CardDescription>
@@ -130,7 +153,9 @@
 		</p>
 		<Button size="lg" class="px-8" href="/auth/signup">
 			Get Started for Free
-			<ArrowRight class="ml-2 h-5 w-5" />
+			{#if browser && ArrowRight}
+				<svelte:component this={ArrowRight} class="ml-2 h-5 w-5" />
+			{/if}
 		</Button>
 	</div>
 </section>

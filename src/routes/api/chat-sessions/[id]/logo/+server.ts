@@ -1,7 +1,7 @@
 import { json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 import { db } from '$lib/db';
-import { brandBuilderChats, brandLogos, brandGuidelines } from '$lib/db/schema';
+import { brandBuilderChats, brandGuidelines } from '$lib/db/schema';
 import { and, eq, desc } from 'drizzle-orm';
 import { getLogoAssetById } from '$lib/server/logo-storage';
 
@@ -122,62 +122,7 @@ export const POST: RequestHandler = async ({ locals, params, request }) => {
 		return json({ success: false, error: 'Chat not found' }, { status: 404 });
 	}
 
-	// Also save logo to brandLogos table if we can find the brandGuidelinesId
-	// Try to find brandGuidelines by brandName (chatId should match brandGuidelines.id)
-	try {
-		// First try: use chatId as brandGuidelinesId (if they match)
-		let brandGuidelinesId: string | null = chatId;
-		
-		// Verify that this ID exists in brandGuidelines
-		const guidelineCheck = await db
-			.select({ id: brandGuidelines.id })
-			.from(brandGuidelines)
-			.where(and(
-				eq(brandGuidelines.id, chatId),
-				eq(brandGuidelines.userId, session.user.id)
-			))
-			.limit(1);
-
-		// If chatId doesn't match brandGuidelines, try to find by brandName
-		if (guidelineCheck.length === 0 && brandName) {
-			const guidelineByName = await db
-				.select({ id: brandGuidelines.id })
-				.from(brandGuidelines)
-				.where(and(
-					eq(brandGuidelines.brandName, brandName),
-					eq(brandGuidelines.userId, session.user.id)
-				))
-				.orderBy(desc(brandGuidelines.createdAt))
-				.limit(1);
-			
-			if (guidelineByName.length > 0) {
-				brandGuidelinesId = guidelineByName[0].id;
-			} else {
-				brandGuidelinesId = null;
-			}
-		}
-
-		// Save to brandLogos table if we have a valid brandGuidelinesId
-		if (brandGuidelinesId) {
-			await db
-				.insert(brandLogos)
-				.values({
-					id: brandGuidelinesId, // Same as brand_guidelines.id
-					logo: logoData
-				})
-				.onConflictDoUpdate({
-					target: brandLogos.id,
-					set: {
-						logo: logoData,
-						updatedAt: new Date()
-					}
-				});
-			console.log('✅ Logo saved to brandLogos table');
-		}
-	} catch (error) {
-		console.warn('⚠️ Failed to save logo to brandLogos table:', error);
-		// Don't fail the request if brandLogos save fails
-	}
+	// Logo is saved in brandBuilderChats.logo and will be used when brand guidelines are created
 
 	return json({ success: true, snapshot });
 };

@@ -1132,7 +1132,7 @@ ${customPrompt}`;
 		}
 	}
 
-	function handleProgressiveComplete(data: {
+	async function handleProgressiveComplete(data: {
 		stepHistory: Array<{ step: string; content: string; approved: boolean }>;
 		brandInput: any;
 		logoFiles: any[];
@@ -1210,6 +1210,7 @@ ${customPrompt}`;
 
 		console.log('[builder] Creating previewBrandData with guidelineId:', guidelineId);
 
+		// Create previewBrandData with FULL data including base64 logos - no sanitization
 		const previewBrandData = {
 			...structuredData,
 			brandName: structuredData?.brandName || (structuredData as any)?.brand_name || brandName,
@@ -1225,10 +1226,11 @@ ${customPrompt}`;
 			selectedMood: selectedMood || (structuredData as any)?.selectedMood,
 			selectedAudience: selectedAudience || (structuredData as any)?.selectedAudience,
 			contact: structuredData?.contact || (structuredData as any)?.legal_contact || contactSnapshot,
+			// Store FULL logoFiles with base64 data - no sanitization
 			logoFiles: logoFiles.length > 0 ? logoFiles : (structuredData as any)?.logoFiles || [],
 			stepHistory: data.stepHistory,
 			brandInput: data.brandInput,
-			guidelineId: guidelineId, // Ensure this is set
+			guidelineId: guidelineId,
 			chatId: remoteChatId
 		};
 
@@ -1238,6 +1240,7 @@ ${customPrompt}`;
 			brandName: previewBrandData.brandName
 		});
 
+		// Create slides snapshot with FULL HTML - no truncation
 		const rawSlides =
 			(Array.isArray((structuredData as any)?.slidesHtml) && (structuredData as any).slidesHtml) ||
 			(Array.isArray((structuredData as any)?.slides) && (structuredData as any).slides) ||
@@ -1263,7 +1266,7 @@ ${customPrompt}`;
 			contactCompany
 		};
 
-		const tempSaveSuccess = saveTempBrandData({
+		const tempSaveSuccess = await saveTempBrandData({
 			userInput: userInputSnapshot,
 			selectedTheme: inferThemeFromMood(selectedMood),
 			brandData: previewBrandData,

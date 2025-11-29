@@ -11,9 +11,9 @@ interface AboutProps {
 }
 
 export function About({ config, tokens, content }: AboutProps) {
-  const galleryImages = config.images.gallery ?? [];
-  const fallbackImage = config.images.hero;
-  const collageSources = [0, 1, 2].map((index) => galleryImages[index] ?? fallbackImage);
+  const galleryImages = (config.images.gallery ?? []).filter((img) => img && img.trim() !== "");
+  const fallbackImage = config.images.hero || "";
+  const collageSources = [0, 1, 2].map((index) => galleryImages[index] || fallbackImage);
   const pillarGradients = [tokens.gradients.primary, tokens.gradients.accent, tokens.gradients.soft];
 
   return (

@@ -8,14 +8,14 @@ interface HeroProps {
 }
 
 export function Hero({ brandConfig }: HeroProps) {
-  const palette = brandConfig.colorPalette;
+  const colors = brandConfig.colors;
   const heroContent = brandConfig.heroContent;
   const PrimaryIcon = getIconComponent(heroContent.primaryCta.icon);
 
   return (
     <section
       className="relative overflow-hidden px-6 py-12 md:py-16"
-      style={{ backgroundColor: palette.background }}
+      style={{ backgroundColor: colors.background }}
     >
       <div className="mx-auto max-w-7xl">
         <div className="grid items-center gap-12 lg:grid-cols-2">
@@ -24,8 +24,8 @@ export function Hero({ brandConfig }: HeroProps) {
               <div
                 className="mb-6 inline-block rounded-full border px-4 py-1.5"
                 style={{
-                  borderColor: palette.accent,
-                  color: palette.text,
+                  borderColor: colors.accent,
+                  color: colors.text,
                 }}
               >
                 {heroContent.eyebrow}
@@ -35,7 +35,7 @@ export function Hero({ brandConfig }: HeroProps) {
             <h1
               className="mb-6 text-5xl font-bold md:text-6xl"
               style={{
-                color: palette.text,
+                color: colors.text,
                 fontFamily: brandConfig.fonts.heading,
               }}
             >
@@ -44,7 +44,7 @@ export function Hero({ brandConfig }: HeroProps) {
 
             <p
               className="mb-8 max-w-xl text-lg"
-              style={{ color: palette.mutedText }}
+              style={{ color: colors.mutedText }}
             >
               {heroContent.subheadline || brandConfig.brandDescription}
             </p>
@@ -52,8 +52,8 @@ export function Hero({ brandConfig }: HeroProps) {
             <div className="flex flex-wrap items-center gap-4">
               <Button
                 style={{
-                  backgroundColor: palette.primary,
-                  color: palette.primaryForeground,
+                  backgroundColor: colors.primary,
+                  color: colors.white,
                 }}
               >
                 {heroContent.primaryCta.label}
@@ -62,8 +62,8 @@ export function Hero({ brandConfig }: HeroProps) {
               <Button
                 variant="outline"
                 style={{
-                  borderColor: palette.accent,
-                  color: palette.text,
+                  borderColor: colors.accent,
+                  color: colors.text,
                 }}
               >
                 {heroContent.secondaryCta.label}
@@ -72,19 +72,19 @@ export function Hero({ brandConfig }: HeroProps) {
 
             <div
               className="mt-12 grid grid-cols-3 gap-8 border-t pt-8"
-              style={{ borderColor: palette.border }}
+              style={{ borderColor: colors.border }}
             >
               {brandConfig.stats.map((stat) => (
                 <div key={stat.label}>
                   <div
                     className="mb-1 text-2xl font-bold"
-                    style={{ color: palette.text }}
+                    style={{ color: colors.text }}
                   >
                     {stat.value}
                   </div>
                   <div
                     className="text-sm"
-                    style={{ color: palette.mutedText }}
+                    style={{ color: colors.mutedText }}
                   >
                     {stat.label}
                   </div>

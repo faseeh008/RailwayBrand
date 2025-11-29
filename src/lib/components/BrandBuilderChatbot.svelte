@@ -488,9 +488,15 @@
 				// Normalize style to one of the four allowed values
 				const normalizedStyle = normalizeStyle(extractedStyle);
 				if (normalizedStyle) {
-					collectedInfo.style = normalizedStyle;
-					answers['style'] = normalizedStyle;
+					// Only set if it's one of the 4 valid options
+					const validStyles = ['Minimalistic', 'Maximalistic', 'Funky', 'Futuristic'];
+					if (validStyles.includes(normalizedStyle)) {
+						collectedInfo.style = normalizedStyle;
+						answers['style'] = normalizedStyle;
+					}
+					// If normalized but not in valid list, don't set it (will ask user)
 				}
+				// If couldn't normalize, don't set it (will ask user)
 			}
 			if (extractedAudience) {
 				collectedInfo.audience = extractedAudience;
@@ -511,6 +517,9 @@
 			}
 
 			// Generate questions ONLY for missing info
+			// Note: If style was mentioned but couldn't be normalized to one of the 4 valid options,
+			// collectedInfo.style will be undefined, and getEssentialQuestions will add a style question
+			// with the 4 options (Minimalistic, Maximalistic, Funky, Futuristic)
 			const essentialQuestions = getEssentialQuestions({
 				brandName: collectedInfo.brandName,
 				industry: collectedInfo.industry,

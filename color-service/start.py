@@ -12,10 +12,11 @@ if __name__ == "__main__":
     port = int(os.getenv("COLOR_SERVICE_PORT", 8001))
     
     # Run the FastAPI server
+    # reload=False in Docker to prevent restart loops
     uvicorn.run(
         "main:app",
         host="0.0.0.0",
         port=port,
-        reload=True,
+        reload=False,
         log_level="info"
     )

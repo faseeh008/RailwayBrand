@@ -12,11 +12,11 @@ interface HeroProps {
 }
 
 export function Hero({ config, tokens, content }: HeroProps) {
-  const heroImages = [config.images.hero, ...(config.images.gallery ?? [])].filter(Boolean);
+  const heroImages = [config.images.hero, ...(config.images.gallery ?? [])].filter((img) => img && img.trim() !== "");
   const [primaryImage, secondaryImage, tertiaryImage] = [
-    heroImages[0],
-    heroImages[1] ?? heroImages[0],
-    heroImages[2] ?? heroImages[0],
+    heroImages[0] || "",
+    heroImages[1] || heroImages[0] || "",
+    heroImages[2] || heroImages[0] || "",
   ];
   const metrics = content.metrics.length ? content.metrics : config.stats;
   const collageBadgePositions = [

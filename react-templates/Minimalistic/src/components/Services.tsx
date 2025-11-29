@@ -6,25 +6,25 @@ interface ServicesProps {
 }
 
 export function Services({ brandConfig }: ServicesProps) {
-  const palette = brandConfig.colorPalette;
+  const colors = brandConfig.colors;
   const servicesContent = brandConfig.servicesContent;
 
   return (
     <section
       className="px-6 py-20 md:py-24"
-      style={{ backgroundColor: palette.background }}
+      style={{ backgroundColor: colors.background }}
     >
       <div className="mx-auto max-w-7xl">
         <div className="mb-16 text-center">
           <h2
             className="mb-4 text-4xl font-bold"
-            style={{ color: palette.text, fontFamily: brandConfig.fonts.heading }}
+            style={{ color: colors.text, fontFamily: brandConfig.fonts.heading }}
           >
             {servicesContent.title}
           </h2>
           <p
             className="mx-auto max-w-2xl"
-            style={{ color: palette.mutedText }}
+            style={{ color: colors.mutedText }}
           >
             {servicesContent.subtitle}
           </p>
@@ -38,34 +38,34 @@ export function Services({ brandConfig }: ServicesProps) {
                 key={service.title}
                 className="group relative overflow-hidden rounded-2xl border p-8 transition-all hover:shadow-xl"
                 style={{
-                  borderColor: palette.border,
-                  backgroundColor: palette.surface,
+                  borderColor: colors.border,
+                  backgroundColor: colors.surface,
                 }}
               >
                 {Icon && (
                   <div
                     className="mb-4 inline-flex rounded-xl p-3"
-                    style={{ backgroundColor: palette.accent }}
+                    style={{ backgroundColor: colors.accent }}
                   >
                     <Icon
                       className="h-6 w-6"
-                      style={{ color: palette.accentForeground }}
+                      style={{ color: colors.white }}
                     />
                   </div>
                 )}
                 <h3
                   className="mb-3 text-xl font-semibold"
-                  style={{ color: palette.text }}
+                  style={{ color: colors.text }}
                 >
                   {service.title}
                 </h3>
-                <p style={{ color: palette.mutedText }}>
+                <p style={{ color: colors.mutedText }}>
                   {service.description}
                 </p>
 
                 <div
                   className="absolute -bottom-24 -right-24 h-48 w-48 rounded-full opacity-0 blur-3xl transition-opacity group-hover:opacity-10"
-                  style={{ backgroundColor: palette.primary }}
+                  style={{ backgroundColor: colors.primary }}
                 />
               </div>
             );

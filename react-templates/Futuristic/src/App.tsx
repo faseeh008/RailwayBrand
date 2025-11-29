@@ -9,30 +9,43 @@ import { getBrandConfig } from "./shared-brand-config";
 
 export default function App() {
   const brandConfig = getBrandConfig();
-  const palette = brandConfig.colorPalette;
+  const colors = brandConfig.colors;
 
   useEffect(() => {
-    const paletteEntries: Record<string, string | undefined> = {
-      "--brand-primary": palette.primary,
-      "--brand-secondary": palette.secondary,
-      "--brand-accent": palette.accent,
-      "--brand-bg": palette.background,
-      "--brand-text": palette.text,
-      "--brand-muted": palette.muted ?? palette.text,
-      "--brand-border": palette.border ?? palette.text,
-      "--brand-surface": palette.surface ?? palette.background,
+    const colorEntries: Record<string, string | undefined> = {
+      "--brand-primary": colors.primary,
+      "--brand-secondary": colors.secondary,
+      "--brand-accent": colors.accent,
+      "--brand-bg": colors.background,
+      "--brand-text": colors.text,
+      "--brand-white": colors.white,
+      "--brand-black": colors.black,
+      "--brand-muted": colors.muted ?? colors.text,
+      "--brand-border": colors.border ?? colors.text,
+      "--brand-surface": colors.surface ?? colors.background,
+      "--primary": colors.primary,
+      "--primary-foreground": colors.white,
+      "--secondary": colors.secondary,
+      "--secondary-foreground": colors.white,
+      "--accent": colors.accent,
+      "--accent-foreground": colors.white,
+      "--background": colors.background,
+      "--foreground": colors.text,
+      "--text": colors.text,
+      "--overlay": `${colors.black}80`,
+      "--muted-border": colors.border ?? colors.text,
     };
 
-    Object.entries(paletteEntries).forEach(([key, value]) => {
+    Object.entries(colorEntries).forEach(([key, value]) => {
       if (value) {
         document.documentElement.style.setProperty(key, value);
       }
     });
-  }, [palette]);
+  }, [colors]);
 
   const gradientBackground = useMemo(
-    () => `linear-gradient(135deg, ${palette.primary} 0%, ${palette.secondary} 100%)`,
-    [palette.primary, palette.secondary]
+    () => `linear-gradient(135deg, ${colors.primary} 0%, ${colors.secondary} 100%)`,
+    [colors.primary, colors.secondary]
   );
 
   const navLinks = brandConfig.navigation?.links ?? [];
@@ -86,12 +99,12 @@ export default function App() {
     <div
       className="min-h-screen overflow-hidden"
       style={{
-        backgroundColor: palette.background,
-        color: palette.text,
+        backgroundColor: colors.background,
+        color: colors.text,
         fontFamily: brandConfig.fonts.body,
       }}
     >
-      <AnimatedBackground palette={palette} />
+      <AnimatedBackground palette={colors} />
 
       <motion.nav
         initial={{ y: -100 }}
@@ -109,12 +122,12 @@ export default function App() {
                 animate={{ rotate: [0, 360] }}
                 transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
               >
-                <span style={{ color: palette.text, fontFamily: brandConfig.fonts.heading }}>
+                <span style={{ color: colors.text, fontFamily: brandConfig.fonts.heading }}>
                   {brandConfig.brandName.charAt(0)}
                 </span>
               </motion.div>
             )}
-            <span className="text-xl" style={{ color: palette.text }}>
+            <span className="text-xl" style={{ color: colors.text }}>
               {brandConfig.brandName}
             </span>
           </motion.div>
@@ -125,13 +138,13 @@ export default function App() {
                 key={link.href}
                 href={link.href}
                 className="transition-opacity"
-                style={{ color: palette.muted ?? palette.text, opacity: 0.9 }}
+                style={{ color: colors.muted ?? colors.text, opacity: 0.9 }}
               >
                 {link.label}
               </a>
             ))}
             {navCtaLabel ? (
-              <Button style={{ background: gradientBackground, color: palette.text }}>
+              <Button style={{ background: gradientBackground, color: colors.text }}>
                 {navCtaLabel}
               </Button>
             ) : null}
@@ -148,27 +161,27 @@ export default function App() {
               transition={{ delay: 0.2 }}
               className="inline-block px-4 py-2 rounded-full mb-6"
               style={{
-                border: `1px solid ${palette.border ?? palette.accent}`,
-                backgroundColor: palette.surface ?? palette.background,
+                border: `1px solid ${colors.border ?? colors.accent}`,
+                backgroundColor: colors.surface ?? colors.background,
               }}
             >
-              <span style={{ color: palette.primary }}>{heroContent.eyebrow}</span>
+              <span style={{ color: colors.primary }}>{heroContent.eyebrow}</span>
             </motion.div>
 
             <h1
               className="text-5xl md:text-7xl mb-6 font-bold"
-              style={{ fontFamily: brandConfig.fonts.heading, color: palette.text }}
+              style={{ fontFamily: brandConfig.fonts.heading, color: colors.text }}
             >
               {brandConfig.brandName}
             </h1>
 
-            <p className="text-xl mb-8" style={{ color: palette.text, opacity: 0.85 }}>
+            <p className="text-xl mb-8" style={{ color: colors.text, opacity: 0.85 }}>
               {brandConfig.brandDescription}
             </p>
 
             <div className="flex flex-wrap gap-4">
               {heroContent.primaryCta ? (
-                <Button size="lg" style={{ background: gradientBackground, color: palette.text }}>
+                <Button size="lg" style={{ background: gradientBackground, color: colors.text }}>
                   {heroContent.primaryCta}
                 </Button>
               ) : null}
@@ -176,7 +189,7 @@ export default function App() {
                 <Button
                   size="lg"
                   variant="outline"
-                  style={{ borderColor: palette.primary, color: palette.text }}
+                  style={{ borderColor: colors.primary, color: colors.text }}
                 >
                   {heroContent.secondaryCta}
                 </Button>
@@ -191,10 +204,10 @@ export default function App() {
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.4 + idx * 0.1 }}
                 >
-                  <div className="text-3xl font-bold" style={{ color: palette.primary }}>
+                  <div className="text-3xl font-bold" style={{ color: colors.primary }}>
                     {stat.value}
                   </div>
-                  <div className="text-sm" style={{ color: palette.text, opacity: 0.6 }}>
+                  <div className="text-sm" style={{ color: colors.text, opacity: 0.6 }}>
                     {stat.label}
                   </div>
                 </motion.div>
@@ -203,7 +216,7 @@ export default function App() {
           </motion.div>
 
           <motion.div initial={{ opacity: 0, x: 50 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.8 }}>
-            <FuturisticCube palette={palette} />
+            <FuturisticCube palette={colors} />
           </motion.div>
         </div>
 
@@ -212,7 +225,7 @@ export default function App() {
             className="absolute bottom-8 left-1/2 transform -translate-x-1/2 text-sm tracking-wide"
             animate={{ y: [0, 10, 0] }}
             transition={{ duration: 2, repeat: Infinity }}
-            style={{ color: palette.muted ?? palette.text }}
+            style={{ color: colors.muted ?? colors.text }}
           >
             {heroContent.scrollHint}
           </motion.div>
@@ -226,10 +239,10 @@ export default function App() {
           viewport={{ once: true }}
           className="text-center mb-16"
         >
-          <h2 className="text-4xl md:text-5xl mb-4" style={{ color: palette.text }}>
+          <h2 className="text-4xl md:text-5xl mb-4" style={{ color: colors.text }}>
             {featureContent.heading}
           </h2>
-          <p className="text-xl" style={{ color: palette.muted ?? palette.text }}>
+          <p className="text-xl" style={{ color: colors.muted ?? colors.text }}>
             {featureContent.subheading}
           </p>
         </motion.div>
@@ -253,10 +266,10 @@ export default function App() {
               animate={{ rotate: 360 }}
               transition={{ duration: 30, repeat: Infinity, ease: "linear" }}
               className="absolute inset-0 rounded-full blur-3xl"
-              style={{ background: `linear-gradient(135deg, ${palette.primary}33, ${palette.secondary}33)` }}
+              style={{ background: `linear-gradient(135deg, ${colors.primary}33, ${colors.secondary}33)` }}
             />
             <ImageWithFallback
-              src={brandConfig.images.technology || brandConfig.images.hero}
+              src={brandConfig.images.technology || brandConfig.images.hero || ""}
               alt={technologyContent.heading}
               className="relative rounded-2xl shadow-2xl"
             />
@@ -267,23 +280,23 @@ export default function App() {
             whileInView={{ opacity: 1, x: 0 }}
             viewport={{ once: true }}
           >
-            <h2 className="text-4xl md:text-5xl mb-6" style={{ color: palette.text }}>
+            <h2 className="text-4xl md:text-5xl mb-6" style={{ color: colors.text }}>
               {technologyContent.heading}
             </h2>
-            <p className="text-xl mb-6" style={{ color: palette.muted ?? palette.text }}>
+            <p className="text-xl mb-6" style={{ color: colors.muted ?? colors.text }}>
               {technologyContent.description}
             </p>
 
             <div className="space-y-4 mb-8">
               {technologyContent.metrics.map((stat, i) => (
                 <div key={stat.label}>
-                  <div className="flex justify-between mb-2" style={{ color: palette.muted ?? palette.text }}>
+                  <div className="flex justify-between mb-2" style={{ color: colors.muted ?? colors.text }}>
                     <span>{stat.label}</span>
-                    <span style={{ color: palette.primary }}>{stat.value}%</span>
+                    <span style={{ color: colors.primary }}>{stat.value}%</span>
                   </div>
                   <div
                     className="h-2 rounded-full overflow-hidden"
-                    style={{ backgroundColor: palette.border ?? palette.accent }}
+                    style={{ backgroundColor: colors.border ?? colors.accent }}
                   >
                     <motion.div
                       initial={{ width: 0 }}
@@ -299,7 +312,7 @@ export default function App() {
             </div>
 
             {technologyContent.ctaLabel ? (
-              <Button style={{ background: gradientBackground, color: palette.text }}>
+              <Button style={{ background: gradientBackground, color: colors.text }}>
                 {technologyContent.ctaLabel}
               </Button>
             ) : null}
@@ -311,27 +324,27 @@ export default function App() {
         <div
           className="relative rounded-3xl overflow-hidden backdrop-blur-sm p-12 md:p-16"
           style={{
-            border: `1px solid ${palette.border ?? palette.accent}`,
-            background: `linear-gradient(135deg, ${(palette.surface ?? palette.background)} 0%, transparent 70%)`,
+            border: `1px solid ${colors.border ?? colors.accent}`,
+            background: `linear-gradient(135deg, ${(colors.surface ?? colors.background)} 0%, transparent 70%)`,
           }}
         >
           <motion.div
             className="absolute top-0 right-0 w-96 h-96 rounded-full blur-3xl"
             animate={{ scale: [1, 1.2, 1], opacity: [0.3, 0.5, 0.3] }}
             transition={{ duration: 8, repeat: Infinity }}
-            style={{ background: `linear-gradient(135deg, ${palette.primary}33, ${palette.secondary}33)` }}
+            style={{ background: `linear-gradient(135deg, ${colors.primary}33, ${colors.secondary}33)` }}
           />
 
           <div className="relative z-10 grid md:grid-cols-2 gap-12 items-center">
             <div>
-              <h2 className="text-4xl md:text-5xl mb-6" style={{ color: palette.text }}>
+              <h2 className="text-4xl md:text-5xl mb-6" style={{ color: colors.text }}>
                 {innovationContent.heading}
               </h2>
-              <p className="text-xl mb-8" style={{ color: palette.muted ?? palette.text }}>
+              <p className="text-xl mb-8" style={{ color: colors.muted ?? colors.text }}>
                 {innovationContent.description}
               </p>
               {innovationContent.ctaLabel ? (
-                <Button size="lg" style={{ backgroundColor: palette.text, color: palette.background }}>
+                <Button size="lg" style={{ backgroundColor: colors.text, color: colors.background }}>
                   {innovationContent.ctaLabel}
                 </Button>
               ) : null}
@@ -344,7 +357,7 @@ export default function App() {
               className="relative"
             >
               <ImageWithFallback
-                src={brandConfig.images.innovation || brandConfig.images.hero}
+                src={brandConfig.images.innovation || brandConfig.images.hero || ""}
                 alt={innovationContent.heading}
                 className="rounded-2xl shadow-2xl"
               />
@@ -360,16 +373,16 @@ export default function App() {
           viewport={{ once: true }}
           className="text-center"
         >
-          <h2 className="text-4xl md:text-6xl mb-6" style={{ color: palette.text }}>
+          <h2 className="text-4xl md:text-6xl mb-6" style={{ color: colors.text }}>
             {ctaContent.heading}
           </h2>
-          <p className="text-xl mb-12 max-w-2xl mx-auto" style={{ color: palette.muted ?? palette.text }}>
+          <p className="text-xl mb-12 max-w-2xl mx-auto" style={{ color: colors.muted ?? colors.text }}>
             {ctaContent.description}
           </p>
 
           <div className="flex flex-wrap gap-4 justify-center">
             {ctaContent.primaryCta ? (
-              <Button size="lg" style={{ background: gradientBackground, color: palette.text }}>
+              <Button size="lg" style={{ background: gradientBackground, color: colors.text }}>
                 {ctaContent.primaryCta}
               </Button>
             ) : null}
@@ -378,7 +391,7 @@ export default function App() {
               <Button
                 size="lg"
                 variant="outline"
-                style={{ borderColor: palette.primary, color: palette.text }}
+                style={{ borderColor: colors.primary, color: colors.text }}
               >
                 {ctaContent.secondaryCta}
               </Button>
@@ -392,7 +405,7 @@ export default function App() {
               viewport={{ once: true }}
               transition={{ delay: 0.3 }}
               className="mt-16 flex flex-wrap justify-center gap-8 items-center"
-              style={{ color: palette.muted ?? palette.text, opacity: 0.8 }}
+              style={{ color: colors.muted ?? colors.text, opacity: 0.8 }}
             >
               <span>{ctaContent.trustMessage}</span>
             </motion.div>
@@ -400,30 +413,30 @@ export default function App() {
         </motion.div>
       </section>
 
-      <footer className="relative py-12" style={{ borderTop: `1px solid ${palette.border ?? palette.accent}` }}>
+      <footer className="relative py-12" style={{ borderTop: `1px solid ${colors.border ?? colors.accent}` }}>
         <div className="container mx-auto px-6">
           <div className="grid md:grid-cols-4 gap-8 mb-8">
             <div>
               <div className="flex items-center gap-2 mb-4">
                 <div
                   className="w-8 h-8 rounded-lg flex items-center justify-center"
-                  style={{ background: gradientBackground, color: palette.text }}
+                  style={{ background: gradientBackground, color: colors.text }}
                 >
                   {brandConfig.brandName.charAt(0)}
                 </div>
-                <span style={{ color: palette.text }}>{brandConfig.brandName}</span>
+                <span style={{ color: colors.text }}>{brandConfig.brandName}</span>
               </div>
-              <p className="text-sm" style={{ color: palette.muted ?? palette.text }}>
+              <p className="text-sm" style={{ color: colors.muted ?? colors.text }}>
                 {footerContent.description}
               </p>
             </div>
 
             {footerContent.columns.map((column) => (
               <div key={column.title}>
-                <div className="mb-4" style={{ color: palette.text }}>
+                <div className="mb-4" style={{ color: colors.text }}>
                   {column.title}
                 </div>
-                <div className="space-y-2 text-sm" style={{ color: palette.muted ?? palette.text }}>
+                <div className="space-y-2 text-sm" style={{ color: colors.muted ?? colors.text }}>
                   {column.links.map((link) => (
                     <div key={link}>{link}</div>
                   ))}
@@ -434,7 +447,7 @@ export default function App() {
 
           <div
             className="pt-8 text-center text-sm"
-            style={{ borderTop: `1px solid ${palette.border ?? palette.accent}`, color: palette.muted ?? palette.text }}
+            style={{ borderTop: `1px solid ${colors.border ?? colors.accent}`, color: colors.muted ?? colors.text }}
           >
             {footerContent.copyright}
           </div>

@@ -40,6 +40,12 @@
 
 			const guideline = result.guideline;
 			
+			// Remove large base64 logo from API response if present
+			// Logo will be fetched from database when needed on preview page
+			if (result.logo && typeof result.logo === 'string' && result.logo.length > 10000) {
+				// Don't include in previewData - will be fetched from DB
+			}
+			
 			// Transform to preview_brand_data format
 			const previewData: any = {
 				brandName: guideline.brandName,
@@ -61,12 +67,13 @@
 						typeof guideline.structuredData === 'string'
 							? JSON.parse(guideline.structuredData)
 							: guideline.structuredData;
+					// Keep FULL structuredData including all base64 logos - no sanitization
 				} catch (e) {
 					console.warn('⚠️ Failed to parse guideline.structuredData:', e);
 				}
 			}
 
-			// Parse JSON fields
+			// Parse JSON fields - keep FULL base64 data
 			if (guideline.logoFiles) {
 				try {
 					previewData.logoFiles = typeof guideline.logoFiles === 'string' 
@@ -126,8 +133,12 @@
 				previewData.brandColors = structuredData.brandColors;
 			}
 
-			// Store in sessionStorage
-			sessionStorage.setItem('preview_brand_data', JSON.stringify(previewData));
+			// Store in IndexedDB - save FULL data including base64 logos (no quota issues!)
+			const jsonString = JSON.stringify(previewData);
+			const { saveLargeDataAsync } = await import('$lib/services/storage-utils-async');
+			await saveLargeDataAsync('preview_brand_data', jsonString);
+			
+			// Also save small metadata to sessionStorage for quick access
 			sessionStorage.setItem('preview_brand_saved', 'true');
 			sessionStorage.setItem('current_guideline_id', guideline.id);
 

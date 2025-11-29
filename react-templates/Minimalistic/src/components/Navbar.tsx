@@ -9,7 +9,7 @@ interface NavbarProps {
 
 export function Navbar({ brandConfig }: NavbarProps) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const palette = brandConfig.colorPalette;
+  const colors = brandConfig.colors;
 
   const { MenuIcon, CloseIcon } = useMemo(() => {
     return {
@@ -19,7 +19,7 @@ export function Navbar({ brandConfig }: NavbarProps) {
   }, [brandConfig.navigation.closeIcon, brandConfig.navigation.menuIcon]);
 
   const navLinkStyle = {
-    color: palette.text,
+    color: colors.text,
     opacity: 0.75,
   };
 
@@ -27,8 +27,8 @@ export function Navbar({ brandConfig }: NavbarProps) {
     <nav
       className="sticky top-0 z-50 backdrop-blur-lg"
       style={{
-        borderBottom: `1px solid ${palette.border}`,
-        backgroundColor: palette.surface,
+        borderBottom: `1px solid ${colors.border}`,
+        backgroundColor: colors.surface,
       }}
     >
       <div className="mx-auto max-w-7xl px-6 py-4">
@@ -43,16 +43,16 @@ export function Navbar({ brandConfig }: NavbarProps) {
             ) : (
               <div
                 className="flex h-9 w-9 items-center justify-center rounded-lg"
-                style={{ backgroundColor: palette.primary }}
+                style={{ backgroundColor: colors.primary }}
               >
-                <span style={{ color: palette.primaryForeground }}>
+                <span style={{ color: colors.white }}>
                   {brandConfig.brandName[0]}
                 </span>
               </div>
             )}
             <span
               className="font-medium"
-              style={{ color: palette.text }}
+              style={{ color: colors.text }}
             >
               {brandConfig.brandName}
             </span>
@@ -74,14 +74,14 @@ export function Navbar({ brandConfig }: NavbarProps) {
           <div className="hidden items-center gap-4 md:flex">
             <Button
               variant="ghost"
-              style={{ color: palette.text }}
+              style={{ color: colors.text }}
             >
               {brandConfig.navigation.cartLabel}
             </Button>
             <Button
               style={{
-                backgroundColor: palette.primary,
-                color: palette.primaryForeground,
+                backgroundColor: colors.primary,
+                color: colors.white,
               }}
             >
               {brandConfig.navigation.primaryCtaLabel}
@@ -91,7 +91,7 @@ export function Navbar({ brandConfig }: NavbarProps) {
           <button
             className="md:hidden"
             onClick={() => setIsMenuOpen((prev) => !prev)}
-            style={{ color: palette.text }}
+            style={{ color: colors.text }}
             aria-label="Toggle navigation menu"
           >
             {isMenuOpen ? (
@@ -105,7 +105,7 @@ export function Navbar({ brandConfig }: NavbarProps) {
         {isMenuOpen && (
           <div
             className="mt-4 flex flex-col gap-4 border-t pt-4 md:hidden"
-            style={{ borderColor: palette.border }}
+            style={{ borderColor: colors.border }}
           >
             {brandConfig.navigation.links.map((link) => (
               <a
@@ -120,8 +120,8 @@ export function Navbar({ brandConfig }: NavbarProps) {
             <div className="flex flex-col gap-2 pt-2">
               <Button
                 style={{
-                  backgroundColor: palette.primary,
-                  color: palette.primaryForeground,
+                  backgroundColor: colors.primary,
+                  color: colors.white,
                 }}
               >
                 {brandConfig.navigation.mobileCtaLabel}

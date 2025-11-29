@@ -9,15 +9,15 @@ interface HeroSectionProps {
 }
 
 export function HeroSection({ brandConfig }: HeroSectionProps) {
-  const { colorPalette, logoUrl, brandName, brandDescription, images, features } = brandConfig;
+  const { colors, logoUrl, brandName, brandDescription, images, features } = brandConfig;
   
   // Create gradient strings from brand colors
-  const gradient1 = `linear-gradient(to bottom right, ${colorPalette.secondary}, ${colorPalette.primary})`;
-  const gradient2 = `linear-gradient(to bottom right, ${colorPalette.accent}, ${colorPalette.secondary})`;
-  const heroGradient = `linear-gradient(to right, ${colorPalette.primary}, ${colorPalette.secondary})`;
-  const textGradient1 = `linear-gradient(to right, ${colorPalette.primary}, ${colorPalette.secondary}, ${colorPalette.accent})`;
-  const textGradient2 = `linear-gradient(to right, ${colorPalette.accent}, ${colorPalette.secondary}, ${colorPalette.primary})`;
-  const imageGradient = `linear-gradient(to right, ${colorPalette.primary}, ${colorPalette.secondary}, ${colorPalette.accent})`;
+  const gradient1 = `linear-gradient(to bottom right, ${colors.secondary}, ${colors.primary})`;
+  const gradient2 = `linear-gradient(to bottom right, ${colors.accent}, ${colors.secondary})`;
+  const heroGradient = `linear-gradient(to right, ${colors.primary}, ${colors.secondary})`;
+  const textGradient1 = `linear-gradient(to right, ${colors.primary}, ${colors.secondary}, ${colors.accent})`;
+  const textGradient2 = `linear-gradient(to right, ${colors.accent}, ${colors.secondary}, ${colors.primary})`;
+  const imageGradient = `linear-gradient(to right, ${colors.primary}, ${colors.secondary}, ${colors.accent})`;
 
   return (
     <section className="relative min-h-screen overflow-hidden">
@@ -53,9 +53,9 @@ export function HeroSection({ brandConfig }: HeroSectionProps) {
           {logoUrl ? (
             <img src={logoUrl} alt={brandName} className="h-8 w-auto" />
           ) : (
-            <Sparkles className="w-8 h-8" style={{ color: colorPalette.primary }} />
+            <Sparkles className="w-8 h-8" style={{ color: colors.primary }} />
           )}
-          <span className="tracking-wider font-bold" style={{ color: colorPalette.primary }}>
+          <span className="tracking-wider font-bold" style={{ color: colors.primary }}>
             {brandName}
           </span>
         </div>
@@ -66,10 +66,10 @@ export function HeroSection({ brandConfig }: HeroSectionProps) {
               href="#"
               className="transition-colors"
               style={{ 
-                color: colorPalette.text,
+                color: colors.text,
               }}
-              onMouseEnter={(e) => e.currentTarget.style.color = colorPalette.primary}
-              onMouseLeave={(e) => e.currentTarget.style.color = colorPalette.text}
+              onMouseEnter={(e) => e.currentTarget.style.color = colors.primary}
+              onMouseLeave={(e) => e.currentTarget.style.color = colors.text}
             >
               {feature.title}
             </a>
@@ -78,16 +78,16 @@ export function HeroSection({ brandConfig }: HeroSectionProps) {
         <Button
           variant="outline"
           style={{
-            borderColor: colorPalette.primary,
-            color: colorPalette.primary,
+            borderColor: colors.primary,
+            color: colors.primary,
           }}
           onMouseEnter={(e) => {
-            e.currentTarget.style.backgroundColor = colorPalette.primary;
-            e.currentTarget.style.color = '#ffffff';
+            e.currentTarget.style.backgroundColor = colors.primary;
+            e.currentTarget.style.color = colors.white;
           }}
           onMouseLeave={(e) => {
             e.currentTarget.style.backgroundColor = 'transparent';
-            e.currentTarget.style.color = colorPalette.primary;
+            e.currentTarget.style.color = colors.primary;
           }}
         >
           Shop Now
@@ -106,12 +106,13 @@ export function HeroSection({ brandConfig }: HeroSectionProps) {
             initial={{ opacity: 0, scale: 0.8 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ delay: 0.2 }}
-            className="inline-block px-4 py-2 text-white rounded-full"
+            className="inline-block px-4 py-2 rounded-full"
+            style={{ color: colors.white }}
             style={{ background: heroGradient }}
           >
             {brandConfig.industry} Collection 2024
           </motion.div>
-          <h1 className="text-6xl md:text-8xl leading-tight" style={{ color: colorPalette.text }}>
+          <h1 className="text-6xl md:text-8xl leading-tight" style={{ color: colors.text }}>
             <span
               className="bg-clip-text text-transparent"
               style={{
@@ -123,7 +124,7 @@ export function HeroSection({ brandConfig }: HeroSectionProps) {
               {features[0]?.title || "BOLD."}
             </span>
             <br />
-            <span style={{ color: colorPalette.text }}>{brandName}</span>
+            <span style={{ color: colors.text }}>{brandName}</span>
             <br />
             <span
               className="bg-clip-text text-transparent"
@@ -136,14 +137,14 @@ export function HeroSection({ brandConfig }: HeroSectionProps) {
               {features[1]?.title || "FEARLESS."}
             </span>
           </h1>
-          <p className="max-w-md" style={{ color: colorPalette.text, opacity: 0.7 }}>
+          <p className="max-w-md" style={{ color: colors.text, opacity: 0.7 }}>
             {brandDescription}
           </p>
           <div className="flex gap-4">
             <Button
               style={{
                 background: heroGradient,
-                color: '#ffffff',
+                color: colors.white,
               }}
               onMouseEnter={(e) => {
                 e.currentTarget.style.opacity = '0.9';
@@ -154,7 +155,7 @@ export function HeroSection({ brandConfig }: HeroSectionProps) {
             >
               Explore Collection <ArrowRight className="ml-2 w-4 h-4" />
             </Button>
-            <Button variant="outline" style={{ borderColor: colorPalette.primary, color: colorPalette.primary }}>
+            <Button variant="outline" style={{ borderColor: colors.primary, color: colors.primary }}>
               Watch Video
             </Button>
           </div>
@@ -176,7 +177,7 @@ export function HeroSection({ brandConfig }: HeroSectionProps) {
               style={{ background: imageGradient }}
             />
             <ImageWithFallback
-              src={images.hero || "https://images.unsplash.com/photo-1685432531593-1afc8a152e5f?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxmYXNoaW9uJTIwbW9kZWwlMjBydW53YXl8ZW58MXx8fHwxNzYzNzEzNjM1fDA&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral"}
+              src={images.hero || ""}
               alt={brandName}
               className="relative rounded-3xl shadow-2xl w-full h-[600px] object-cover"
             />
@@ -188,17 +189,18 @@ export function HeroSection({ brandConfig }: HeroSectionProps) {
               key={index}
               animate={{ y: [0, index === 0 ? -10 : 10, 0] }}
               transition={{ duration: 3 + index * 1, repeat: Infinity, delay: index * 0.5 }}
-              className="absolute bg-white px-6 py-3 rounded-full shadow-xl"
+              className="absolute px-6 py-3 rounded-full shadow-xl"
+              style={{ backgroundColor: colors.white }}
               style={{
                 top: index === 0 ? '2.5rem' : 'auto',
                 bottom: index === 1 ? '5rem' : 'auto',
                 left: index === 0 ? '-1.5rem' : 'auto',
                 right: index === 1 ? '-1.5rem' : 'auto',
                 borderWidth: '2px',
-                borderColor: index === 0 ? colorPalette.primary + '40' : colorPalette.secondary + '40',
+                borderColor: index === 0 ? colors.primary + '40' : colors.secondary + '40',
               }}
             >
-              <span style={{ color: index === 0 ? colorPalette.primary : colorPalette.secondary }}>
+              <span style={{ color: index === 0 ? colors.primary : colors.secondary }}>
                 {index === 0 ? '✨ ' : '🔥 '}{feature.title}
               </span>
             </motion.div>

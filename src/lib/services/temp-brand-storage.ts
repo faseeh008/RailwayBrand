@@ -6,6 +6,7 @@
  */
 
 import { browser } from '$app/environment';
+import { saveLargeDataAsync, loadLargeDataAsync } from './storage-utils-async';
 
 export interface TempBrandData {
 	userInput: Record<string, any>;
@@ -31,9 +32,10 @@ const STORAGE_KEY = 'temp_brand_data';
 const EXPIRY_TIME = 24 * 60 * 60 * 1000; // 24 hours
 
 /**
- * Save brand data to sessionStorage
+ * Save brand data to IndexedDB (no quota issues!)
+ * No sanitization - save full data including large base64 logos
  */
-export function saveTempBrandData(data: Omit<TempBrandData, 'timestamp'>): boolean {
+export async function saveTempBrandData(data: Omit<TempBrandData, 'timestamp'>): Promise<boolean> {
 	if (!browser) return false;
 
 	try {
@@ -42,29 +44,29 @@ export function saveTempBrandData(data: Omit<TempBrandData, 'timestamp'>): boole
 			timestamp: Date.now()
 		};
 
-		sessionStorage.setItem(STORAGE_KEY, JSON.stringify(tempData));
-		return true;
-	} catch (error) {
+		const jsonString = JSON.stringify(tempData);
+		return await saveLargeDataAsync(STORAGE_KEY, jsonString);
+	} catch (error: any) {
 		console.error('Failed to save temp brand data:', error);
 		return false;
 	}
 }
 
 /**
- * Load brand data from sessionStorage
+ * Load brand data from IndexedDB (async)
  */
-export function loadTempBrandData(): TempBrandData | null {
+export async function loadTempBrandData(): Promise<TempBrandData | null> {
 	if (!browser) return null;
 
 	try {
-		const stored = sessionStorage.getItem(STORAGE_KEY);
+		const stored = await loadLargeDataAsync(STORAGE_KEY);
 		if (!stored) return null;
 
 		const data: TempBrandData = JSON.parse(stored);
 
 		// Check if data has expired
 		if (Date.now() - data.timestamp > EXPIRY_TIME) {
-			clearTempBrandData();
+			await clearTempBrandData();
 			return null;
 		}
 
@@ -78,15 +80,15 @@ export function loadTempBrandData(): TempBrandData | null {
 /**
  * Update build data in stored brand data
  */
-export function updateBuildData(buildData: TempBrandData['buildData']): boolean {
+export async function updateBuildData(buildData: TempBrandData['buildData']): Promise<boolean> {
 	if (!browser) return false;
 
 	try {
-		const existing = loadTempBrandData();
+		const existing = await loadTempBrandData();
 		if (!existing) return false;
 
 		existing.buildData = buildData;
-		return saveTempBrandData(existing);
+		return await saveTempBrandData(existing);
 	} catch (error) {
 		console.error('Failed to update build data:', error);
 		return false;
@@ -94,37 +96,55 @@ export function updateBuildData(buildData: TempBrandData['buildData']): boolean 
 }
 
 /**
- * Clear temporary brand data
+ * Clear temporary brand data (from IndexedDB and sessionStorage)
  */
-export function clearTempBrandData(): void {
+export async function clearTempBrandData(): Promise<void> {
 	if (!browser) return;
+	
+	// Clear sessionStorage
 	sessionStorage.removeItem(STORAGE_KEY);
+	
+	// Clear from IndexedDB
+	try {
+		const { getDB } = await import('./storage-utils-async');
+		const db = await getDB();
+		const transaction = db.transaction(['largeData'], 'readwrite');
+		const store = transaction.objectStore('largeData');
+		await new Promise<void>((resolve, reject) => {
+			const request = store.delete(STORAGE_KEY);
+			request.onsuccess = () => resolve();
+			request.onerror = () => reject(request.error);
+		});
+	} catch (error) {
+		console.error('Failed to clear from IndexedDB:', error);
+	}
 }
 
 /**
  * Check if temp brand data exists and is valid
  */
-export function hasTempBrandData(): boolean {
+export async function hasTempBrandData(): Promise<boolean> {
 	if (!browser) return false;
-	return loadTempBrandData() !== null;
+	const data = await loadTempBrandData();
+	return data !== null;
 }
 
 /**
  * Get selected theme from stored data
  */
-export function getSelectedTheme(): TempBrandData['selectedTheme'] | null {
-	const data = loadTempBrandData();
+export async function getSelectedTheme(): Promise<TempBrandData['selectedTheme'] | null> {
+	const data = await loadTempBrandData();
 	return data?.selectedTheme || null;
 }
 
 /**
  * Merge additional data into existing temp brand data
  */
-export function mergeTempBrandData(additionalData: Partial<TempBrandData>): boolean {
+export async function mergeTempBrandData(additionalData: Partial<TempBrandData>): Promise<boolean> {
 	if (!browser) return false;
 
 	try {
-		const existing = loadTempBrandData();
+		const existing = await loadTempBrandData();
 		if (!existing) {
 			// If no existing data, create new entry
 			const newData: Omit<TempBrandData, 'timestamp'> = {
@@ -134,7 +154,7 @@ export function mergeTempBrandData(additionalData: Partial<TempBrandData>): bool
 				slides: additionalData.slides || [],
 				buildData: additionalData.buildData
 			};
-			return saveTempBrandData(newData);
+			return await saveTempBrandData(newData);
 		}
 
 		// Merge with existing data
@@ -146,7 +166,7 @@ export function mergeTempBrandData(additionalData: Partial<TempBrandData>): bool
 			buildData: { ...existing.buildData, ...(additionalData.buildData || {}) }
 		};
 
-		return saveTempBrandData(merged);
+		return await saveTempBrandData(merged);
 	} catch (error) {
 		console.error('Failed to merge temp brand data:', error);
 		return false;
@@ -156,10 +176,10 @@ export function mergeTempBrandData(additionalData: Partial<TempBrandData>): bool
 /**
  * Remove stored mock webpage build data but keep other cached fields intact
  */
-export function clearStoredBuildData(): boolean {
+export async function clearStoredBuildData(): Promise<boolean> {
 	if (!browser) return false;
 
-	const existing = loadTempBrandData();
+	const existing = await loadTempBrandData();
 	if (!existing) return false;
 
 	// Create a clean copy without buildData
@@ -167,6 +187,6 @@ export function clearStoredBuildData(): boolean {
 	
 	// Save back without timestamp (saveTempBrandData will add a new one)
 	const { timestamp, ...dataToSave } = cleanData;
-	return saveTempBrandData(dataToSave as Omit<TempBrandData, 'timestamp'>);
+	return await saveTempBrandData(dataToSave as Omit<TempBrandData, 'timestamp'>);
 }
 

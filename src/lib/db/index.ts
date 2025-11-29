@@ -24,6 +24,5 @@ export {
 	complianceIssues,
 	auditSessions,
 	brandBuilderChats,
-	brandLogos,
 	mockWebpages
 } from './schema.js';

@@ -1,4 +1,4 @@
-// logoAssets table has been removed - logos are now stored in brandLogos table
+// logoAssets table has been removed - logos are now stored in brandGuidelines table
 // This function now converts buffer to base64 data URL for direct use
 
 type SaveLogoAssetParams = {

@@ -26,8 +26,8 @@ export interface BrandTokens {
 }
 
 export const buildBrandTokens = (config: BrandConfig): BrandTokens => {
-  const { colorPalette } = config;
-  const { primary, secondary, accent, background, text } = colorPalette;
+  const { colors } = config;
+  const { primary, secondary, accent, background, text } = colors;
 
   const surface = mixColors(background, primary, 0.08);
   const surfaceAlt = mixColors(background, secondary, 0.12);
