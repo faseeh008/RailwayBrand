@@ -46,6 +46,7 @@ export let onDownloadMockWebpage: (() => void | Promise<void>) | null = null;
 export let onDeleteMockWebpage: (() => void | Promise<void>) | null = null;
 export let isBuildingMockWebpage = false;
 export let hasMockWebpage = false;
+export let buildStepMessage = '';
   
   // Component refs
 let coverSlideRef: CoverSlide;
@@ -2152,20 +2153,27 @@ $: colorSignature = JSON.stringify({
 
         {#if onBuildMockWebpage}
           {#if !hasMockWebpage}
-            <button
-              class="btn large btn-build"
-              class:loading={isBuildingMockWebpage}
-              disabled={isBuildingMockWebpage}
-              onclick={() => onBuildMockWebpage?.()}
-            >
-              {#if isBuildingMockWebpage}
-                <Loader2 class="h-4 w-4 animate-spin" />
-                Building Mock Webpage...
-              {:else}
-                <Globe class="h-4 w-4" />
-                Build Mock Webpage
+            <div class="flex flex-col items-end gap-2">
+              {#if buildStepMessage}
+                <p class="text-sm text-muted-foreground">
+                  {buildStepMessage}
+                </p>
               {/if}
-            </button>
+              <button
+                class="btn large btn-build"
+                class:loading={isBuildingMockWebpage}
+                disabled={isBuildingMockWebpage}
+                onclick={() => onBuildMockWebpage?.()}
+              >
+                {#if isBuildingMockWebpage}
+                  <Loader2 class="h-4 w-4 animate-spin" />
+                  Building Mock Webpage...
+                {:else}
+                  <Globe class="h-4 w-4" />
+                  Build Mock Webpage
+                {/if}
+              </button>
+            </div>
           {:else}
             {#if onVisitMockWebpage}
               <button

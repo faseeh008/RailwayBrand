@@ -303,10 +303,15 @@ function getDefaultContent(brandName: string, industry: string) {
 export async function buildFuturistic(sessionData: BrandSessionData): Promise<string> {
 	console.log('[buildFuturistic] Starting build with data:', sessionData);
 	
-	// Step 1: Fetch images based on industry
-	console.log('[buildFuturistic] Fetching images for industry:', sessionData.brand_industry);
+	// Step 1: Fetch images based on industry (priority 1) and brand name (priority 2)
+	console.log('[buildFuturistic] Fetching images for industry:', sessionData.brand_industry, 'brand:', sessionData.brand_name);
 	await sleep(3000);
-	const images = await fetchIndustryImages(sessionData.brand_industry);
+	const images = await fetchIndustryImages(sessionData.brand_industry, sessionData.brand_name);
+	console.log('[buildFuturistic] Images fetched:', {
+		hero: images.hero ? `data URL (${images.hero.substring(0, 50)}...)` : 'MISSING',
+		gallery: images.gallery ? `${images.gallery.length} images` : 'MISSING',
+		galleryDetails: images.gallery?.map((img, i) => `Image ${i + 1}: ${img ? img.substring(0, 50) + '...' : 'MISSING'}`)
+	});
 	
 	// Step 2: Use colors directly from session data (no fallbacks)
 	const primaryColor = sessionData.colors.primary || '';
@@ -409,7 +414,14 @@ export async function buildFuturistic(sessionData: BrandSessionData): Promise<st
 		}
 	};
 	
-	console.log('[buildFuturistic] Brand config prepared with generated content and 3D elements:', brandConfig);
+	console.log('[buildFuturistic] Brand config prepared with generated content and 3D elements');
+	console.log('[buildFuturistic] Images in brand config:', {
+		hero: brandConfig.images.hero ? `data URL (${brandConfig.images.hero.substring(0, 50)}...)` : 'MISSING',
+		galleryCount: brandConfig.images.gallery?.length || 0,
+		technology: brandConfig.images.technology ? `data URL (${brandConfig.images.technology.substring(0, 50)}...)` : 'MISSING',
+		innovation: brandConfig.images.innovation ? `data URL (${brandConfig.images.innovation.substring(0, 50)}...)` : 'MISSING',
+		gallery: brandConfig.images.gallery?.map((img, i) => `[${i}]: ${img ? img.substring(0, 30) + '...' : 'MISSING'}`)
+	});
 	await sleep(3000);
 	
 	// Step 5: Read the template index.html

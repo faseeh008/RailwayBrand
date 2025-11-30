@@ -868,7 +868,10 @@ async function fetchMockPageFromDatabase(guidelineId?: string, brandName?: strin
 		// Note: This endpoint may not exist, silently fail if 404
 		const response = await fetch(`/api/mockpagebuilder?${params.toString()}`);
 		if (!response.ok) {
-			if (response.status === 404) return; // Endpoint doesn't exist, that's okay
+			if (response.status === 404) {
+				// Endpoint doesn't exist, that's okay - just return silently
+				return;
+			}
 			throw new Error('Failed to fetch mock webpage');
 		}
 
@@ -888,7 +891,11 @@ async function fetchMockPageFromDatabase(guidelineId?: string, brandName?: strin
 			});
 		}
 	} catch (err) {
-		console.error('Failed to fetch mock webpage from database:', err);
+		// Silently handle errors - this endpoint is optional
+		// Only log if it's not a 404 (which is expected)
+		if (err instanceof Error && !err.message.includes('404')) {
+			console.error('Failed to fetch mock webpage from database:', err);
+		}
 	}
 }
 
@@ -924,6 +931,20 @@ async function fetchMockPageFromDatabase(guidelineId?: string, brandName?: strin
 	}
 
 async function handleDeleteMockWebpage() {
+	// Update state immediately for reactive UI update
+	webpageBuildComplete = false;
+	mockPageBuild = null;
+	buildStepMessage = '';
+
+	if (mockPageBlobUrl) {
+		URL.revokeObjectURL(mockPageBlobUrl);
+		mockPageBlobUrl = null;
+	}
+
+	// Clear stored build data
+	await clearStoredBuildData();
+
+	// Try to delete from API (if endpoint exists)
 	const params = new URLSearchParams();
 	if (brandData?.guidelineId) {
 		params.set('brandGuidelinesId', brandData.guidelineId);
@@ -937,27 +958,20 @@ async function handleDeleteMockWebpage() {
 			const response = await fetch(`/api/mockpagebuilder?${params.toString()}`, {
 				method: 'DELETE'
 			});
-			if (response.status === 404) return; // Endpoint doesn't exist, that's okay
+			// Silently handle 404 - endpoint doesn't exist, that's okay
+			if (response.status === 404) {
+				console.log('[handleDeleteMockWebpage] Delete endpoint not found (404) - state cleared locally');
+			} else if (!response.ok) {
+				console.warn('[handleDeleteMockWebpage] Delete request failed:', response.status);
+			}
 		}
 	} catch (err) {
-		console.error('Failed to delete mock webpage:', err);
+		// Silently handle errors - state is already cleared locally
+		console.log('[handleDeleteMockWebpage] Delete request error (non-critical):', err);
 	}
 
-	webpageBuildComplete = false;
-	mockPageBuild = null;
-	buildStepMessage = '';
-
-	if (mockPageBlobUrl) {
-		URL.revokeObjectURL(mockPageBlobUrl);
-		mockPageBlobUrl = null;
-	}
-
-	await clearStoredBuildData();
-
-	// Refresh UI state after deletion so the Visit button resets
-	if (typeof window !== 'undefined') {
-		window.location.reload();
-	}
+	// State is already updated above, UI will reactively update
+	console.log('[handleDeleteMockWebpage] Mock webpage deleted, state cleared');
 }
 </script>
 
@@ -994,12 +1008,8 @@ async function handleDeleteMockWebpage() {
 					onDeleteMockWebpage={handleDeleteMockWebpage}
 					isBuildingMockWebpage={isBuildingMockWebpage}
 					hasMockWebpage={webpageBuildComplete}
+					{buildStepMessage}
 				/>
-				{#if isBuildingMockWebpage || buildStepMessage}
-					<p class="mt-2 text-sm text-muted-foreground text-center">
-						{buildStepMessage}
-					</p>
-				{/if}
 			{:else}
 				<div
 					class="rounded-xl border border-dashed border-amber-200 bg-white/70 p-8 text-center text-gray-500 shadow-sm"
