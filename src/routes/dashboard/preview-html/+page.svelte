@@ -591,15 +591,16 @@ onMount(async () => {
 			}
 		}
 
-		if (stored.buildData?.html) {
+		// Priority 1: Try to load from database first (persistent storage)
+		if (brandData?.guidelineId) {
+			await fetchMockPageFromDatabase(brandData.guidelineId);
+		}
+		
+		// Priority 2: Fallback to stored build data (temporary storage)
+		if (!webpageBuildComplete && stored.buildData?.html) {
 			mockPageBuild = stored.buildData as MockBuildResult;
 			webpageBuildComplete = true;
 			setMockPageBlob(mockPageBuild.html);
-		} else if (brandData?.guidelineId || brandData?.brandName || brandData?.brand_name) {
-			await fetchMockPageFromDatabase(
-				brandData?.guidelineId,
-				brandData?.brandName || brandData?.brand_name
-			);
 		}
 	} catch (e: any) {
 		error = e?.message || 'Failed to load preview data.';
@@ -856,46 +857,54 @@ async function fetchLogoFromDatabase(guidelineId: string) {
 }
 
 async function fetchMockPageFromDatabase(guidelineId?: string, brandName?: string) {
-	if (!guidelineId && !brandName) return;
-	const params = new URLSearchParams();
-	if (guidelineId) {
-		params.set('brandGuidelinesId', guidelineId);
-	} else if (brandName) {
-		params.set('brandName', brandName);
-	}
+	if (!guidelineId) return;
 
 	try {
-		// Note: This endpoint may not exist, silently fail if 404
-		const response = await fetch(`/api/mockpagebuilder?${params.toString()}`);
+		// Fetch from brand-guidelines table
+		const response = await fetch(`/api/brand-guidelines/${guidelineId}`);
 		if (!response.ok) {
 			if (response.status === 404) {
-				// Endpoint doesn't exist, that's okay - just return silently
+				console.log('[fetchMockPageFromDatabase] Brand guideline not found');
 				return;
 			}
-			throw new Error('Failed to fetch mock webpage');
+			throw new Error('Failed to fetch brand guideline');
 		}
 
 		const result = await response.json();
-		if (result?.success && result.page?.htmlContent) {
-			mockPageBuild = {
-				theme: result.page.theme,
-				html: result.page.htmlContent,
-				brandConfig: result.page.brandConfig
-			};
-			setMockPageBlob(result.page.htmlContent);
-			webpageBuildComplete = true;
+		if (result?.success && result?.guideline) {
+			const guideline = result.guideline;
+			
+			// Check if mockPages exists in the guideline
+			if (guideline.mockPages) {
+				try {
+					const mockPageData = typeof guideline.mockPages === 'string' 
+						? JSON.parse(guideline.mockPages) 
+						: guideline.mockPages;
+					
+					if (mockPageData?.html) {
+						console.log('[fetchMockPageFromDatabase] Found saved mock page in database');
+						mockPageBuild = {
+							theme: mockPageData.vibe || 'Minimalistic',
+							html: mockPageData.html,
+							brandConfig: mockPageData.brandConfig || {}
+						};
+						setMockPageBlob(mockPageData.html);
+						webpageBuildComplete = true;
 
-			await updateBuildData({
-				...mockPageBuild,
-				generatedAt: Date.now()
-			});
+						await updateBuildData({
+							...mockPageBuild,
+							generatedAt: Date.now()
+						});
+						
+						console.log('[fetchMockPageFromDatabase] Mock page loaded from database successfully');
+					}
+				} catch (parseError) {
+					console.warn('[fetchMockPageFromDatabase] Failed to parse mockPages:', parseError);
+				}
+			}
 		}
 	} catch (err) {
-		// Silently handle errors - this endpoint is optional
-		// Only log if it's not a 404 (which is expected)
-		if (err instanceof Error && !err.message.includes('404')) {
-			console.error('Failed to fetch mock webpage from database:', err);
-		}
+		console.error('Failed to fetch mock webpage from database:', err);
 	}
 }
 
@@ -931,6 +940,11 @@ async function fetchMockPageFromDatabase(guidelineId?: string, brandName?: strin
 	}
 
 async function handleDeleteMockWebpage() {
+	if (!brandData?.guidelineId) {
+		console.warn('[handleDeleteMockWebpage] No guidelineId found, cannot delete from database');
+		return;
+	}
+
 	// Update state immediately for reactive UI update
 	webpageBuildComplete = false;
 	mockPageBuild = null;
@@ -944,30 +958,24 @@ async function handleDeleteMockWebpage() {
 	// Clear stored build data
 	await clearStoredBuildData();
 
-	// Try to delete from API (if endpoint exists)
-	const params = new URLSearchParams();
-	if (brandData?.guidelineId) {
-		params.set('brandGuidelinesId', brandData.guidelineId);
-	} else if (brandData?.brandName || brandData?.brand_name) {
-		params.set('brandName', brandData?.brandName || brandData?.brand_name);
-	}
-
+	// Delete from database
 	try {
-		if ([...params.keys()].length) {
-			// Note: This endpoint may not exist, silently fail if 404
-			const response = await fetch(`/api/mockpagebuilder?${params.toString()}`, {
-				method: 'DELETE'
-			});
-			// Silently handle 404 - endpoint doesn't exist, that's okay
-			if (response.status === 404) {
-				console.log('[handleDeleteMockWebpage] Delete endpoint not found (404) - state cleared locally');
-			} else if (!response.ok) {
-				console.warn('[handleDeleteMockWebpage] Delete request failed:', response.status);
-			}
+		console.log('[handleDeleteMockWebpage] Deleting mock page from database...');
+		const response = await fetch(`/api/brand-guidelines/${brandData.guidelineId}`, {
+			method: 'PUT',
+			headers: { 'Content-Type': 'application/json' },
+			body: JSON.stringify({
+				mockPages: null // Set to null to delete
+			})
+		});
+
+		if (response.ok) {
+			console.log('[handleDeleteMockWebpage] Mock page deleted from database successfully');
+		} else {
+			console.warn('[handleDeleteMockWebpage] Failed to delete from database:', response.status);
 		}
 	} catch (err) {
-		// Silently handle errors - state is already cleared locally
-		console.log('[handleDeleteMockWebpage] Delete request error (non-critical):', err);
+		console.error('[handleDeleteMockWebpage] Error deleting from database:', err);
 	}
 
 	// State is already updated above, UI will reactively update

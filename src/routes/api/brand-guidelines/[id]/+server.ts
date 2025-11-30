@@ -100,8 +100,34 @@ export const PUT: RequestHandler = async ({ locals, params, request }) => {
 			return json({ error: 'Authentication required' }, { status: 401 });
 		}
 
-		const { content, brandName, structuredData } = await request.json();
+		const body = await request.json();
+		const { content, brandName, structuredData, mockPages } = body;
 
+		// Allow partial updates - if mockPages is being updated, don't require content/brandName
+		if (mockPages !== undefined) {
+			// Update only mockPages
+			const updateData: any = {
+				mockPages: mockPages === null ? null : (typeof mockPages === 'string' ? mockPages : JSON.stringify(mockPages)),
+				updatedAt: new Date()
+			};
+
+			const updatedGuideline = await db
+				.update(brandGuidelines)
+				.set(updateData)
+				.where(and(eq(brandGuidelines.id, params.id), eq(brandGuidelines.userId, session.user.id)))
+				.returning();
+
+			if (updatedGuideline.length === 0) {
+				return json({ error: 'Brand guideline not found' }, { status: 404 });
+			}
+
+			return json({
+				success: true,
+				guideline: updatedGuideline[0]
+			});
+		}
+
+		// Original logic for content/brandName updates
 		if (!content || !brandName) {
 			return json({ error: 'Content and brand name are required' }, { status: 400 });
 		}

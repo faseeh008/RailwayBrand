@@ -97,6 +97,7 @@ export const brandGuidelines = pgTable('brand_guidelines', {
 	contactInfo: text('contactInfo'), // JSON string of contact data
 	exportFiles: text('exportFiles'), // JSON string of export file metadata
 	powerpointContent: text('powerpointContent'), // Base64 encoded PowerPoint content
+	mockPages: text('mockPages'), // JSON string of mock webpage data: { html: string, vibe: string, createdAt: string }
 	isActive: boolean('is_active').default(true).notNull(),
 	createdAt: timestamp('createdAt', { mode: 'date' })
 		.notNull()

@@ -323,6 +323,26 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 		// This includes Gemini content generation, dark/light detection, gradients, etc.
 		const htmlContent = await buildMockPage(sessionData, vibe);
 
+		// Step 3: Save mock page to database in brand-guidelines table
+		console.log('[build-mock-page] Saving mock page to database...');
+		const mockPageData = {
+			html: htmlContent,
+			vibe: vibe,
+			brandConfig: sessionData,
+			createdAt: new Date().toISOString(),
+			updatedAt: new Date().toISOString()
+		};
+
+		await db
+			.update(brandGuidelines)
+			.set({
+				mockPages: JSON.stringify(mockPageData),
+				updatedAt: new Date()
+			})
+			.where(eq(brandGuidelines.id, id));
+
+		console.log('[build-mock-page] Mock page saved to database successfully');
+
 		return json({
 			success: true,
 			html: htmlContent,
