@@ -4,6 +4,7 @@ import type { TemplateContent } from "../template-content";
 import { withAlpha } from "../utils/color";
 import { ImageWithFallback } from "./figma/ImageWithFallback";
 import { Button } from "./ui/button";
+import { getIconComponent } from "../utils/icon-mapper";
 
 interface HeroProps {
   config: BrandConfig;
@@ -19,6 +20,8 @@ export function Hero({ config, tokens, content }: HeroProps) {
     heroImages[2] || heroImages[0] || "",
   ];
   const metrics = content.metrics.length ? content.metrics : config.stats;
+  const PrimaryIcon = getIconComponent(content.primaryCtaIcon);
+  const SecondaryIcon = getIconComponent(content.secondaryCtaIcon);
   const collageBadgePositions = [
     { top: "-1rem", left: "2rem", transform: "rotate(-8deg)" },
     { bottom: "2rem", left: "2rem", transform: "rotate(10deg)" },
@@ -89,6 +92,7 @@ export function Hero({ config, tokens, content }: HeroProps) {
                 }}
               >
                 {content.primaryCta}
+                {PrimaryIcon && <PrimaryIcon className="ml-2 h-5 w-5" />}
               </Button>
               <Button
                 size="lg"
@@ -102,6 +106,7 @@ export function Hero({ config, tokens, content }: HeroProps) {
                 }}
               >
                 {content.secondaryCta}
+                {SecondaryIcon && <SecondaryIcon className="ml-2 h-5 w-5" />}
               </Button>
             </div>
 

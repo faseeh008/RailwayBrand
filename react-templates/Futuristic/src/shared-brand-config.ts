@@ -73,34 +73,41 @@ export interface BrandConfig {
   navigation?: {
     links: NavigationLink[];
     ctaLabel: string;
+    ctaIcon?: string;
   };
   hero?: {
     eyebrow: string;
     primaryCta: string;
+    primaryCtaIcon?: string;
     secondaryCta: string;
+    secondaryCtaIcon?: string;
     scrollHint: string;
   };
   featuresContent?: {
     heading: string;
     subheading: string;
-    cards: FeatureItem[];
+    cards: Array<FeatureItem & { icon?: string }>;
   };
   technologyContent?: {
     heading: string;
     description: string;
     metrics: MetricItem[];
     ctaLabel: string;
+    ctaIcon?: string;
   };
   innovationContent?: {
     heading: string;
     description: string;
     ctaLabel: string;
+    ctaIcon?: string;
   };
   ctaContent?: {
     heading: string;
     description: string;
     primaryCta: string;
+    primaryCtaIcon?: string;
     secondaryCta: string;
+    secondaryCtaIcon?: string;
     trustMessage: string;
   };
   footerContent?: {
@@ -111,17 +118,23 @@ export interface BrandConfig {
 }
 
 // Helper function to compute background and text colors from primary color
+// Uses colors directly from brand config (no fallbacks)
 function computeColors(primary: string, secondary: string, accent: string) {
+  if (!primary || !secondary || !accent) {
+    throw new Error('Colors are required. Primary, secondary, and accent colors must be provided in brand config.');
+  }
+  
   // Convert hex to RGB for calculations
   const hexToRgb = (hex: string) => {
     const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
-    return result
-      ? {
-          r: parseInt(result[1], 16),
-          g: parseInt(result[2], 16),
-          b: parseInt(result[3], 16),
-        }
-      : { r: 59, g: 130, b: 246 };
+    if (!result) {
+      throw new Error(`Invalid hex color: ${hex}`);
+    }
+    return {
+      r: parseInt(result[1], 16),
+      g: parseInt(result[2], 16),
+      b: parseInt(result[3], 16),
+    };
   };
 
   const primaryRgb = hexToRgb(primary);
@@ -132,8 +145,8 @@ function computeColors(primary: string, secondary: string, accent: string) {
   const black = "#000000";
 
   // For futuristic/tech themes, prefer dark backgrounds
-  const background = isLight ? "#0f172a" : "#0f172a"; // Dark tech background
-  const text = isLight ? "#ffffff" : "#ffffff"; // White text for dark backgrounds
+  const background = "#0f172a"; // Dark tech background
+  const text = "#ffffff"; // White text for dark backgrounds
   const muted = "rgba(255,255,255,0.75)";
   const border = "rgba(255,255,255,0.25)";
   const surface = "rgba(15,23,42,0.8)";
@@ -162,12 +175,12 @@ function convertUserConfig(userConfig: UserBrandConfig): BrandConfig {
 
   return {
     brandName: userConfig.brandName,
-    brandDescription: `The Future of ${userConfig.industry}`,
-    logoUrl: "",
+    brandDescription: userConfig.brandDescription || "",
+    logoUrl: userConfig.logoUrl || "",
     colors,
     fonts: {
-      heading: "Inter, sans-serif",
-      body: "Inter, sans-serif",
+      heading: userConfig.fonts?.heading || "Inter, sans-serif",
+      body: userConfig.fonts?.body || "Inter, sans-serif",
     },
     images: {
       hero: userConfig.images?.hero || "",
@@ -176,174 +189,20 @@ function convertUserConfig(userConfig: UserBrandConfig): BrandConfig {
       gallery: userConfig.images?.gallery || [],
     },
     industry: userConfig.industry,
-    stats: [
-      { value: "99.9%", label: "Uptime" },
-      { value: "10M+", label: "Users" },
-      { value: "500+", label: "Countries" },
-    ],
-    features: [
-      { title: "Lightning Fast", description: "Experience blazing speed with cutting-edge infrastructure" },
-      { title: "Ultra Secure", description: "Military-grade encryption keeps your data safe" },
-      { title: "AI-Powered", description: "Advanced machine learning adapts to your needs" },
-      { title: "Next-Gen UX", description: "Intuitive interfaces for seamless interaction" },
-    ],
-    contact: {},
-    navigation: {
-      links: [
-        { label: "Features", href: "#features" },
-        { label: "Technology", href: "#technology" },
-        { label: "About", href: "#about" },
-      ],
-      ctaLabel: "Get Started",
-    },
-    hero: {
-      eyebrow: `Advanced ${userConfig.industry} Solutions`,
-      primaryCta: "Start Your Journey",
-      secondaryCta: "Watch Demo",
-      scrollHint: "Scroll to explore",
-    },
-    featuresContent: {
-      heading: "Powerful Features",
-      subheading: "Built for tomorrow, available today",
-      cards: [
-        { title: "Lightning Fast", description: "Experience blazing speed with cutting-edge infrastructure" },
-        { title: "Ultra Secure", description: "Military-grade encryption keeps your data safe" },
-        { title: "AI-Powered", description: "Advanced machine learning adapts to your needs" },
-        { title: "Next-Gen UX", description: "Intuitive interfaces for seamless interaction" },
-      ],
-    },
-    technologyContent: {
-      heading: "Cutting-Edge Technology",
-      description: "Our proprietary quantum neural networks process data at unprecedented speeds, delivering insights in microseconds.",
-      metrics: [
-        { label: "Processing Speed", value: 98 },
-        { label: "Accuracy Rate", value: 99 },
-        { label: "Efficiency", value: 96 },
-      ],
-      ctaLabel: "Explore Technology",
-    },
-    innovationContent: {
-      heading: "Innovation That Matters",
-      description: "Join forward-thinking teams already using our platform to revolutionize their operations.",
-      ctaLabel: "Schedule a Demo",
-    },
-    ctaContent: {
-      heading: "Ready to Transform?",
-      description: "Start your journey into the future. Experience the next evolution of technology.",
-      primaryCta: "Get Started Free",
-      secondaryCta: "Contact Sales",
-      trustMessage: "Trusted by industry leaders worldwide",
-    },
-    footerContent: {
-      description: `Building the future of ${userConfig.industry}, one innovation at a time.`,
-      columns: [
-        { title: "Product", links: ["Features", "Pricing", "Security", "Enterprise"] },
-        { title: "Company", links: ["About", "Careers", "Blog", "Press"] },
-        { title: "Connect", links: ["Twitter", "LinkedIn", "GitHub", "Discord"] },
-      ],
-      copyright: `© 2025 ${userConfig.brandName}. All rights reserved.`,
-    },
+    stats: userConfig.stats || [],
+    features: userConfig.features || [],
+    contact: userConfig.contact || {},
+    navigation: userConfig.navigation,
+    hero: userConfig.hero,
+    featuresContent: userConfig.featuresContent,
+    technologyContent: userConfig.technologyContent,
+    innovationContent: userConfig.innovationContent,
+    ctaContent: userConfig.ctaContent,
+    footerContent: userConfig.footerContent,
   };
 }
 
-// Default config (will be overridden by window.__BRAND_CONFIG__)
-const defaultConfig: BrandConfig = {
-  brandName: "NEXUS",
-  brandDescription: "The Future of Technology",
-  logoUrl: "",
-  colors: {
-    primary: "#3b82f6",
-    secondary: "#8b5cf6",
-    accent: "#06b6d4",
-    background: "#0f172a",
-    text: "#ffffff",
-    white: "#ffffff",
-    black: "#000000",
-    muted: "rgba(255,255,255,0.75)",
-    border: "rgba(255,255,255,0.25)",
-    surface: "rgba(15,23,42,0.8)",
-  },
-  fonts: {
-    heading: "Inter, sans-serif",
-    body: "Inter, sans-serif",
-  },
-  images: {
-    hero: "",
-    technology: "",
-    innovation: "",
-    gallery: [],
-  },
-  industry: "Technology",
-  stats: [
-    { value: "99.9%", label: "Uptime" },
-    { value: "10M+", label: "Users" },
-    { value: "500+", label: "Countries" },
-  ],
-  features: [
-    { title: "Lightning Fast", description: "Experience blazing speed with cutting-edge infrastructure" },
-    { title: "Ultra Secure", description: "Military-grade encryption keeps your data safe" },
-    { title: "AI-Powered", description: "Advanced machine learning adapts to your needs" },
-    { title: "Next-Gen UX", description: "Intuitive interfaces for seamless interaction" },
-  ],
-  contact: {},
-  navigation: {
-    links: [
-      { label: "Features", href: "#features" },
-      { label: "Technology", href: "#technology" },
-      { label: "About", href: "#about" },
-    ],
-    ctaLabel: "Get Started",
-  },
-  hero: {
-    eyebrow: "Advanced Industry Solutions",
-    primaryCta: "Start Your Journey",
-    secondaryCta: "Watch Demo",
-    scrollHint: "Scroll to explore",
-  },
-  featuresContent: {
-    heading: "Powerful Features",
-    subheading: "Built for tomorrow, available today",
-    cards: [
-      { title: "Lightning Fast", description: "Experience blazing speed with cutting-edge infrastructure" },
-      { title: "Ultra Secure", description: "Military-grade encryption keeps your data safe" },
-      { title: "AI-Powered", description: "Advanced machine learning adapts to your needs" },
-      { title: "Next-Gen UX", description: "Intuitive interfaces for seamless interaction" },
-    ],
-  },
-  technologyContent: {
-    heading: "Cutting-Edge Technology",
-    description: "Our proprietary quantum neural networks process data at unprecedented speeds, delivering insights in microseconds.",
-    metrics: [
-      { label: "Processing Speed", value: 98 },
-      { label: "Accuracy Rate", value: 99 },
-      { label: "Efficiency", value: 96 },
-    ],
-    ctaLabel: "Explore Technology",
-  },
-  innovationContent: {
-    heading: "Innovation That Matters",
-    description: "Join forward-thinking teams already using our platform to revolutionize their operations.",
-    ctaLabel: "Schedule a Demo",
-  },
-  ctaContent: {
-    heading: "Ready to Transform?",
-    description: "Start your journey into the future. Experience the next evolution of technology.",
-    primaryCta: "Get Started Free",
-    secondaryCta: "Contact Sales",
-    trustMessage: "Trusted by industry leaders worldwide",
-  },
-  footerContent: {
-    description: "Building the future of technology, one innovation at a time.",
-    columns: [
-      { title: "Product", links: ["Features", "Pricing", "Security", "Enterprise"] },
-      { title: "Company", links: ["About", "Careers", "Blog", "Press"] },
-      { title: "Connect", links: ["Twitter", "LinkedIn", "GitHub", "Discord"] },
-    ],
-    copyright: "© 2025 NEXUS. All rights reserved.",
-  },
-};
-
-// Get config from window or use default
+// Get config from window or throw error
 export const getBrandConfig = (): BrandConfig => {
   if (typeof window !== "undefined" && (window as any).__BRAND_CONFIG__) {
     const userConfig = (window as any).__BRAND_CONFIG__;
@@ -354,6 +213,6 @@ export const getBrandConfig = (): BrandConfig => {
     // Otherwise, assume it's already in the old BrandConfig format
     return userConfig as BrandConfig;
   }
-  return defaultConfig;
+  throw new Error("Brand config not found. Please ensure window.__BRAND_CONFIG__ is set by the mock-page-builder.");
 };
 

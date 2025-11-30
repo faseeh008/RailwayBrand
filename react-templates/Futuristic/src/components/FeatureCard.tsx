@@ -1,12 +1,15 @@
 import { motion } from "motion/react";
+import { getIconComponent } from "../utils/icon-mapper";
 
 interface FeatureCardProps {
   title: string;
   description: string;
   index: number;
+  icon?: string;
 }
 
-export function FeatureCard({ title, description, index }: FeatureCardProps) {
+export function FeatureCard({ title, description, index, icon }: FeatureCardProps) {
+  const Icon = getIconComponent(icon);
   return (
     <motion.div
       initial={{ opacity: 0, y: 50 }}
@@ -36,7 +39,11 @@ export function FeatureCard({ title, description, index }: FeatureCardProps) {
             className="w-16 h-16 rounded-xl flex items-center justify-center text-2xl font-semibold"
             style={{ background: "linear-gradient(135deg, var(--brand-primary), var(--brand-secondary))" }}
           >
-            {title.charAt(0)}
+            {Icon ? (
+              <Icon className="h-8 w-8" style={{ color: "var(--brand-white)" }} />
+            ) : (
+              title.charAt(0)
+            )}
           </div>
 
           <h3 style={{ color: "var(--brand-text)" }}>{title}</h3>

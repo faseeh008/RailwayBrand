@@ -1,5 +1,3 @@
-import type { IconName } from "./icon-registry";
-
 // User-provided JSON structure
 export interface UserBrandConfig {
   brandName: string;
@@ -36,15 +34,15 @@ export interface NavigationConfig {
   cartLabel: string;
   primaryCtaLabel: string;
   mobileCtaLabel: string;
-  menuIcon: IconName;
-  closeIcon: IconName;
+  menuIcon?: string;
+  closeIcon?: string;
 }
 
 export interface HeroContent {
   eyebrow: string;
   headline: string;
   subheadline: string;
-  primaryCta: { label: string; icon?: IconName };
+  primaryCta: { label: string; icon?: string };
   secondaryCta: { label: string };
 }
 
@@ -52,13 +50,13 @@ export interface AboutContent {
   title: string;
   description: string;
   highlights: string[];
-  highlightIcon?: IconName;
+  highlightIcon?: string;
 }
 
 export interface ServicesContent {
   title: string;
   subtitle: string;
-  items: Array<{ title: string; description: string; icon?: IconName }>;
+  items: Array<{ title: string; description: string; icon?: string }>;
 }
 
 export interface FooterContent {
@@ -66,7 +64,7 @@ export interface FooterContent {
     title: string;
     links: Array<{ label: string; href?: string }>;
   }>;
-  social: Array<{ icon: IconName; href: string; label: string }>;
+  social: Array<{ icon?: string; href: string; label: string }>;
   legalText: string;
 }
 
@@ -111,17 +109,23 @@ export interface BrandConfig {
 }
 
 // Helper function to compute background and text colors from primary color
+// Uses colors directly from brand config (no fallbacks)
 function computeColors(primary: string, secondary: string, accent: string) {
+  if (!primary || !secondary || !accent) {
+    throw new Error('Colors are required. Primary, secondary, and accent colors must be provided in brand config.');
+  }
+  
   // Convert hex to RGB for calculations
   const hexToRgb = (hex: string) => {
     const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
-    return result
-      ? {
-          r: parseInt(result[1], 16),
-          g: parseInt(result[2], 16),
-          b: parseInt(result[3], 16),
-        }
-      : { r: 10, g: 10, b: 10 };
+    if (!result) {
+      throw new Error(`Invalid hex color: ${hex}`);
+    }
+    return {
+      r: parseInt(result[1], 16),
+      g: parseInt(result[2], 16),
+      b: parseInt(result[3], 16),
+    };
   };
 
   const primaryRgb = hexToRgb(primary);
@@ -177,253 +181,53 @@ function convertUserConfig(userConfig: UserBrandConfig): BrandConfig {
 
   return {
     brandName: userConfig.brandName,
-    brandDescription: `Pure Design, Timeless Comfort - ${userConfig.industry}`,
-    logoUrl: "",
+    brandDescription: userConfig.brandDescription || "",
+    logoUrl: userConfig.logoUrl || "",
     colorPalette,
     colors,
     fonts: {
-      heading: "Inter, sans-serif",
-      body: "Inter, sans-serif",
+      heading: userConfig.fonts?.heading || "Inter, sans-serif",
+      body: userConfig.fonts?.body || "Inter, sans-serif",
     },
     images: {
       hero: userConfig.images?.hero || "",
       gallery: userConfig.images?.gallery || [],
     },
     industry: userConfig.industry,
-    stats: [
-      { value: "500+", label: "Products" },
-      { value: "50k+", label: "Happy Homes" },
-      { value: "Free", label: "Delivery" },
-    ],
-    navigation: {
-      links: [
-        { label: "Products", href: "#" },
-        { label: "Collections", href: "#" },
-        { label: "About", href: "#" },
-        { label: "Contact", href: "#" },
-      ],
+    stats: userConfig.stats || [],
+    navigation: userConfig.navigation || {
+      links: [],
       cartLabel: "Cart",
       primaryCtaLabel: "Shop Now",
       mobileCtaLabel: "Get Started",
       menuIcon: "Menu",
       closeIcon: "X",
     },
-    heroContent: {
-      eyebrow: `${userConfig.industry} Excellence`,
-      headline: "Pure design. Timeless comfort.",
-      subheadline: "Each collection is crafted to bring balance and warmth into modern spaces.",
-      primaryCta: { label: "Explore Collection", icon: "ArrowRight" },
-      secondaryCta: { label: "Learn More" },
+    heroContent: userConfig.heroContent || {
+      eyebrow: "",
+      headline: "",
+      subheadline: "",
+      primaryCta: { label: "" },
+      secondaryCta: { label: "" },
     },
-    aboutContent: {
-      title: `Why Choose ${userConfig.brandName}`,
-      description: "We combine natural materials with modern silhouettes to create adaptable, lasting pieces.",
-      highlights: [
-        "Premium quality and service",
-        "Expert team and support",
-        "Trusted by thousands",
-        "Innovative solutions",
-        "Customer satisfaction guaranteed",
-        "Professional consultation",
-      ],
-      highlightIcon: "CheckCircle2",
+    aboutContent: userConfig.aboutContent || {
+      title: "",
+      description: "",
+      highlights: [],
     },
-    servicesContent: {
-      title: "Our Services",
-      subtitle: "Discover what makes us unique",
-      items: [
-        { title: "Custom Solutions", description: "Tailored designs built for your space", icon: "Sofa" },
-        { title: "Quality Products", description: "Refined details with premium materials", icon: "Armchair" },
-        { title: "Expert Service", description: "Professional consultation and support", icon: "Table2" },
-        { title: "Fast Delivery", description: "Quick and reliable shipping", icon: "Lamp" },
-        { title: "Warranty", description: "Comprehensive coverage for peace of mind", icon: "Bed" },
-        { title: "Support", description: "Dedicated customer service team", icon: "ShoppingBag" },
-      ],
+    servicesContent: userConfig.servicesContent || {
+      title: "",
+      subtitle: "",
+      items: [],
     },
-    footerContent: {
-      columns: [
-        {
-          title: "Products",
-          links: [
-            { label: "Collections", href: "#" },
-            { label: "New Arrivals", href: "#" },
-            { label: "Featured", href: "#" },
-          ],
-        },
-        {
-          title: "Company",
-          links: [
-            { label: "About", href: "#" },
-            { label: "Careers", href: "#" },
-            { label: "Press", href: "#" },
-          ],
-        },
-        {
-          title: "Resources",
-          links: [
-            { label: "Blog", href: "#" },
-            { label: "Guides", href: "#" },
-            { label: "Support", href: "#" },
-          ],
-        },
-        {
-          title: "Policies",
-          links: [
-            { label: "Privacy Policy", href: "#" },
-            { label: "Terms of Service", href: "#" },
-          ],
-        },
-      ],
-      social: [
-        { icon: "Twitter", href: "#", label: "Twitter" },
-        { icon: "Github", href: "#", label: "Github" },
-        { icon: "Linkedin", href: "#", label: "LinkedIn" },
-        { icon: "Mail", href: "#", label: "Email" },
-      ],
-      legalText: `© {year} ${userConfig.brandName}. All rights reserved.`,
+    footerContent: userConfig.footerContent || {
+      columns: [],
+      social: [],
+      legalText: "",
     },
-    contact: {
-      title: "Contact",
-    },
+    contact: userConfig.contact || {},
   };
 }
-
-const defaultConfig: BrandConfig = {
-  brandName: "MONO",
-  brandDescription: "Pure Design, Timeless Comfort",
-  logoUrl: "",
-  colors: {
-    primary: "#0a0a0a",
-    secondary: "#171717",
-    accent: "#404040",
-    background: "#ffffff",
-    text: "#0a0a0a",
-    white: "#ffffff",
-    black: "#000000",
-    surface: "#f7f7f7",
-    border: "rgba(0, 0, 0, 0.1)",
-    mutedText: "rgba(10,10,10,0.7)",
-  },
-  colorPalette: {
-    primary: "#0a0a0a",
-    primaryForeground: "#ffffff",
-    secondary: "#171717",
-    secondaryForeground: "#ffffff",
-    accent: "#404040",
-    accentForeground: "#ffffff",
-    background: "#ffffff",
-    surface: "#f7f7f7",
-    border: "rgba(0, 0, 0, 0.1)",
-    text: "#0a0a0a",
-    mutedText: "rgba(10,10,10,0.7)",
-    white: "#ffffff",
-    black: "#000000",
-  },
-  fonts: {
-    heading: "Inter, sans-serif",
-    body: "Inter, sans-serif",
-  },
-  images: {
-    hero: "",
-    gallery: [],
-  },
-  industry: "Furniture",
-  stats: [
-    { value: "500+", label: "Products" },
-    { value: "50k+", label: "Happy Homes" },
-    { value: "Free", label: "Delivery" },
-  ],
-  navigation: {
-    links: [
-      { label: "Sofas", href: "#" },
-      { label: "Chairs", href: "#" },
-      { label: "Tables", href: "#" },
-      { label: "Collections", href: "#" },
-    ],
-    cartLabel: "Cart",
-    primaryCtaLabel: "Shop Now",
-    mobileCtaLabel: "Get Started",
-    menuIcon: "Menu",
-    closeIcon: "X",
-  },
-  heroContent: {
-    eyebrow: "Furniture Excellence",
-    headline: "Pure design. Timeless comfort.",
-    subheadline: "Each collection is crafted to bring balance and warmth into modern spaces.",
-    primaryCta: { label: "Explore Collection", icon: "ArrowRight" },
-    secondaryCta: { label: "Learn More" },
-  },
-  aboutContent: {
-    title: "Why Choose MONO",
-    description: "We combine natural materials with modern silhouettes to create adaptable, lasting pieces.",
-    highlights: [
-      "Premium quality and service",
-      "Expert team and support",
-      "Trusted by thousands",
-      "Innovative solutions",
-      "Customer satisfaction guaranteed",
-      "Professional consultation",
-    ],
-    highlightIcon: "CheckCircle2",
-  },
-  servicesContent: {
-    title: "Our Services",
-    subtitle: "Discover what makes us unique",
-    items: [
-      { title: "Custom Sofas", description: "Tailored silhouettes built for your space", icon: "Sofa" },
-      { title: "Comfort Chairs", description: "Ergonomic seating with refined details", icon: "Armchair" },
-      { title: "Dining Tables", description: "Durable finishes for everyday gatherings", icon: "Table2" },
-      { title: "Ambient Lighting", description: "Lighting concepts that set a calm mood", icon: "Lamp" },
-      { title: "Bedroom Sets", description: "Layered textures for restorative rest", icon: "Bed" },
-      { title: "Lifestyle Shop", description: "Curated objects that complete the look", icon: "ShoppingBag" },
-    ],
-  },
-  footerContent: {
-    columns: [
-      {
-        title: "Products",
-        links: [
-          { label: "Living", href: "#" },
-          { label: "Dining", href: "#" },
-          { label: "Outdoor", href: "#" },
-        ],
-      },
-      {
-        title: "Company",
-        links: [
-          { label: "About", href: "#" },
-          { label: "Careers", href: "#" },
-          { label: "Press", href: "#" },
-        ],
-      },
-      {
-        title: "Resources",
-        links: [
-          { label: "Journal", href: "#" },
-          { label: "Guides", href: "#" },
-          { label: "Support", href: "#" },
-        ],
-      },
-      {
-        title: "Policies",
-        links: [
-          { label: "Privacy Policy", href: "#" },
-          { label: "Terms of Service", href: "#" },
-        ],
-      },
-    ],
-    social: [
-      { icon: "Twitter", href: "#", label: "Twitter" },
-      { icon: "Github", href: "#", label: "Github" },
-      { icon: "Linkedin", href: "#", label: "LinkedIn" },
-      { icon: "Mail", href: "#", label: "Email" },
-    ],
-    legalText: "© {year} {brand}. All rights reserved.",
-  },
-  contact: {
-    title: "Contact",
-  },
-};
 
 export const getBrandConfig = (): BrandConfig => {
   if (typeof window !== "undefined" && (window as any).__BRAND_CONFIG__) {
@@ -453,6 +257,6 @@ export const getBrandConfig = (): BrandConfig => {
     }
     return userConfig as BrandConfig;
   }
-  return defaultConfig;
+  throw new Error("Brand config not found. Please ensure window.__BRAND_CONFIG__ is set by the mock-page-builder.");
 };
 

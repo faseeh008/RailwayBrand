@@ -1,7 +1,7 @@
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { Button } from "./ui/button";
 import type { BrandConfig } from "../shared-brand-config";
-import { getIconComponent } from "../icon-registry";
+import { getIconComponent } from "../utils/icon-mapper";
 
 interface NavbarProps {
   brandConfig: BrandConfig;
@@ -10,13 +10,8 @@ interface NavbarProps {
 export function Navbar({ brandConfig }: NavbarProps) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const colors = brandConfig.colors;
-
-  const { MenuIcon, CloseIcon } = useMemo(() => {
-    return {
-      MenuIcon: getIconComponent(brandConfig.navigation.menuIcon),
-      CloseIcon: getIconComponent(brandConfig.navigation.closeIcon),
-    };
-  }, [brandConfig.navigation.closeIcon, brandConfig.navigation.menuIcon]);
+  const MenuIcon = getIconComponent(brandConfig.navigation.menuIcon) || (() => null);
+  const CloseIcon = getIconComponent(brandConfig.navigation.closeIcon) || (() => null);
 
   const navLinkStyle = {
     color: colors.text,

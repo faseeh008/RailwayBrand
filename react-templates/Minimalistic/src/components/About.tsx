@@ -1,6 +1,6 @@
 import { ImageWithFallback } from "./figma/ImageWithFallback";
 import type { BrandConfig } from "../shared-brand-config";
-import { getIconComponent } from "../icon-registry";
+import { getIconComponent } from "../utils/icon-mapper";
 
 interface AboutProps {
   brandConfig: BrandConfig;

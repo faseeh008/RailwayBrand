@@ -2,20 +2,28 @@ import { motion } from "motion/react";
 import { Shirt, Package, Sparkles, Star } from "lucide-react";
 import { ImageWithFallback } from "./figma/ImageWithFallback";
 import type { BrandConfig } from "../shared-brand-config";
+import { getIconComponent } from "../utils/icon-mapper";
 
 interface CategoryShowcaseProps {
   brandConfig: BrandConfig;
 }
 
 export function CategoryShowcase({ brandConfig }: CategoryShowcaseProps) {
-  const { colors, images, features, stats } = brandConfig;
+  const { colors, images, features, stats, categoryIcons } = brandConfig;
+  
+  // Default icons fallback
+  const defaultIcons = [Shirt, Package, Sparkles, Star];
   
   // Create categories from features
   const categories = features.slice(0, 4).map((feature, index) => {
     const categoryColors = [colors.primary, colors.secondary, colors.accent, colors.primary];
-    const icons = [Shirt, Package, Sparkles, Star];
+    // Get icon from categoryIcons array or use default
+    const iconName = categoryIcons?.[index] || (feature.icon);
+    const IconComponent = iconName ? getIconComponent(iconName) : null;
+    const DefaultIcon = defaultIcons[index] || Shirt;
+    
     return {
-      icon: icons[index] || Shirt,
+      icon: IconComponent || DefaultIcon,
       title: feature.title,
       count: stats[index]?.value + " " + stats[index]?.label || `${(index + 1) * 25}+ Items`,
       color: categoryColors[index],
@@ -107,7 +115,7 @@ export function CategoryShowcase({ brandConfig }: CategoryShowcaseProps) {
 
             <div className="grid grid-cols-2 gap-4">
               {categories.map((category, index) => {
-                const Icon = category.icon;
+                const IconComponent = category.icon;
                 return (
                   <motion.div
                     key={category.title}
@@ -123,7 +131,7 @@ export function CategoryShowcase({ brandConfig }: CategoryShowcaseProps) {
                       className="w-12 h-12 rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform"
                       style={{ backgroundColor: category.color }}
                     >
-                      <Icon className="w-6 h-6" style={{ color: colors.white }} />
+                      <IconComponent className="w-6 h-6" style={{ color: colors.white }} />
                     </div>
                     <h3 className="mb-1" style={{ color: colors.white }}>{category.title}</h3>
                     <p className="text-sm" style={{ color: colors.background, opacity: 0.8 }}>{category.count}</p>

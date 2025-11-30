@@ -620,37 +620,84 @@ onMount(async () => {
 
 		isBuildingMockWebpage = true;
 		webpageBuildComplete = false;
-		buildStepMessage = 'Gathering data from slides and chat...';
+		buildStepMessage = 'Extracting brand data...';
 
 		try {
-			// Stage 1: small delay while we \"gather\" data
+			// Step 1: Extract session data and store in sessionStorage
+			if (!brandData?.guidelineId) {
+				throw new Error('Brand guideline ID is required');
+			}
+
 			await sleep(3000);
+			buildStepMessage = 'Creating session data...';
 
-		const theme = previewTheme || inferThemeFromBrandData(brandData);
-		previewTheme = theme;
+			// Fetch session data from API
+			const sessionResponse = await fetch(`/api/brand-guidelines/${brandData.guidelineId}/extract-session-data`);
+			if (!sessionResponse.ok) {
+				throw new Error('Failed to extract session data');
+			}
 
-			buildStepMessage = 'Fetching images and logos...';
+			const sessionResult = await sessionResponse.json();
+			if (!sessionResult.success || !sessionResult.data) {
+				throw new Error('Invalid session data');
+			}
 
-			const buildPromise = buildMockWebpage(brandData, theme, slides);
+			// Store in sessionStorage
+			if (typeof sessionStorage !== 'undefined') {
+				sessionStorage.setItem('brand_session_data', JSON.stringify(sessionResult.data));
+				console.log('[handleBuildMockWebpage] Session data stored:', sessionResult.data);
+			}
 
-			// Give the API some breathing room while we show progress
 			await sleep(3000);
-			buildStepMessage = 'Applying styles and building UI...';
+			buildStepMessage = 'Building mock webpage...';
 
-			const buildResult = await buildPromise;
+			// Step 2: Determine vibe from brand data
+			const vibe = brandData.mood || brandData.selectedMood || previewTheme || inferThemeFromBrandData(brandData);
+			const normalizedVibe = (vibe === 'Minimalistic' || vibe === 'Maximalistic' || 
+				vibe === 'Funky' || vibe === 'Futuristic') 
+				? vibe 
+				: 'Minimalistic';
+
+			// Step 3: Call build API with new mock-page-builder system
+			const buildResponse = await fetch('/api/build-mock-page', {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({ 
+					guidelineId: brandData.guidelineId,
+					vibe: normalizedVibe // Pass the determined vibe
+				})
+			});
+
+			if (!buildResponse.ok) {
+				const errorData = await buildResponse.json().catch(() => ({}));
+				throw new Error(errorData.error || 'Failed to build mock webpage');
+			}
+
+			const buildResult = await buildResponse.json();
+			if (!buildResult.success || !buildResult.html) {
+				throw new Error('Invalid build result');
+			}
 
 			await sleep(3000);
 			buildStepMessage = 'Finalizing preview...';
 
-			mockPageBuild = buildResult;
+			// Step 4: Set the mock page build result
+			mockPageBuild = {
+				theme: normalizedVibe,
+				html: buildResult.html,
+				brandConfig: sessionResult.data
+			};
+
 			setMockPageBlob(buildResult.html);
 			webpageBuildComplete = true;
 
-			// Persist build data so user can revisit without rebuilding immediately
+			// Persist build data
 			await updateBuildData({
-				...buildResult,
+				...mockPageBuild,
 				generatedAt: Date.now()
 			});
+
+			console.log('[handleBuildMockWebpage] Mock webpage built successfully');
 		} catch (err: any) {
 			console.error('Failed to build mock webpage:', err);
 			error = err?.message || 'Failed to build mock webpage.';
@@ -818,9 +865,10 @@ async function fetchMockPageFromDatabase(guidelineId?: string, brandName?: strin
 	}
 
 	try {
+		// Note: This endpoint may not exist, silently fail if 404
 		const response = await fetch(`/api/mockpagebuilder?${params.toString()}`);
 		if (!response.ok) {
-			if (response.status === 404) return;
+			if (response.status === 404) return; // Endpoint doesn't exist, that's okay
 			throw new Error('Failed to fetch mock webpage');
 		}
 
@@ -885,9 +933,11 @@ async function handleDeleteMockWebpage() {
 
 	try {
 		if ([...params.keys()].length) {
-			await fetch(`/api/mockpagebuilder?${params.toString()}`, {
+			// Note: This endpoint may not exist, silently fail if 404
+			const response = await fetch(`/api/mockpagebuilder?${params.toString()}`, {
 				method: 'DELETE'
 			});
+			if (response.status === 404) return; // Endpoint doesn't exist, that's okay
 		}
 	} catch (err) {
 		console.error('Failed to delete mock webpage:', err);

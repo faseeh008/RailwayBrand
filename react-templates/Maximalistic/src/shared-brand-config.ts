@@ -43,20 +43,27 @@ export interface BrandConfig {
     phone?: string;
     address?: string;
   };
+  templateContent?: any; // Content from mock-page-builder
 }
 
 // Helper function to compute background and text colors from primary color
+// Uses colors directly from brand config (no fallbacks)
 function computeColors(primary: string, secondary: string, accent: string) {
+  if (!primary || !secondary || !accent) {
+    throw new Error('Colors are required. Primary, secondary, and accent colors must be provided in brand config.');
+  }
+  
   // Convert hex to RGB for calculations
   const hexToRgb = (hex: string) => {
     const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
-    return result
-      ? {
-          r: parseInt(result[1], 16),
-          g: parseInt(result[2], 16),
-          b: parseInt(result[3], 16),
-        }
-      : { r: 249, g: 115, b: 22 };
+    if (!result) {
+      throw new Error(`Invalid hex color: ${hex}`);
+    }
+    return {
+      r: parseInt(result[1], 16),
+      g: parseInt(result[2], 16),
+      b: parseInt(result[3], 16),
+    };
   };
 
   const primaryRgb = hexToRgb(primary);
@@ -89,67 +96,23 @@ function convertUserConfig(userConfig: UserBrandConfig): BrandConfig {
 
   return {
     brandName: userConfig.brandName,
-    brandDescription: `Bold Design, Maximum Impact - ${userConfig.industry}`,
-    logoUrl: "",
+    brandDescription: userConfig.brandDescription || "",
+    logoUrl: userConfig.logoUrl || "",
     colors,
     fonts: {
-      heading: "Inter, sans-serif",
-      body: "Inter, sans-serif",
+      heading: userConfig.fonts?.heading || "Inter, sans-serif",
+      body: userConfig.fonts?.body || "Inter, sans-serif",
     },
     images: {
       hero: userConfig.images?.hero || "",
       gallery: userConfig.images?.gallery || [],
     },
     industry: userConfig.industry,
-    stats: [
-      { value: "1000+", label: "Projects" },
-      { value: "100k+", label: "Customers" },
-      { value: "24/7", label: "Support" },
-    ],
-    features: [
-      { title: "Bold Design", description: "Stand out with vibrant aesthetics" },
-      { title: "Full Service", description: "Complete creative solutions" },
-      { title: "Fast Delivery", description: "Quick turnaround times" },
-    ],
-    contact: {},
+    stats: userConfig.stats || [],
+    features: userConfig.features || [],
+    contact: userConfig.contact || {},
   };
 }
-
-// Default config
-const defaultConfig: BrandConfig = {
-  brandName: "VIBRANT",
-  brandDescription: "Bold Design, Maximum Impact",
-  logoUrl: "",
-  colors: {
-    primary: "#f97316",
-    secondary: "#ec4899",
-    accent: "#fde047",
-    background: "#ffffff",
-    text: "#0a0a0a",
-    white: "#ffffff",
-    black: "#000000",
-  },
-  fonts: {
-    heading: "Inter, sans-serif",
-    body: "Inter, sans-serif",
-  },
-  images: {
-    hero: "",
-    gallery: [],
-  },
-  industry: "Creative",
-  stats: [
-    { value: "1000+", label: "Projects" },
-    { value: "100k+", label: "Customers" },
-    { value: "24/7", label: "Support" },
-  ],
-  features: [
-    { title: "Bold Design", description: "Stand out with vibrant aesthetics" },
-    { title: "Full Service", description: "Complete creative solutions" },
-    { title: "Fast Delivery", description: "Quick turnaround times" },
-  ],
-  contact: {},
-};
 
 export const getBrandConfig = (): BrandConfig => {
   if (typeof window !== "undefined" && (window as any).__BRAND_CONFIG__) {
@@ -161,6 +124,6 @@ export const getBrandConfig = (): BrandConfig => {
     // Otherwise, assume it's already in the old BrandConfig format
     return userConfig as BrandConfig;
   }
-  return defaultConfig;
+  throw new Error("Brand config not found. Please ensure window.__BRAND_CONFIG__ is set by the mock-page-builder.");
 };
 

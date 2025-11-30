@@ -1,13 +1,26 @@
 import { motion } from "motion/react";
 import { Sparkles, Instagram, Facebook, Twitter, Youtube } from "lucide-react";
 import type { BrandConfig } from "../shared-brand-config";
+import { getIconComponent } from "../utils/icon-mapper";
 
 interface FooterProps {
   brandConfig: BrandConfig;
 }
 
 export function Footer({ brandConfig }: FooterProps) {
-  const { colors, logoUrl, brandName, brandDescription } = brandConfig;
+  const { colors, logoUrl, brandName, brandDescription, logoIcon, socialIcons } = brandConfig;
+  
+  // Get logo icon component
+  const LogoIcon = (logoIcon ? getIconComponent(logoIcon) : null) || Sparkles;
+  
+  // Default social icons
+  const defaultSocialIcons = [Instagram, Facebook, Twitter, Youtube];
+  
+  // Get social icon components
+  const socialIconComponents = socialIcons?.map((iconName, index) => {
+    const IconComponent = getIconComponent(iconName);
+    return IconComponent || defaultSocialIcons[index] || Instagram;
+  }) || defaultSocialIcons;
   const footerGradient = `linear-gradient(to bottom right, ${colors.text}dd, ${colors.primary}dd, ${colors.secondary}dd)`;
   const bottomGradient = `linear-gradient(to right, ${colors.primary}, ${colors.secondary}, ${colors.accent})`;
   const footerLinks = {
@@ -32,32 +45,27 @@ export function Footer({ brandConfig }: FooterProps) {
               <div className="flex items-center gap-2">
                 {logoUrl ? (
                   <img src={logoUrl} alt={brandName} className="h-8 w-auto" />
-                ) : (
-                  <Sparkles className="w-8 h-8" style={{ color: colors.accent }} />
-                )}
+                ) : LogoIcon ? (
+                  <LogoIcon className="w-8 h-8" style={{ color: colors.accent }} />
+                ) : null}
                 <span className="tracking-wider font-bold">{brandName}</span>
               </div>
               <p className="text-sm" style={{ color: colors.background, opacity: 0.8 }}>
                 {brandDescription}
               </p>
               <div className="flex gap-4">
-                {[
-                  { icon: Instagram, color: "hover:text-pink-400" },
-                  { icon: Facebook, color: "hover:text-blue-400" },
-                  { icon: Twitter, color: "hover:text-cyan-400" },
-                  { icon: Youtube, color: "hover:text-red-400" },
-                ].map((social, index) => {
-                  const Icon = social.icon;
+                {socialIconComponents.map((IconComponent, index) => {
+                  const hoverColors = ["hover:text-pink-400", "hover:text-blue-400", "hover:text-cyan-400", "hover:text-red-400"];
                   return (
                     <motion.a
                       key={index}
                       href="#"
                       whileHover={{ scale: 1.2, rotate: 5 }}
                       whileTap={{ scale: 0.9 }}
-                      className="w-10 h-10 rounded-full flex items-center justify-center transition-colors"
+                      className={`w-10 h-10 rounded-full flex items-center justify-center transition-colors ${hoverColors[index] || ""}`}
                       style={{ backgroundColor: `${colors.white}1A` }}
                     >
-                      <Icon className="w-5 h-5" />
+                      <IconComponent className="w-5 h-5" />
                     </motion.a>
                   );
                 })}

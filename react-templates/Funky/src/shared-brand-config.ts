@@ -11,6 +11,11 @@ export interface UserBrandConfig {
     hero?: string;
     gallery?: string[];
   };
+  // Icon fields
+  logoIcon?: string;
+  heroCtaIcon?: string;
+  categoryIcons?: string[];
+  socialIcons?: string[];
 }
 
 // Internal brand config with computed values
@@ -37,32 +42,41 @@ export interface BrandConfig {
   };
   industry: string;
   stats: Array<{ value: string; label: string }>;
-  features: Array<{ title: string; description: string }>;
+  features: Array<{ title: string; description: string; icon?: string }>;
   contact: Record<string, any>;
+  // Icon fields
+  logoIcon?: string;
+  heroCtaIcon?: string;
+  categoryIcons?: string[];
+  socialIcons?: string[];
 }
 
 // Helper function to compute background and text colors from primary color
+// Uses colors directly from brand config (no fallbacks)
 function computeColors(primary: string, secondary: string, accent: string) {
+  if (!primary || !secondary || !accent) {
+    throw new Error('Colors are required. Primary, secondary, and accent colors must be provided in brand config.');
+  }
+  
   // Convert hex to RGB for calculations
   const hexToRgb = (hex: string) => {
     const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
-    return result
-      ? {
-          r: parseInt(result[1], 16),
-          g: parseInt(result[2], 16),
-          b: parseInt(result[3], 16),
-        }
-      : { r: 245, g: 245, b: 242 };
+    if (!result) {
+      throw new Error(`Invalid hex color: ${hex}`);
+    }
+    return {
+      r: parseInt(result[1], 16),
+      g: parseInt(result[2], 16),
+      b: parseInt(result[3], 16),
+    };
   };
 
   const primaryRgb = hexToRgb(primary);
   const isLight = primaryRgb.r + primaryRgb.g + primaryRgb.b > 382; // Threshold for light colors
 
   // Compute white and black based on brand colors
-  // White should be light enough for text on dark backgrounds
-  // Black should be dark enough for overlays on light backgrounds
-  const white = isLight ? "#ffffff" : "#ffffff"; // Always use white for contrast
-  const black = isLight ? "#000000" : "#000000"; // Always use black for overlays
+  const white = "#ffffff";
+  const black = "#000000";
 
   return {
     primary,
@@ -85,66 +99,27 @@ function convertUserConfig(userConfig: UserBrandConfig): BrandConfig {
 
   return {
     brandName: userConfig.brandName,
-    brandDescription: `Discover ${userConfig.brandName} - Premium ${userConfig.industry} collection.`,
-    logoUrl: "",
+    brandDescription: userConfig.brandDescription || "",
+    logoUrl: userConfig.logoUrl || "",
     colors,
     fonts: {
-      heading: "Inter, sans-serif",
-      body: "Inter, sans-serif",
+      heading: userConfig.fonts?.heading || "Inter, sans-serif",
+      body: userConfig.fonts?.body || "Inter, sans-serif",
     },
     images: {
       hero: userConfig.images?.hero || "",
       gallery: userConfig.images?.gallery || [],
     },
     industry: userConfig.industry,
-    stats: [
-      { value: "24/7", label: "Creative Flow" },
-      { value: "120+", label: "Happy Clients" },
-      { value: "12", label: "Brand Touchpoints" },
-    ],
-    features: [
-      { title: "Joyful Expressions", description: "Turn every interaction into a playful moment." },
-      { title: "Bold Voice", description: "A brand story that never whispers." },
-      { title: "Culture Ready", description: "Made for social, retail, and experiential drops." },
-    ],
-    contact: {},
+    stats: userConfig.stats || [],
+    features: userConfig.features || [],
+    contact: userConfig.contact || {},
+    logoIcon: userConfig.logoIcon,
+    heroCtaIcon: userConfig.heroCtaIcon,
+    categoryIcons: userConfig.categoryIcons,
+    socialIcons: userConfig.socialIcons,
   };
 }
-
-const defaultConfig: BrandConfig = {
-  brandName: "FUNKIFY",
-  brandDescription: "Bold. Funky. Fearless. Express yourself with fashion that speaks your language.",
-  logoUrl: "",
-  colors: {
-    primary: "#9333ea",
-    secondary: "#ec4899",
-    accent: "#f59e0b",
-    background: "#faf5ff",
-    text: "#1f2937",
-    white: "#ffffff",
-    black: "#000000",
-  },
-  fonts: {
-    heading: "Inter, sans-serif",
-    body: "Inter, sans-serif",
-  },
-  images: {
-    hero: "",
-    gallery: [],
-  },
-  industry: "Fashion",
-  stats: [
-    { value: "24/7", label: "Creative Flow" },
-    { value: "120+", label: "Happy Clients" },
-    { value: "12", label: "Brand Touchpoints" },
-  ],
-  features: [
-    { title: "Joyful Expressions", description: "Turn every interaction into a playful moment." },
-    { title: "Bold Voice", description: "A brand story that never whispers." },
-    { title: "Culture Ready", description: "Made for social, retail, and experiential drops." },
-  ],
-  contact: {},
-};
 
 export const getBrandConfig = (): BrandConfig => {
   if (typeof window !== "undefined" && (window as any).__BRAND_CONFIG__) {
@@ -156,6 +131,6 @@ export const getBrandConfig = (): BrandConfig => {
     // Otherwise, assume it's already in the old BrandConfig format
     return userConfig as BrandConfig;
   }
-  return defaultConfig;
+  throw new Error("Brand config not found. Please ensure window.__BRAND_CONFIG__ is set by the mock-page-builder.");
 };
 

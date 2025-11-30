@@ -1,15 +1,20 @@
 import { motion } from "motion/react";
 import { Button } from "./ui/button";
-import { Sparkles, ArrowRight } from "lucide-react";
 import { ImageWithFallback } from "./figma/ImageWithFallback";
 import type { BrandConfig } from "../shared-brand-config";
+import { getIconComponent } from "../utils/icon-mapper";
+import { Sparkles } from "lucide-react";
 
 interface HeroSectionProps {
   brandConfig: BrandConfig;
 }
 
 export function HeroSection({ brandConfig }: HeroSectionProps) {
-  const { colors, logoUrl, brandName, brandDescription, images, features } = brandConfig;
+  const { colors, logoUrl, brandName, brandDescription, images, features, logoIcon, heroCtaIcon } = brandConfig;
+  
+  // Get icon components
+  const LogoIcon = (logoIcon ? getIconComponent(logoIcon) : null) || Sparkles;
+  const CtaIcon = heroCtaIcon ? getIconComponent(heroCtaIcon) : null;
   
   // Create gradient strings from brand colors
   const gradient1 = `linear-gradient(to bottom right, ${colors.secondary}, ${colors.primary})`;
@@ -52,9 +57,9 @@ export function HeroSection({ brandConfig }: HeroSectionProps) {
         <div className="flex items-center gap-2">
           {logoUrl ? (
             <img src={logoUrl} alt={brandName} className="h-8 w-auto" />
-          ) : (
-            <Sparkles className="w-8 h-8" style={{ color: colors.primary }} />
-          )}
+          ) : LogoIcon ? (
+            <LogoIcon className="w-8 h-8" style={{ color: colors.primary }} />
+          ) : null}
           <span className="tracking-wider font-bold" style={{ color: colors.primary }}>
             {brandName}
           </span>
@@ -153,7 +158,7 @@ export function HeroSection({ brandConfig }: HeroSectionProps) {
                 e.currentTarget.style.opacity = '1';
               }}
             >
-              Explore Collection <ArrowRight className="ml-2 w-4 h-4" />
+              Explore Collection {CtaIcon && <CtaIcon className="ml-2 w-4 h-4" />}
             </Button>
             <Button variant="outline" style={{ borderColor: colors.primary, color: colors.primary }}>
               Watch Video

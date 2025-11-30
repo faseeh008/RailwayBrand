@@ -6,6 +6,7 @@ import { FuturisticCube } from "./components/FuturisticCube";
 import { Button } from "./components/ui/button";
 import { ImageWithFallback } from "./components/figma/ImageWithFallback";
 import { getBrandConfig } from "./shared-brand-config";
+import { getIconComponent } from "./utils/icon-mapper";
 
 export default function App() {
   const brandConfig = getBrandConfig();
@@ -50,13 +51,18 @@ export default function App() {
 
   const navLinks = brandConfig.navigation?.links ?? [];
   const navCtaLabel = brandConfig.navigation?.ctaLabel ?? "";
+  const navCtaIcon = getIconComponent(brandConfig.navigation?.ctaIcon);
 
   const heroContent = {
     eyebrow: brandConfig.hero?.eyebrow ?? brandConfig.industry,
     primaryCta: brandConfig.hero?.primaryCta ?? brandConfig.brandName,
+    primaryCtaIcon: brandConfig.hero?.primaryCtaIcon,
     secondaryCta: brandConfig.hero?.secondaryCta ?? brandConfig.brandDescription,
+    secondaryCtaIcon: brandConfig.hero?.secondaryCtaIcon,
     scrollHint: brandConfig.hero?.scrollHint ?? "",
   };
+  const PrimaryCtaIcon = getIconComponent(heroContent.primaryCtaIcon);
+  const SecondaryCtaIcon = getIconComponent(heroContent.secondaryCtaIcon);
 
   const featureCards =
     brandConfig.featuresContent?.cards?.length
@@ -73,21 +79,29 @@ export default function App() {
     description: brandConfig.technologyContent?.description ?? brandConfig.brandDescription,
     metrics: brandConfig.technologyContent?.metrics ?? [],
     ctaLabel: brandConfig.technologyContent?.ctaLabel ?? "",
+    ctaIcon: brandConfig.technologyContent?.ctaIcon,
   };
+  const TechnologyCtaIcon = getIconComponent(technologyContent.ctaIcon);
 
   const innovationContent = {
     heading: brandConfig.innovationContent?.heading ?? brandConfig.brandName,
     description: brandConfig.innovationContent?.description ?? brandConfig.brandDescription,
     ctaLabel: brandConfig.innovationContent?.ctaLabel ?? "",
+    ctaIcon: brandConfig.innovationContent?.ctaIcon,
   };
+  const InnovationCtaIcon = getIconComponent(innovationContent.ctaIcon);
 
   const ctaContent = {
     heading: brandConfig.ctaContent?.heading ?? brandConfig.brandName,
     description: brandConfig.ctaContent?.description ?? brandConfig.brandDescription,
     primaryCta: brandConfig.ctaContent?.primaryCta ?? "",
+    primaryCtaIcon: brandConfig.ctaContent?.primaryCtaIcon,
     secondaryCta: brandConfig.ctaContent?.secondaryCta ?? "",
+    secondaryCtaIcon: brandConfig.ctaContent?.secondaryCtaIcon,
     trustMessage: brandConfig.ctaContent?.trustMessage ?? "",
   };
+  const CtaPrimaryIcon = getIconComponent(ctaContent.primaryCtaIcon);
+  const CtaSecondaryIcon = getIconComponent(ctaContent.secondaryCtaIcon);
 
   const footerContent = brandConfig.footerContent ?? {
     description: brandConfig.brandDescription,
@@ -146,6 +160,7 @@ export default function App() {
             {navCtaLabel ? (
               <Button style={{ background: gradientBackground, color: colors.text }}>
                 {navCtaLabel}
+                {navCtaIcon && <navCtaIcon className="ml-2 h-4 w-4" />}
               </Button>
             ) : null}
           </div>
@@ -183,6 +198,7 @@ export default function App() {
               {heroContent.primaryCta ? (
                 <Button size="lg" style={{ background: gradientBackground, color: colors.text }}>
                   {heroContent.primaryCta}
+                  {PrimaryCtaIcon && <PrimaryCtaIcon className="ml-2 h-5 w-5" />}
                 </Button>
               ) : null}
               {heroContent.secondaryCta ? (
@@ -192,6 +208,7 @@ export default function App() {
                   style={{ borderColor: colors.primary, color: colors.text }}
                 >
                   {heroContent.secondaryCta}
+                  {SecondaryCtaIcon && <SecondaryCtaIcon className="ml-2 h-5 w-5" />}
                 </Button>
               ) : null}
             </div>
@@ -249,7 +266,13 @@ export default function App() {
 
         <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
           {featureCards.map((feature, index) => (
-            <FeatureCard key={feature.title} title={feature.title} description={feature.description} index={index} />
+            <FeatureCard 
+              key={feature.title} 
+              title={feature.title} 
+              description={feature.description} 
+              index={index}
+              icon={(feature as any).icon}
+            />
           ))}
         </div>
       </section>
@@ -314,6 +337,7 @@ export default function App() {
             {technologyContent.ctaLabel ? (
               <Button style={{ background: gradientBackground, color: colors.text }}>
                 {technologyContent.ctaLabel}
+                {TechnologyCtaIcon && <TechnologyCtaIcon className="ml-2 h-4 w-4" />}
               </Button>
             ) : null}
           </motion.div>
@@ -346,6 +370,7 @@ export default function App() {
               {innovationContent.ctaLabel ? (
                 <Button size="lg" style={{ backgroundColor: colors.text, color: colors.background }}>
                   {innovationContent.ctaLabel}
+                  {InnovationCtaIcon && <InnovationCtaIcon className="ml-2 h-5 w-5" />}
                 </Button>
               ) : null}
             </div>
@@ -384,6 +409,7 @@ export default function App() {
             {ctaContent.primaryCta ? (
               <Button size="lg" style={{ background: gradientBackground, color: colors.text }}>
                 {ctaContent.primaryCta}
+                {CtaPrimaryIcon && <CtaPrimaryIcon className="ml-2 h-5 w-5" />}
               </Button>
             ) : null}
 
@@ -394,6 +420,7 @@ export default function App() {
                 style={{ borderColor: colors.primary, color: colors.text }}
               >
                 {ctaContent.secondaryCta}
+                {CtaSecondaryIcon && <CtaSecondaryIcon className="ml-2 h-5 w-5" />}
               </Button>
             ) : null}
           </div>

@@ -3,6 +3,7 @@ import type { TemplateContent } from "../template-content";
 import { withAlpha } from "../utils/color";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
+import { getIconComponent } from "../utils/icon-mapper";
 
 interface FooterProps {
   tokens: BrandTokens;
@@ -37,19 +38,24 @@ export function Footer({ tokens, content }: FooterProps) {
               </p>
             </div>
             <div className="flex flex-wrap gap-4">
-              {content.socialLinks.map((link) => (
-                <a
-                  key={link.label}
-                  href={link.url}
-                  className="px-4 py-2 rounded-full text-sm"
-                  style={{
-                    background: tokens.colors.surface,
-                    color: tokens.colors.text,
-                  }}
-                >
-                  {link.label}
-                </a>
-              ))}
+              {content.socialLinks.map((link) => {
+                const Icon = getIconComponent(link.icon);
+                return (
+                  <a
+                    key={link.label}
+                    href={link.url}
+                    className="px-4 py-2 rounded-full text-sm flex items-center gap-2"
+                    style={{
+                      background: tokens.colors.surface,
+                      color: tokens.colors.text,
+                    }}
+                    aria-label={link.label}
+                  >
+                    {Icon && <Icon className="h-4 w-4" />}
+                    {link.label}
+                  </a>
+                );
+              })}
             </div>
           </div>
 
