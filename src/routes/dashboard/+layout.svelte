@@ -196,15 +196,15 @@
 <div class="flex h-screen bg-background">
 	{#if !isPreviewPage}
 		<!-- Sidebar -->
-		<aside class="flex w-72 flex-col border-r border-border bg-card">
+		<aside class="flex h-full w-72 flex-col overflow-hidden border-r border-border bg-card">
 			<!-- Logo -->
-			<div class="border-b border-border p-6">
+			<div class="flex-shrink-0 border-b border-border p-6">
 				<h1 class="text-xl font-bold text-foreground">EternaBrand</h1>
 				<p class="text-sm text-muted-foreground">AI Brand Assistant</p>
 			</div>
 
 		<!-- Navigation -->
-		<nav class="flex-1 p-4">
+		<nav class="flex min-h-0 flex-1 flex-col overflow-y-auto p-4">
 			<ul class="space-y-2">
 				{#each navItems as item}
 					<li>
