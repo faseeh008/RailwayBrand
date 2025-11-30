@@ -39,7 +39,7 @@ export function Footer({ tokens, content }: FooterProps) {
             </div>
             <div className="flex flex-wrap gap-4">
               {content.socialLinks.map((link) => {
-                const Icon = getIconComponent(link.icon);
+                const Icon = link.icon ? getIconComponent(link.icon) : null;
                 return (
                   <a
                     key={link.label}
@@ -49,9 +49,8 @@ export function Footer({ tokens, content }: FooterProps) {
                       background: tokens.colors.surface,
                       color: tokens.colors.text,
                     }}
-                    aria-label={link.label}
                   >
-                    {Icon && <Icon className="h-4 w-4" />}
+                    {Icon && <Icon className="w-4 h-4" />}
                     {link.label}
                   </a>
                 );

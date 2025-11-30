@@ -26,8 +26,14 @@ export interface BrandTokens {
 }
 
 export const buildBrandTokens = (config: BrandConfig): BrandTokens => {
+  // Use colors directly from config (already computed by buildMaximalistic.ts)
   const { colors } = config;
   const { primary, secondary, accent, background, text } = colors;
+
+  // Validate colors are present
+  if (!primary || !secondary || !accent || !background || !text) {
+    throw new Error('Brand tokens require all colors: primary, secondary, accent, background, text');
+  }
 
   const surface = mixColors(background, primary, 0.08);
   const surfaceAlt = mixColors(background, secondary, 0.12);

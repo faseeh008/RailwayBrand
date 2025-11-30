@@ -65,9 +65,9 @@ function computeColors(primary: string, secondary: string, accent: string) {
       throw new Error(`Invalid hex color: ${hex}`);
     }
     return {
-      r: parseInt(result[1], 16),
-      g: parseInt(result[2], 16),
-      b: parseInt(result[3], 16),
+          r: parseInt(result[1], 16),
+          g: parseInt(result[2], 16),
+          b: parseInt(result[3], 16),
     };
   };
 
@@ -118,7 +118,7 @@ function convertUserConfig(userConfig: UserBrandConfig): BrandConfig {
     heroCtaIcon: userConfig.heroCtaIcon,
     categoryIcons: userConfig.categoryIcons,
     socialIcons: userConfig.socialIcons,
-  };
+};
 }
 
 export const getBrandConfig = (): BrandConfig => {

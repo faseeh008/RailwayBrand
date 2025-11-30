@@ -11,10 +11,10 @@ interface GalleryProps {
 }
 
 export function Gallery({ config, tokens, content }: GalleryProps) {
-  const galleryImages = (config.images.gallery ?? []).filter((img) => img && img.trim() !== "");
+  const galleryImages = config.images.gallery ?? [];
   const tiles = content.tiles.map((tile, index) => ({
     ...tile,
-    image: galleryImages[index] || galleryImages[0] || config.images.hero || "",
+    image: galleryImages[index] ?? galleryImages[0] ?? config.images.hero,
   }));
 
   return (

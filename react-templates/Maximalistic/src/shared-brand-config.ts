@@ -1,129 +1,84 @@
-// User-provided JSON structure
-export interface UserBrandConfig {
-  brandName: string;
-  industry: string;
-  colors: {
-    primary: string;
-    secondary: string;
-    accent: string;
-  };
-  images?: {
-    hero?: string;
-    gallery?: string[];
-  };
-}
-
-// Internal brand config with computed values
 export interface BrandConfig {
   brandName: string;
-  brandDescription: string;
-  logoUrl: string;
+  industry: string;
   colors: {
     primary: string;
     secondary: string;
     accent: string;
     background: string;
     text: string;
-    white: string;
-    black: string;
-  };
-  fonts: {
-    heading: string;
-    body: string;
+    white?: string;
+    black?: string;
   };
   images: {
     hero: string;
     gallery: string[];
   };
-  industry: string;
+  brandDescription: string;
   stats: Array<{ value: string; label: string }>;
-  features: Array<{ title: string; description: string }>;
-  contact: {
-    email?: string;
-    phone?: string;
-    address?: string;
-  };
-  templateContent?: any; // Content from mock-page-builder
+  templateContent?: any; // Will be used by template-content.ts
 }
 
-// Helper function to compute background and text colors from primary color
-// Uses colors directly from brand config (no fallbacks)
+// Helper to compute colors if not already provided
 function computeColors(primary: string, secondary: string, accent: string) {
   if (!primary || !secondary || !accent) {
     throw new Error('Colors are required. Primary, secondary, and accent colors must be provided in brand config.');
   }
   
-  // Convert hex to RGB for calculations
-  const hexToRgb = (hex: string) => {
-    const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
-    if (!result) {
-      throw new Error(`Invalid hex color: ${hex}`);
-    }
-    return {
-      r: parseInt(result[1], 16),
-      g: parseInt(result[2], 16),
-      b: parseInt(result[3], 16),
-    };
-  };
-
-  const primaryRgb = hexToRgb(primary);
-  const isLight = primaryRgb.r + primaryRgb.g + primaryRgb.b > 382; // Threshold for light colors
-
-  // For maximalistic themes, prefer light backgrounds with vibrant colors
-  const white = "#ffffff";
-  const black = "#000000";
-  const background = isLight ? "#ffffff" : "#0a0a0a"; // Light for vibrant, dark for dark primary
-  const text = isLight ? "#0a0a0a" : "#ffffff"; // Dark text for light backgrounds, white for dark
-
-  return {
-    primary,
-    secondary,
-    accent,
-    background,
-    text,
-    white,
-    black,
-  };
-}
-
-// Convert user config to internal config
-function convertUserConfig(userConfig: UserBrandConfig): BrandConfig {
-  const colors = computeColors(
-    userConfig.colors.primary,
-    userConfig.colors.secondary,
-    userConfig.colors.accent
-  );
-
-  return {
-    brandName: userConfig.brandName,
-    brandDescription: userConfig.brandDescription || "",
-    logoUrl: userConfig.logoUrl || "",
-    colors,
-    fonts: {
-      heading: userConfig.fonts?.heading || "Inter, sans-serif",
-      body: userConfig.fonts?.body || "Inter, sans-serif",
-    },
-    images: {
-      hero: userConfig.images?.hero || "",
-      gallery: userConfig.images?.gallery || [],
-    },
-    industry: userConfig.industry,
-    stats: userConfig.stats || [],
-    features: userConfig.features || [],
-    contact: userConfig.contact || {},
-  };
+  // Determine if primary color is light or dark
+  const cleanHex = primary.replace('#', '');
+  const r = parseInt(cleanHex.substring(0, 2), 16);
+  const g = parseInt(cleanHex.substring(2, 4), 16);
+  const b = parseInt(cleanHex.substring(4, 6), 16);
+  const luminance = (r + g + b) / 3;
+  const isPrimaryLight = luminance > 127;
+  
+  const background = isPrimaryLight ? '#ffffff' : '#0a0a0a';
+  const text = isPrimaryLight ? '#0a0a0a' : '#ffffff';
+  const white = '#ffffff';
+  const black = '#000000';
+  
+  return { primary, secondary, accent, background, text, white, black };
 }
 
 export const getBrandConfig = (): BrandConfig => {
   if (typeof window !== "undefined" && (window as any).__BRAND_CONFIG__) {
-    const userConfig = (window as any).__BRAND_CONFIG__;
-    // Check if it's in the new format (has colors object with primary, secondary, accent)
-    if (userConfig.colors && userConfig.colors.primary && userConfig.colors.secondary && userConfig.colors.accent) {
-      return convertUserConfig(userConfig as UserBrandConfig);
+    const injectedConfig = (window as any).__BRAND_CONFIG__;
+    
+    // If colors are already computed (have background and text), use them directly
+    if (injectedConfig.colors && injectedConfig.colors.background && injectedConfig.colors.text) {
+      return injectedConfig;
     }
-    // Otherwise, assume it's already in the old BrandConfig format
-    return userConfig as BrandConfig;
+    
+    // Otherwise, compute colors from primary, secondary, accent
+    if (injectedConfig.colors && injectedConfig.colors.primary && injectedConfig.colors.secondary && injectedConfig.colors.accent) {
+      return {
+        ...injectedConfig,
+        colors: computeColors(
+          injectedConfig.colors.primary,
+          injectedConfig.colors.secondary,
+          injectedConfig.colors.accent
+        )
+      };
+    }
+    
+    // If structure is different (e.g., colorPalette), convert it
+    if (injectedConfig.colorPalette) {
+      const computedColors = computeColors(
+        injectedConfig.colorPalette.primary,
+        injectedConfig.colorPalette.secondary,
+        injectedConfig.colorPalette.accent
+      );
+      return {
+        ...injectedConfig,
+        colors: computedColors
+      };
+    }
+    
+    return injectedConfig;
   }
-  throw new Error("Brand config not found. Please ensure window.__BRAND_CONFIG__ is set by the mock-page-builder.");
+  
+  // No default config - throw error if colors are missing
+  throw new Error('Brand config not found. Colors must be provided via window.__BRAND_CONFIG__');
 };
 

@@ -13,14 +13,13 @@ interface ProductsProps {
 }
 
 export function Products({ config, tokens, content }: ProductsProps) {
-  const galleryImages = (config.images.gallery ?? []).filter((img) => img && img.trim() !== "");
+  const galleryImages = config.images.gallery ?? [];
   const getImage = (index?: number) => {
     if (typeof index === "number" && galleryImages[index]) {
       return galleryImages[index];
     }
-    return galleryImages[0] || config.images.hero || "";
+    return galleryImages[0] ?? config.images.hero;
   };
-  const CtaIcon = getIconComponent(content.ctaIcon);
 
   const variantGradient = {
     primary: tokens.gradients.primary,
@@ -69,9 +68,7 @@ export function Products({ config, tokens, content }: ProductsProps) {
         </div>
 
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {content.items.map((product) => {
-            const ProductIcon = getIconComponent(product.icon);
-            return (
+          {content.items.map((product) => (
             <div
               key={product.name}
               className="group relative rounded-3xl overflow-hidden shadow-2xl transition-all duration-300 border"
@@ -119,9 +116,15 @@ export function Products({ config, tokens, content }: ProductsProps) {
                   <span>Craft index #{content.items.indexOf(product) + 1}</span>
                 </div>
 
-                <h3 className="text-2xl" style={{ color: tokens.colors.text }}>
-                  {product.name}
-                </h3>
+                <div className="flex items-center gap-2">
+                  {product.icon && (() => {
+                    const Icon = getIconComponent(product.icon);
+                    return Icon ? <Icon className="w-5 h-5" style={{ color: tokens.colors.primary }} /> : null;
+                  })()}
+                  <h3 className="text-2xl" style={{ color: tokens.colors.text }}>
+                    {product.name}
+                  </h3>
+                </div>
 
                 <p style={{ color: tokens.colors.mutedText }}>{product.description}</p>
 
@@ -141,19 +144,17 @@ export function Products({ config, tokens, content }: ProductsProps) {
                     }}
                   >
                     Reserve
-                    {ProductIcon && <ProductIcon className="ml-2 h-4 w-4" />}
                   </Button>
                 </div>
               </div>
             </div>
-            );
-          })}
+          ))}
         </div>
 
         <div className="text-center mt-16">
           <Button
             size="lg"
-            className="px-12 py-6 rounded-full text-xl"
+            className="px-12 py-6 rounded-full text-xl flex items-center gap-2 mx-auto"
             style={{
               background: tokens.gradients.primary,
               color: tokens.colors.onPrimary,
@@ -162,7 +163,10 @@ export function Products({ config, tokens, content }: ProductsProps) {
             }}
           >
             {content.ctaLabel}
-            {CtaIcon && <CtaIcon className="ml-2 h-5 w-5" />}
+            {content.ctaIcon && (() => {
+              const Icon = getIconComponent(content.ctaIcon);
+              return Icon ? <Icon className="w-5 h-5" /> : null;
+            })()}
           </Button>
         </div>
       </div>

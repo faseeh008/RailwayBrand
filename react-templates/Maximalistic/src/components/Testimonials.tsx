@@ -12,12 +12,12 @@ interface TestimonialsProps {
 }
 
 export function Testimonials({ config, tokens, content }: TestimonialsProps) {
-  const galleryImages = (config.images.gallery ?? []).filter((img) => img && img.trim() !== "");
+  const galleryImages = config.images.gallery ?? [];
   const getAvatar = (index?: number) => {
     if (typeof index === "number" && galleryImages[index]) {
       return galleryImages[index];
     }
-    return galleryImages[0] || config.images.hero || "";
+    return galleryImages[0] ?? config.images.hero;
   };
 
   return (

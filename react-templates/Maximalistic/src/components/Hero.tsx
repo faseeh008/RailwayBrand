@@ -13,15 +13,13 @@ interface HeroProps {
 }
 
 export function Hero({ config, tokens, content }: HeroProps) {
-  const heroImages = [config.images.hero, ...(config.images.gallery ?? [])].filter((img) => img && img.trim() !== "");
+  const heroImages = [config.images.hero, ...(config.images.gallery ?? [])].filter(Boolean);
   const [primaryImage, secondaryImage, tertiaryImage] = [
-    heroImages[0] || "",
-    heroImages[1] || heroImages[0] || "",
-    heroImages[2] || heroImages[0] || "",
+    heroImages[0],
+    heroImages[1] ?? heroImages[0],
+    heroImages[2] ?? heroImages[0],
   ];
   const metrics = content.metrics.length ? content.metrics : config.stats;
-  const PrimaryIcon = getIconComponent(content.primaryCtaIcon);
-  const SecondaryIcon = getIconComponent(content.secondaryCtaIcon);
   const collageBadgePositions = [
     { top: "-1rem", left: "2rem", transform: "rotate(-8deg)" },
     { bottom: "2rem", left: "2rem", transform: "rotate(10deg)" },
@@ -83,7 +81,7 @@ export function Hero({ config, tokens, content }: HeroProps) {
             <div className="flex flex-wrap gap-4">
               <Button
                 size="lg"
-                className="text-lg px-8 py-6 rounded-full transform hover:scale-105 transition-transform"
+                className="text-lg px-8 py-6 rounded-full transform hover:scale-105 transition-transform flex items-center gap-2"
                 style={{
                   background: tokens.gradients.accent,
                   color: tokens.colors.onPrimary,
@@ -92,12 +90,15 @@ export function Hero({ config, tokens, content }: HeroProps) {
                 }}
               >
                 {content.primaryCta}
-                {PrimaryIcon && <PrimaryIcon className="ml-2 h-5 w-5" />}
+                {content.primaryCtaIcon && (() => {
+                  const Icon = getIconComponent(content.primaryCtaIcon);
+                  return Icon ? <Icon className="w-5 h-5" /> : null;
+                })()}
               </Button>
               <Button
                 size="lg"
                 variant="outline"
-                className="text-lg px-8 py-6 rounded-full transform hover:scale-105 transition-transform"
+                className="text-lg px-8 py-6 rounded-full transform hover:scale-105 transition-transform flex items-center gap-2"
                 style={{
                   background: withAlpha(tokens.colors.background, 0.2),
                   color: tokens.colors.onPrimary,
@@ -106,7 +107,10 @@ export function Hero({ config, tokens, content }: HeroProps) {
                 }}
               >
                 {content.secondaryCta}
-                {SecondaryIcon && <SecondaryIcon className="ml-2 h-5 w-5" />}
+                {content.secondaryCtaIcon && (() => {
+                  const Icon = getIconComponent(content.secondaryCtaIcon);
+                  return Icon ? <Icon className="w-5 h-5" /> : null;
+                })()}
               </Button>
             </div>
 
