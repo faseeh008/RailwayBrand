@@ -3,7 +3,7 @@ services:
   - type: web
     name: eternabrand-app
     env: node
-    buildCommand: npm ci --include=dev && npx svelte-kit sync && npx vite build
+    buildCommand: npm ci && npm run build
     startCommand: node build
     envVars:
       - key: NODE_ENV

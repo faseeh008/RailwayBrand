@@ -18,7 +18,7 @@
 	"type": "module",
 	"scripts": {
 		"dev": "vite dev",
-		"build": "npx svelte-kit sync && npx vite build",
+		"build": "npx vite build",
 		"preview": "vite preview",
 		"prepare": "echo 'Skipping prepare hook for production' || true",
 		"postinstall": "echo 'Skipping Playwright installation for production build'",
