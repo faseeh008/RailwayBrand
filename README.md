@@ -405,9 +405,29 @@ src/
 
 ## 🚀 Deployment
 
-### Deploy to Vercel (Recommended)
+### Deploy to Railway (Recommended for Full Stack)
 
-This application is optimized for Vercel deployment:
+Railway is perfect for deploying the complete application including:
+- SvelteKit frontend/backend
+- Python color-service
+- PostgreSQL database
+- All services in one project
+
+**Quick Start:**
+1. Push your code to GitHub
+2. Go to [railway.app](https://railway.app) → New Project
+3. Deploy from GitHub repo
+4. Add PostgreSQL database
+5. Add color-service (set root directory to `color-service/`)
+6. Configure environment variables
+7. Run database migrations
+
+📖 **See [RAILWAY_DEPLOYMENT.md](./RAILWAY_DEPLOYMENT.md) for detailed Railway deployment instructions.**  
+⚡ **Or check [RAILWAY_QUICKSTART.md](./RAILWAY_QUICKSTART.md) for a 5-minute quick start.**
+
+### Deploy to Vercel (Frontend Only)
+
+This application is also optimized for Vercel deployment (frontend + API routes):
 
 ```bash
 # Install Vercel CLI
@@ -419,12 +439,17 @@ vercel
 
 Or connect your Git repository to Vercel Dashboard for automatic deployments.
 
-**Environment Variables for Vercel:**
-- Set all environment variables from `.env` in Vercel dashboard
+**Note:** For Vercel deployment, you'll need to:
+- Deploy color-service separately (Railway, Render, etc.)
+- Use external PostgreSQL database
+- Update `COLOR_SERVICE_URL` environment variable
+
+**Environment Variables:**
+- Set all environment variables from `.env` in deployment dashboard
 - Ensure `DATABASE_URL` is set for production database
 - Configure `AUTH_SECRET` and other auth variables
 
-📖 **See [DEPLOYMENT.md](./DEPLOYMENT.md) for detailed deployment instructions.**
+📖 **See [DEPLOYMENT.md](./DEPLOYMENT.md) for detailed Vercel deployment instructions.**
 
 ## 🧪 Development
 

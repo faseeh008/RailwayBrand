@@ -37,7 +37,9 @@
 		"docker:reset": "docker-compose down -v && docker-compose up -d",
 		"dev:docker": "docker-compose up -d db && npm run dev",
 		"docker:setup": "node scripts/docker-setup.js",
-		"docker:health": "node scripts/health-check.js"
+		"docker:health": "node scripts/health-check.js",
+		"start": "node build",
+		"railway:deploy": "npm run build && npm run start"
 	},
 	"devDependencies": {
 		"@eslint/compat": "^1.2.5",
@@ -45,6 +47,7 @@
 		"@internationalized/date": "^3.9.0",
 		"@lucide/svelte": "^0.515.0",
 		"@sveltejs/adapter-auto": "^6.0.0",
+		"@sveltejs/adapter-node": "^5.0.0",
 		"@sveltejs/kit": "^2.22.0",
 		"@sveltejs/vite-plugin-svelte": "^6.0.0",
 		"@tailwindcss/vite": "^4.0.0",
