@@ -9,14 +9,19 @@ const tsconfigPath = join(svelteKitDir, 'tsconfig.json');
 try {
   await mkdir(svelteKitDir, { recursive: true });
   
+  // Create standalone tsconfig that doesn't extend anything
   const minimalTsConfig = {
-    extends: './tsconfig.json',
     compilerOptions: {
       allowJs: true,
       checkJs: true,
       esModuleInterop: true,
       skipLibCheck: true,
-      moduleResolution: 'bundler'
+      moduleResolution: 'bundler',
+      resolveJsonModule: true,
+      module: 'ESNext',
+      target: 'ES2020',
+      lib: ['ES2020', 'DOM', 'DOM.Iterable'],
+      strict: true
     }
   };
   
