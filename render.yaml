@@ -3,7 +3,7 @@ services:
   - type: web
     name: eternabrand-app
     env: node
-    buildCommand: npm install --ignore-scripts && npm run prepare || true && npm run build
+    buildCommand: npm ci && npm run build
     startCommand: node build
     envVars:
       - key: NODE_ENV
