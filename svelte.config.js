@@ -12,8 +12,17 @@ const config = {
 		// See https://kit.svelte.dev/docs/adapter-vercel for more information
 		adapter: adapter({
 			runtime: 'nodejs20.x',
-			// Exclude large dependencies that aren't needed in serverless functions
-			external: ['puppeteer', 'playwright', 'sharp', 'canvas']
+			// Exclude large dependencies from serverless function bundle
+			outputFileTracingExcludes: {
+				'*': [
+					'node_modules/puppeteer/**',
+					'node_modules/playwright/**',
+					'node_modules/sharp/**',
+					'node_modules/canvas/**',
+					'node_modules/puppeteer-core/**',
+					'node_modules/playwright-core/**'
+				]
+			}
 		})
 	}
 };
