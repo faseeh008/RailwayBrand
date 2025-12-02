@@ -20,7 +20,7 @@
 		"dev": "vite dev",
 		"build": "npx vite build",
 		"preview": "vite preview",
-		"prepare": "echo 'Skipping prepare hook for production' || true",
+		"prepare": "true",
 		"postinstall": "echo 'Skipping Playwright installation for production build'",
 		"check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
 		"check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch",
