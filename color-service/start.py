@@ -8,8 +8,8 @@ import os
 from pathlib import Path
 
 if __name__ == "__main__":
-    # Set the port from environment variable (Railway uses PORT, or fallback to COLOR_SERVICE_PORT or default)
-    port = int(os.getenv("PORT") or os.getenv("COLOR_SERVICE_PORT") or 8001)
+    # Set the port from environment variable or default to 8001
+    port = int(os.getenv("COLOR_SERVICE_PORT", 8001))
     
     # Run the FastAPI server
     # reload=False in Docker to prevent restart loops

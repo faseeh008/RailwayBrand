@@ -468,7 +468,7 @@ export class EnhancedBrandExtractor {
     console.log('🔤 Smart font detection with whitelist...');
     
     // Import the smart font detector
-    const { detectFontsFromText } = await import('./fontDetector.js');
+    const { detectFontsFromText } = await import('../utilities/fontDetector.js');
     
     const fonts = detectFontsFromText(text);
     console.log(`✅ Detected fonts: ${fonts.join(', ')}`);
@@ -1037,13 +1037,13 @@ export class EnhancedBrandExtractor {
     // First try targeted section for additional font detection
     let fonts = detectedFonts;
     if (fonts.length === 0) {
-      const { detectFontsFromText } = await import('./fontDetector.js');
+      const { detectFontsFromText } = await import('../utilities/fontDetector.js');
       fonts = detectFontsFromText(typographySection);
     }
     
     // Fallback to whole document if nothing found in typography section
     if (fonts.length === 0) {
-      const { detectFontsFromText } = await import('./fontDetector.js');
+      const { detectFontsFromText } = await import('../utilities/fontDetector.js');
       fonts = detectFontsFromText(Object.values(sections).join(' '));
     }
     
@@ -1054,7 +1054,7 @@ export class EnhancedBrandExtractor {
     typography.fonts = fonts;
     
     // Prioritize whitelisted fonts for primary/secondary assignment
-    const { FONT_WHITELIST } = await import('./fontDetector.js');
+    const { FONT_WHITELIST } = await import('../utilities/fontDetector.js');
     const whitelistedFonts = fonts.filter(f =>
       FONT_WHITELIST.map(w => w.toLowerCase()).includes(f.toLowerCase())
     );

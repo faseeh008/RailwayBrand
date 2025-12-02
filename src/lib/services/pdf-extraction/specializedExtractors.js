@@ -6,7 +6,7 @@ import {
   classifySection,
   normalizeKey,
   normalizeColorToHex
-} from './brandSynonymMapper.js';
+} from '../utilities/brandSynonymMapper.js';
 
 /**
  * Specialized color extractor with multiple pattern recognition

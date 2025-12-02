@@ -405,34 +405,9 @@ src/
 
 ## 🚀 Deployment
 
-### Deploy to Render (Recommended - FREE Tier Available!)
+### Deploy to Vercel (Recommended)
 
-Render is perfect for deploying the complete application including:
-- SvelteKit frontend/backend
-- Python color-service
-- PostgreSQL database
-- All services with automatic deployments
-
-**FREE Tier Includes:**
-- 750 hours/month of web services
-- Free PostgreSQL database
-- Automatic deployments from GitHub
-
-**Quick Start:**
-1. Push your code to GitHub
-2. Go to [render.com](https://render.com) → Sign Up (FREE!)
-3. Connect GitHub repository
-4. Create PostgreSQL database
-5. Deploy services (or use Blueprint for automatic setup)
-6. Configure environment variables
-7. Run database migrations
-
-📖 **See [RENDER_DEPLOYMENT.md](./RENDER_DEPLOYMENT.md) for detailed Render deployment instructions.**  
-⚡ **Or check [RENDER_QUICKSTART.md](./RENDER_QUICKSTART.md) for a 10-minute quick start.**
-
-### Deploy to Vercel (Frontend Only)
-
-This application is also optimized for Vercel deployment (frontend + API routes):
+This application is optimized for Vercel deployment:
 
 ```bash
 # Install Vercel CLI
@@ -444,17 +419,12 @@ vercel
 
 Or connect your Git repository to Vercel Dashboard for automatic deployments.
 
-**Note:** For Vercel deployment, you'll need to:
-- Deploy color-service separately (Render, Railway, etc.)
-- Use external PostgreSQL database
-- Update `COLOR_SERVICE_URL` environment variable
-
-**Environment Variables:**
-- Set all environment variables from `.env` in deployment dashboard
+**Environment Variables for Vercel:**
+- Set all environment variables from `.env` in Vercel dashboard
 - Ensure `DATABASE_URL` is set for production database
 - Configure `AUTH_SECRET` and other auth variables
 
-📖 **See [DEPLOYMENT.md](./DEPLOYMENT.md) for detailed Vercel deployment instructions.**
+📖 **See [DEPLOYMENT.md](./DEPLOYMENT.md) for detailed deployment instructions.**
 
 ## 🧪 Development
 

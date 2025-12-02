@@ -18,12 +18,10 @@
 	"type": "module",
 	"scripts": {
 		"dev": "vite dev",
-		"prebuild": "npx svelte-kit sync || true",
 		"build": "vite build",
-		"build:render": "node scripts/verify-and-build.js && vite build",
 		"preview": "vite preview",
-		"prepare": "true",
-		"postinstall": "echo 'Skipping Playwright installation for production build'",
+		"prepare": "svelte-kit sync || echo ''",
+		"postinstall": "npx playwright install chromium || echo 'Playwright browser installation skipped (optional)'",
 		"check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
 		"check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch",
 		"format": "prettier --write .",
@@ -39,9 +37,7 @@
 		"docker:reset": "docker-compose down -v && docker-compose up -d",
 		"dev:docker": "docker-compose up -d db && npm run dev",
 		"docker:setup": "node scripts/docker-setup.js",
-		"docker:health": "node scripts/health-check.js",
-		"start": "node build",
-		"railway:deploy": "npm run build && npm run start"
+		"docker:health": "node scripts/health-check.js"
 	},
 	"devDependencies": {
 		"@eslint/compat": "^1.2.5",
@@ -49,7 +45,6 @@
 		"@internationalized/date": "^3.9.0",
 		"@lucide/svelte": "^0.515.0",
 		"@sveltejs/adapter-auto": "^6.0.0",
-		"@sveltejs/adapter-node": "^5.0.0",
 		"@sveltejs/kit": "^2.22.0",
 		"@sveltejs/vite-plugin-svelte": "^6.0.0",
 		"@tailwindcss/vite": "^4.0.0",
@@ -109,6 +104,7 @@
 		"playwright": "^1.56.1",
 		"postgres": "^3.4.7",
 		"pptxgenjs": "^4.0.1",
-		"puppeteer": "^24.28.0"
+		"puppeteer": "^24.28.0",
+		"sharp": "^0.34.5"
 	}
 }

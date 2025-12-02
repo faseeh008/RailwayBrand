@@ -1,5 +1,5 @@
-# Use Node.js 22 Alpine as base image (matches package.json engines requirement)
-FROM node:22-alpine AS base
+# Use Node.js 20 Alpine as base image
+FROM node:20-alpine AS base
 
 # Install dependencies only when needed
 FROM base AS deps
@@ -21,8 +21,8 @@ WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
-# Generate database schema (skip if fails - migrations can run at runtime)
-RUN npm run db:generate || echo "Schema generation skipped"
+# Generate database schema
+RUN npm run db:generate
 
 # Build the application
 RUN npm run build
