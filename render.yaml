@@ -3,7 +3,7 @@ services:
   - type: web
     name: eternabrand-app
     env: node
-    buildCommand: npm install --legacy-peer-deps && npm run build
+    buildCommand: npm install --ignore-scripts && npx svelte-kit sync && npx vite build
     startCommand: node build
     envVars:
       - key: NODE_ENV
