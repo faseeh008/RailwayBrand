@@ -316,7 +316,8 @@
 							filename: logo.filename,
 							usage_tag: logo.usageTag,
 							fileData: logo.fileData,
-							file_size: 0
+							file_size: 0,
+							extractedColors: (logo as any).extractedColors || undefined // Include extracted colors from uploaded logo
 						}))
 					},
 					userApproval: false
@@ -519,7 +520,8 @@
 							filename: logo.filename,
 							usage_tag: logo.usageTag,
 							fileData: logo.fileData,
-							file_size: 0
+							file_size: 0,
+							extractedColors: (logo as any).extractedColors || undefined // Include extracted colors from uploaded logo
 						})),
 						// Include stepHistory so the API can access current step content for partial modifications
 						stepHistory: stepHistory

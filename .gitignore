@@ -107,5 +107,8 @@ Thumbs.db
 # User uploaded files
 static/uploads/
 
+# Google Cloud credentials
+gen-lang-client-*.json
+*-client-*.json
 
 *.onnx

@@ -56,7 +56,7 @@ export interface TypographyExtractionResponse {
  */
 export async function extractColorsFromLogo(
 	logoFile: File,
-	colorCount: number = 5
+	colorCount: number = 7 // Increased default to match service expectations
 ): Promise<ColorExtractionResponse> {
 	try {
 		// Get API key - check env object first, then process.env directly as fallback
@@ -76,11 +76,28 @@ export async function extractColorsFromLogo(
 				}
 			}
 		}
+
+		if (!apiKey || apiKey.trim() === '') {
+			throw new Error('Google Gemini API key is required for color extraction. Please configure GOOGLE_GEMINI_API environment variable.');
+		}
+
+		// Validate file
+		if (!logoFile || logoFile.size === 0) {
+			throw new Error('Invalid logo file: file is empty or not provided');
+		}
+
+		console.log('[Color Extraction] Calling color service:', {
+			url: `${COLOR_SERVICE_URL}/extract-colors`,
+			filename: logoFile.name,
+			fileSize: logoFile.size,
+			fileType: logoFile.type,
+			colorCount
+		});
 		
 		const formData = new FormData();
 		formData.append('file', logoFile);
 		formData.append('color_count', colorCount.toString());
-		formData.append('api_key', apiKey || '');
+		formData.append('api_key', apiKey);
 
 		const response = await fetch(`${COLOR_SERVICE_URL}/extract-colors`, {
 			method: 'POST',
@@ -88,15 +105,43 @@ export async function extractColorsFromLogo(
 		});
 
 		if (!response.ok) {
-			const error = await response.json();
-			throw new Error(error.detail || 'Color extraction failed');
+			let errorDetail = 'Color extraction failed';
+			try {
+				const errorData = await response.json();
+				errorDetail = errorData.detail || errorData.error || errorDetail;
+			} catch (e: unknown) {
+				errorDetail = `HTTP ${response.status}: ${response.statusText}`;
+			}
+			throw new Error(errorDetail);
 		}
 
 		const result = await response.json();
+		
+		// Validate response structure
+		if (!result.success) {
+			throw new Error(result.error || 'Color extraction returned success=false');
+		}
+
+		if (!result.brand_color_system) {
+			throw new Error('Color extraction service did not return brand_color_system');
+		}
+
+		console.log('[Color Extraction] Success:', {
+			hasPrimary: !!result.brand_color_system?.primary?.length,
+			hasSecondary: !!result.brand_color_system?.secondary?.length,
+			primaryCount: result.brand_color_system?.primary?.length || 0,
+			secondaryCount: result.brand_color_system?.secondary?.length || 0
+		});
+
 		return result;
-	} catch (error) {
-		console.error('Color extraction error:', error);
-		throw new Error(`Failed to extract colors: ${error.message}`);
+	} catch (error: any) {
+		console.error('[Color Extraction] Detailed error:', {
+			message: error.message,
+			stack: error.stack,
+			serviceUrl: COLOR_SERVICE_URL,
+			fileName: logoFile?.name
+		});
+		throw new Error(`Failed to extract colors from logo: ${error.message}`);
 	}
 }
 
@@ -142,7 +187,7 @@ export async function detectFontFromLogo(logoFile: File): Promise<{ detected_fon
 			detected_font: result.detected_font,
 			has_text: result.has_text
 		};
-	} catch (error) {
+	} catch (error: unknown) {
 		console.error('Font detection error:', error);
 		return { detected_font: null, has_text: false };
 	}
@@ -215,7 +260,7 @@ export async function extractTypographyFromLogo(
 			detected_font: fontDetection.detected_font,
 			has_text_in_logo: fontDetection.has_text
 		};
-	} catch (error) {
+	} catch (error: any) {
 		console.error('Typography extraction error:', error);
 		throw new Error(`Failed to extract typography: ${error.message}`);
 	}
@@ -228,7 +273,7 @@ export async function checkColorServiceHealth(): Promise<boolean> {
 	try {
 		const response = await fetch(`${COLOR_SERVICE_URL}/health`);
 		return response.ok;
-	} catch (error) {
+	} catch (error: unknown) {
 		console.error('Color service health check failed:', error);
 		return false;
 	}

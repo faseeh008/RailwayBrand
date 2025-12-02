@@ -105,7 +105,9 @@ export const POST: RequestHandler = async ({ request, locals, fetch }) => {
 
 					const loadedLogo = await loadLogoBuffer(logoFile);
 					if (loadedLogo) {
-						logoFileObj = new File([loadedLogo.buffer], logoFile.filename, {
+						// Convert Buffer to Uint8Array for File constructor compatibility
+						const uint8Array = new Uint8Array(loadedLogo.buffer);
+						logoFileObj = new File([uint8Array], logoFile.filename, {
 							type: loadedLogo.mimeType || 'image/png'
 						});
 					} else if (logoFile.filePath) {
@@ -157,28 +159,53 @@ export const POST: RequestHandler = async ({ request, locals, fetch }) => {
 					}
 					
 					// Now extract colors using the File object (PNG if converted, or original if not SVG)
-					console.log('Extracting colors from logo file:', { filename: fileToExtract.name, type: fileToExtract.type, size: fileToExtract.size });
+					console.log('Extracting colors from logo file:', { 
+						filename: fileToExtract.name, 
+						type: fileToExtract.type, 
+						size: fileToExtract.size 
+					});
 					
 					try {
-						const colorResult = await extractColorsFromLogo(fileToExtract);
-						console.log('Color extraction result:', { success: colorResult.success, hasColors: !!colorResult.brand_color_system });
+						// Use color extraction service directly
+						const colorResult = await extractColorsFromLogo(fileToExtract, 7);
 						
-						if (colorResult.success) {
+						console.log('Color extraction result:', { 
+							success: colorResult.success, 
+							hasBrandColorSystem: !!colorResult.brand_color_system,
+							hasPrimary: !!colorResult.brand_color_system?.primary?.length,
+							hasSecondary: !!colorResult.brand_color_system?.secondary?.length,
+							primaryCount: colorResult.brand_color_system?.primary?.length || 0,
+							secondaryCount: colorResult.brand_color_system?.secondary?.length || 0
+						});
+						
+						if (colorResult.success && colorResult.brand_color_system) {
 							extractedColors = convertExtractedColorsToProgressiveFormat(colorResult.brand_color_system);
-							console.log('Extracted colors formatted for progressive generation');
+							console.log('Extracted colors formatted for progressive generation, length:', extractedColors.length);
 						} else {
-							console.warn('Color extraction returned success=false, but continuing without extracted colors');
-							// Don't fail completely - let the AI generate colors based on industry/vibe
-							extractedColors = '';
+							throw new Error('Color extraction returned success=false or missing brand_color_system');
 						}
 					} catch (extractionError: any) {
-						console.error('Color extraction error:', extractionError);
-						// Don't fail completely - log the error but continue without extracted colors
-						// The AI will generate colors based on industry and vibe
-						console.warn('Continuing without extracted colors - AI will generate colors based on industry and vibe');
-						extractedColors = '';
+						console.error('Color extraction error details:', {
+							message: extractionError.message,
+							stack: extractionError.stack,
+							fileName: fileToExtract.name,
+							fileType: fileToExtract.type,
+							fileSize: fileToExtract.size
+						});
 						
-						// Log a user-friendly message (but don't throw - we'll continue)
+						// Check if it's a service availability issue
+						if (extractionError.message.includes('not available') || 
+						    extractionError.message.includes('ECONNREFUSED') ||
+						    extractionError.message.includes('fetch failed')) {
+							console.error('Color extraction service is not accessible. Please ensure the service is running.');
+							// Don't fail completely - let the AI generate colors based on industry/vibe
+							extractedColors = '';
+						} else {
+							// For other errors, log but continue
+							console.warn('Continuing without extracted colors - AI will generate colors based on industry and vibe');
+							extractedColors = '';
+						}
+						
 						console.log('Note: Color extraction from logo failed, but color palette will be generated based on industry and brand style instead.');
 					}
 				}
@@ -249,6 +276,62 @@ export const POST: RequestHandler = async ({ request, locals, fetch }) => {
 		let stepResult;
 		const canUseEnhanced = Boolean(brandName && industry && style);
 
+		// For color-palette step, generate colors using the same logic as logo generation to ensure they match
+		let logoColors: { primary: string; secondary: string; accent1: string; accent2?: string } | undefined = undefined;
+		if (step === 'color-palette' && brandName && industry && style) {
+			try {
+				// Import the shared color generation function (same as logo generation uses)
+				const { generateColorsForLogo } = await import('$lib/services/color-generation');
+				// Get API key
+				const { env } = await import('$lib/env');
+				let apiKey = env?.GOOGLE_GEMINI_API || '';
+				if (!apiKey || apiKey.trim() === '') {
+					if (typeof process !== 'undefined' && process.env) {
+						apiKey = process.env.Google_Gemini_Api || 
+						         process.env.GOOGLE_GEMINI_API || 
+						         process.env.GOOGLE_AI_API_KEY || '';
+						if (apiKey) {
+							apiKey = apiKey.trim().replace(/^["']|["']$/g, '');
+						}
+					}
+				}
+				if (apiKey) {
+					// Get extracted colors from uploaded logo if available
+					let extractedColorsFromLogo: any = undefined;
+					if (previousSteps?.logo_files && previousSteps.logo_files.length > 0) {
+						const logoFile = previousSteps.logo_files[0];
+						// Check if extracted colors are already stored in the logo file data
+						if ((logoFile as any).extractedColors) {
+							extractedColorsFromLogo = (logoFile as any).extractedColors;
+							console.log('[progressive API] Using extracted colors from uploaded logo (stored in logo file):', extractedColorsFromLogo);
+						} else if (extractedColors) {
+							// If colors were just extracted in this request, use them
+							// Parse extractedColors string back to object if needed
+							try {
+								if (typeof extractedColors === 'string') {
+									// Try to parse if it's a JSON string
+									extractedColorsFromLogo = JSON.parse(extractedColors);
+								} else {
+									extractedColorsFromLogo = extractedColors;
+								}
+								console.log('[progressive API] Using extracted colors from uploaded logo (just extracted):', extractedColorsFromLogo);
+							} catch (parseError) {
+								console.warn('[progressive API] Failed to parse extracted colors, continuing without them');
+							}
+						}
+					}
+
+					const generatedColors = await generateColorsForLogo(apiKey, brandName, industry, style, extractedColorsFromLogo);
+					if (generatedColors) {
+						logoColors = generatedColors;
+						console.log('[progressive API] Generated logo colors for color palette step:', logoColors, extractedColorsFromLogo ? '(using extracted colors from uploaded logo)' : '');
+					}
+				}
+			} catch (error) {
+				console.warn('[progressive API] Failed to generate logo colors, will generate colors in color palette step:', error);
+			}
+		}
+
 		if (canUseEnhanced) {
 			console.log('Using enhanced progressive generator with:', {
 				brandName,
@@ -256,7 +339,8 @@ export const POST: RequestHandler = async ({ request, locals, fetch }) => {
 				style,
 				audience,
 				hasIndustrySpecificInfo: Object.keys(industrySpecificInfo).length > 0,
-				hasGroundingData: !!groundingData
+				hasGroundingData: !!groundingData,
+				hasLogoColors: !!logoColors
 			});
 			
 			// Include stepHistory in previousSteps so industry-specific steps can reference previous common steps
@@ -279,6 +363,7 @@ export const POST: RequestHandler = async ({ request, locals, fetch }) => {
 					feedback: feedback || undefined,
 					extractedColors: extractedColors || undefined,
 					extractedTypography: extractedTypography || undefined,
+					logoColors: logoColors,
 					groundingData: groundingData
 				});
 			} catch (enhancedError) {

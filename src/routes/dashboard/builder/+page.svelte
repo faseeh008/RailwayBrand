@@ -300,7 +300,8 @@ type LogoFileEntry = {
 					filePath: logoAnswer.filePath || '',
 					fileData: logoAnswer.fileData,
 					usageTag: logoAnswer.usageTag || 'primary',
-					aiGenerated: logoAnswer.type === 'ai-generated'
+					aiGenerated: logoAnswer.type === 'ai-generated',
+					extractedColors: logoAnswer.extractedColors || undefined // Include extracted colors
 				}
 			];
 		} else {
@@ -1961,7 +1962,8 @@ ${customPrompt}`;
 							usage_tag: logo.usageTag as 'primary' | 'icon' | 'lockup',
 							file_path: logo.filePath,
 							file_size: 0,
-							fileData: logo.fileData // Include base64 data
+							fileData: logo.fileData, // Include base64 data
+							extractedColors: (logo as any).extractedColors || undefined // Include extracted colors from uploaded logo
 						})),
 						contact: {
 							name: contactName || '',

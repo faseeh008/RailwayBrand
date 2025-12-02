@@ -81,6 +81,7 @@
 		returnToIndex: number;
 		logoStatus: LogoStatus;
 		currentLogoMessageId: string | null;
+		currentLogoFormat: 'png' | 'svg' | null;
 	}
 
 	// ============================================================================
@@ -95,6 +96,12 @@
 	export let totalSteps: number = 7;
 	export let storageKey: string | null = null;
 	export let onSessionSave: ((payload: { id: string; brandName?: string; messages: any[]; state: any }) => void) | null = null;
+	
+	// Store accepted logo separately so it persists even if new logos are generated
+	let acceptedLogo: { logoData: string; filename: string; format: string; storageId?: string } | null = null;
+	
+	// Store previous logo context for branching (when regenerating, we need to reference the previous logo)
+	let previousLogoContext: { logoData: string; filename: string; format: string; messageId: string } | null = null;
 
 	// ============================================================================
 	// STATE - Consolidated into logical groups
@@ -108,7 +115,8 @@
 		editingIndex: -1,
 		returnToIndex: -1,
 		logoStatus: 'none',
-		currentLogoMessageId: null
+		currentLogoMessageId: null,
+		currentLogoFormat: null
 	};
 
 	// Messages and answers
@@ -739,6 +747,7 @@
 			// Ensure we're in questioning phase and logo status is ready
 			chatState.phase = 'questioning';
 			chatState.logoStatus = 'none';
+			chatState.currentLogoFormat = null;
 
 			// Set the question index to point to the logo question
 			chatState.questionIndex = newIndex;
@@ -790,8 +799,22 @@
 	}
 
 	async function finishConversation() {
-		// Verify logo is accepted before finishing
-		const logoAnswer = answers['logo'];
+		// Verify logo is accepted before finishing - use accepted logo if available
+		let logoAnswer = answers['logo'];
+		
+		// If we have an accepted logo stored separately, use that instead
+		if (acceptedLogo && acceptedLogo.logoData) {
+			logoAnswer = {
+				type: 'ai-generated',
+				fileData: acceptedLogo.logoData,
+				filename: acceptedLogo.filename,
+				status: 'accepted',
+				format: acceptedLogo.format,
+				storageId: acceptedLogo.storageId
+			};
+			answers['logo'] = logoAnswer;
+		}
+		
 		const isLogoAccepted = logoAnswer &&
 			(logoAnswer.status === 'accepted' || logoAnswer.status === 'generated' ||
 			(logoAnswer.type !== 'ai-generated' && logoAnswer.fileData));
@@ -1099,12 +1122,72 @@
 
 			const result = await response.json();
 
+			// Extract colors from uploaded logo using color extraction service
+			let extractedColors: any = null;
+			try {
+				const { extractColorsFromLogo } = await import('$lib/services/color-extraction');
+				
+				// Convert file data URL to File object for color extraction
+				let logoFileForExtraction: File;
+				if (result.fileData && result.fileData.startsWith('data:')) {
+					// If it's a data URL, convert to File
+					const response = await fetch(result.fileData);
+					const blob = await response.blob();
+					logoFileForExtraction = new File([blob], result.filename, { type: blob.type });
+				} else {
+					// If it's a URL, fetch and convert to File
+					const response = await fetch(result.fileData || result.fileUrl);
+					const blob = await response.blob();
+					logoFileForExtraction = new File([blob], result.filename, { type: blob.type });
+				}
+
+				// Check if SVG and convert to PNG if needed (color extraction service requires raster images)
+				let fileToExtract = logoFileForExtraction;
+				if (logoFileForExtraction.type === 'image/svg+xml' || logoFileForExtraction.name.endsWith('.svg')) {
+					try {
+						const { svgToPngNode } = await import('$lib/utils/svg-to-png');
+						const svgContent = await logoFileForExtraction.text();
+						const pngDataUrl = await svgToPngNode(svgContent, 800, 800);
+						const base64Data = pngDataUrl.split(',')[1];
+						const pngBuffer = Buffer.from(base64Data, 'base64');
+						const pngFilename = logoFileForExtraction.name.replace(/\.svg$/i, '.png');
+						fileToExtract = new File([pngBuffer], pngFilename, { type: 'image/png' });
+						console.log('[Chatbot] SVG converted to PNG for color extraction');
+					} catch (svgError) {
+						console.warn('[Chatbot] Failed to convert SVG to PNG for color extraction, using original:', svgError);
+					}
+				}
+
+				// Use color extraction service directly
+				const colorResult = await extractColorsFromLogo(fileToExtract, 7);
+				if (colorResult.success && colorResult.brand_color_system) {
+					extractedColors = colorResult.brand_color_system;
+					console.log('[Chatbot] Successfully extracted colors from uploaded logo:', {
+						primaryCount: extractedColors.primary?.length || 0,
+						secondaryCount: extractedColors.secondary?.length || 0,
+						neutralsCount: extractedColors.neutrals?.length || 0,
+						backgroundCount: extractedColors.background?.length || 0
+					});
+				} else {
+					console.warn('[Chatbot] Color extraction returned success=false or missing brand_color_system');
+				}
+			} catch (extractionError: any) {
+				console.error('[Chatbot] Failed to extract colors from uploaded logo:', {
+					message: extractionError.message,
+					stack: extractionError.stack,
+					fileName: result.filename
+				});
+				// Continue without extracted colors - not a critical error
+				console.warn('[Chatbot] Continuing without extracted colors - colors will be generated based on industry and vibe');
+			}
+
 			answers['logo'] = {
 				filename: result.filename,
 				filePath: result.filePath,
 				fileData: result.fileData,
 				status: 'accepted',
-				usageTag: 'primary'
+				usageTag: 'primary',
+				extractedColors: extractedColors // Store extracted colors
 			};
 
 			chatState.logoStatus = 'accepted';
@@ -1114,8 +1197,33 @@
 		} catch (error) {
 			console.error('[Chatbot] Logo upload error:', error);
 			chatState.logoStatus = 'none';
+			chatState.currentLogoFormat = null;
 			await addBotMessage(`Failed to upload logo: ${error instanceof Error ? error.message : 'Unknown error'}`);
 		}
+	}
+
+	// Helper function to detect logo format from logoData
+	function detectLogoFormat(logoData: string, resultFormat?: string): 'png' | 'svg' {
+		// First check if format is provided in result
+		if (resultFormat === 'svg' || resultFormat === 'png') {
+			return resultFormat;
+		}
+		
+		// Check data URL mime type
+		if (logoData.includes('data:image/svg+xml')) {
+			return 'svg';
+		}
+		if (logoData.includes('data:image/png')) {
+			return 'png';
+		}
+		
+		// Check if it's SVG code (starts with <svg)
+		if (logoData.trim().startsWith('<svg') || logoData.includes('<svg')) {
+			return 'svg';
+		}
+		
+		// Default to PNG
+		return 'png';
 	}
 
 	async function handleGenerateLogo() {
@@ -1133,7 +1241,11 @@
 		isTyping = true;
 
 		try {
-			const result = await fetchWithAbort<{ success: boolean; logoData: string; filename?: string; error?: string }>(
+			// Get extracted colors from uploaded logo if available
+			const logoAnswer = answers['logo'];
+			const extractedColors = logoAnswer?.extractedColors || null;
+
+			const result = await fetchWithAbort<{ success: boolean; logoData?: string; logoUrl?: string; filename?: string; format?: string; error?: string }>(
 				'/api/generate-logo',
 				{
 					method: 'POST',
@@ -1144,31 +1256,65 @@
 						style: collectedInfo.style || answers['style'] || '',
 						description: collectedInfo.description || answers['shortDescription'] || '',
 						values: collectedInfo.values || answers['brandValues'] || '',
-						audience: collectedInfo.audience || answers['audience'] || ''
+						audience: collectedInfo.audience || answers['audience'] || '',
+						extractedColors: extractedColors // Pass extracted colors from uploaded logo
 					})
 				}
 			);
 
 			// Handle both logoData (base64) and logoUrl response formats
-			const logoData = result.logoData || result.logoUrl;
+			let logoData = result.logoData || result.logoUrl;
 			if (!result.success || !logoData) {
 				throw new Error(result.error || 'Failed to generate logo');
 			}
 
+			// If logoUrl is provided, fetch and convert to base64
+			if (result.logoUrl && !logoData.startsWith('data:')) {
+				try {
+					const response = await fetch(result.logoUrl);
+					const blob = await response.blob();
+					const reader = new FileReader();
+					logoData = await new Promise<string>((resolve, reject) => {
+						reader.onloadend = () => resolve(reader.result as string);
+						reader.onerror = reject;
+						reader.readAsDataURL(blob);
+					});
+				} catch (fetchError) {
+					console.warn('Failed to convert logoUrl to base64, using URL directly:', fetchError);
+					// Use URL directly if conversion fails
+				}
+			}
+
+			// Detect and store format
+			const logoFormat = detectLogoFormat(logoData, result.format);
+			chatState.currentLogoFormat = logoFormat;
+
+			const defaultExtension = logoFormat;
+			const defaultFilename = result.filename || `${brandName.toLowerCase().replace(/\s+/g, '-')}-logo.${defaultExtension}`;
+
 			answers['logo'] = {
 				type: 'ai-generated',
 				fileData: logoData,
-				filename: result.filename || `${brandName.toLowerCase().replace(/\s+/g, '-')}-logo.svg`,
-				status: 'pending-acceptance'
+				filename: defaultFilename,
+				status: 'pending-acceptance',
+				format: logoFormat
 			};
 
 			const logoMessage = await addBotMessage(
 				"I've generated a logo for your brand. Please review it and let me know if you'd like to accept it or make changes.",
-				{ logoData: logoData }
+				{ logoData: logoData, logoFilename: defaultFilename }
 			);
 
 			chatState.logoStatus = 'pending-acceptance';
 			chatState.currentLogoMessageId = logoMessage.id;
+
+			// Store this logo as previous context for future regenerations (branching)
+			previousLogoContext = {
+				logoData: logoData,
+				filename: defaultFilename,
+				format: logoFormat,
+				messageId: logoMessage.id
+			};
 
 			messages = messages.map(m =>
 				m.id === logoMessage.id
@@ -1189,16 +1335,85 @@
 	}
 
 	async function handleLogoAccept(messageId: string) {
-		messages = messages.map(m =>
-			m.id === messageId ? { ...m, logoAccepted: true, waitingForLogoAcceptance: false } : m
-		);
+		// Find the logo message that was accepted
+		const logoMessage = messages.find(m => m.id === messageId);
+		if (!logoMessage || !logoMessage.logoData) {
+			console.error('[Chatbot] Logo message not found or has no logo data');
+			await addBotMessage("Error: Could not find logo data to save.");
+			return;
+		}
 
+		// Store the accepted logo data separately (this becomes the accepted logo)
+		acceptedLogo = {
+			logoData: logoMessage.logoData,
+			filename: logoMessage.logoFilename || 'logo.png',
+			format: logoMessage.logoData.includes('data:image/svg+xml') ? 'svg' : 'png',
+			storageId: undefined // Will be set after saving
+		};
+
+		// Update message status - mark this one as accepted, unmark others
+		messages = messages.map(m => {
+			if (m.id === messageId) {
+				return { ...m, logoAccepted: true, waitingForLogoAcceptance: false };
+			} else if (m.logoData && m.logoAccepted) {
+				// Unmark previously accepted logos
+				return { ...m, logoAccepted: false };
+			}
+			return m;
+		});
+
+		// Update answers with accepted logo
 		if (answers['logo']) {
-			answers['logo'].status = 'accepted';
+			answers['logo'] = {
+				...answers['logo'],
+				status: 'accepted',
+				fileData: logoMessage.logoData,
+				filename: logoMessage.logoFilename || 'logo.png',
+				format: acceptedLogo.format
+			};
 		}
 
 		chatState.logoStatus = 'accepted';
 		chatState.currentLogoMessageId = null;
+
+		// Save accepted logo to database if we have a chat session ID
+		if (storageKey && storageKey !== 'local-chat') {
+			try {
+				const brandName = collectedInfo.brandName || answers['brandName'] || '';
+				
+				// Extract storage ID if logo was generated (it might be in the message or answers)
+				let logoStorageId: string | undefined = undefined;
+				if (answers['logo']?.storageId) {
+					logoStorageId = answers['logo'].storageId;
+				}
+
+				const saveResponse = await fetch(`/api/chat-sessions/${storageKey}/logo`, {
+					method: 'POST',
+					headers: { 'Content-Type': 'application/json' },
+					body: JSON.stringify({
+						logoData: logoMessage.logoData,
+						filename: logoMessage.logoFilename || 'logo.png',
+						mimeType: acceptedLogo.format === 'svg' ? 'image/svg+xml' : 'image/png',
+						storageId: logoStorageId,
+						source: 'ai-generated',
+						brandName: brandName || null
+					})
+				});
+
+				if (saveResponse.ok) {
+					const saveResult = await saveResponse.json();
+					if (saveResult?.snapshot?.assetId) {
+						acceptedLogo.storageId = saveResult.snapshot.assetId;
+					}
+					console.log('[Chatbot] Logo saved to database successfully');
+				} else {
+					console.warn('[Chatbot] Failed to save logo to database:', await saveResponse.text());
+				}
+			} catch (error) {
+				console.error('[Chatbot] Error saving logo to database:', error);
+				// Continue even if save fails - logo is still accepted
+			}
+		}
 
 		await addBotMessage("Logo saved! It will be used in your brand guidelines.");
 		await delay(300);
@@ -1224,41 +1439,115 @@
 		isTyping = true;
 
 		try {
-			const result = await fetchWithAbort<{ success: boolean; logoData?: string; logoUrl?: string; filename?: string; error?: string }>(
+			// Determine format: use stored format, or detect from current logo, or default to PNG
+			let logoFormat: 'png' | 'svg' = chatState.currentLogoFormat || 'png';
+			
+			// Find the previous logo to use as context (branching approach)
+			// Priority: 1) Logo from the message being regenerated, 2) previousLogoContext, 3) current answers
+			let previousLogoData: string | null = null;
+			let previousLogoFilename: string | null = null;
+			
+			// Check if we're regenerating a specific message
+			const sourceLogoMessage = messages.find(m => m.id === messageId);
+			if (sourceLogoMessage && sourceLogoMessage.logoData) {
+				previousLogoData = sourceLogoMessage.logoData;
+				previousLogoFilename = sourceLogoMessage.logoFilename || null;
+			} else if (previousLogoContext && previousLogoContext.logoData) {
+				// Use previous logo context (branching)
+				previousLogoData = previousLogoContext.logoData;
+				previousLogoFilename = previousLogoContext.filename;
+				logoFormat = previousLogoContext.format;
+			} else if (answers['logo']?.fileData) {
+				// Fallback to current logo in answers
+				previousLogoData = answers['logo'].fileData;
+				previousLogoFilename = answers['logo'].filename || null;
+				logoFormat = detectLogoFormat(answers['logo'].fileData, answers['logo'].format);
+			}
+			
+			// Fallback: try to detect from current logo data
+			if (!chatState.currentLogoFormat && answers['logo']?.fileData) {
+				logoFormat = detectLogoFormat(answers['logo'].fileData);
+			}
+
+			const requestBody: any = {
+				brandName: collectedInfo.brandName || answers['brandName'] || '',
+				industry: collectedInfo.industry || answers['industry'] || '',
+				style: collectedInfo.style || answers['style'] || '',
+				description: collectedInfo.description || answers['shortDescription'] || '',
+				values: collectedInfo.values || answers['brandValues'] || '',
+				audience: collectedInfo.audience || answers['audience'] || '',
+				enhancementPrompt: feedback || 'Please improve the logo design',
+				outputFormat: logoFormat // Pass format so API can process feedback correctly
+			};
+			
+			// Add previous logo context for branching (critical for preserving design)
+			if (previousLogoData) {
+				requestBody.previousLogoData = previousLogoData;
+				requestBody.previousLogoFilename = previousLogoFilename;
+				console.log('[Chatbot] Passing previous logo context for branching (preservation)');
+			}
+
+			const result = await fetchWithAbort<{ success: boolean; logoData?: string; logoUrl?: string; filename?: string; format?: string; error?: string }>(
 				'/api/generate-logo',
 				{
 					method: 'POST',
 					headers: { 'Content-Type': 'application/json' },
-					body: JSON.stringify({
-						brandName: collectedInfo.brandName || answers['brandName'] || '',
-						industry: collectedInfo.industry || answers['industry'] || '',
-						style: collectedInfo.style || answers['style'] || '',
-						description: collectedInfo.description || answers['shortDescription'] || '',
-						values: collectedInfo.values || answers['brandValues'] || '',
-						audience: collectedInfo.audience || answers['audience'] || '',
-						enhancementPrompt: feedback || 'Please improve the logo design'
-					})
+					body: JSON.stringify(requestBody)
 				}
 			);
 
 			// Handle both logoData (base64) and logoUrl response formats
-			const logoData = result.logoData || result.logoUrl;
+			let logoData = result.logoData || result.logoUrl;
 			if (!result.success || !logoData) {
 				throw new Error(result.error || 'Failed to regenerate logo');
 			}
 
+			// If logoUrl is provided, fetch and convert to base64
+			if (result.logoUrl && !logoData.startsWith('data:')) {
+				try {
+					const response = await fetch(result.logoUrl);
+					const blob = await response.blob();
+					const reader = new FileReader();
+					logoData = await new Promise<string>((resolve, reject) => {
+						reader.onloadend = () => resolve(reader.result as string);
+						reader.onerror = reject;
+						reader.readAsDataURL(blob);
+					});
+				} catch (fetchError) {
+					console.warn('Failed to convert logoUrl to base64, using URL directly:', fetchError);
+					// Use URL directly if conversion fails
+				}
+			}
+
 			const brandName = collectedInfo.brandName || answers['brandName'] || 'brand';
+			
+			// Detect and store format
+			const regeneratedFormat = detectLogoFormat(logoData, result.format);
+			chatState.currentLogoFormat = regeneratedFormat;
+			
+			const defaultExtension = regeneratedFormat;
+			const defaultFilename = result.filename || `${brandName.toLowerCase().replace(/\s+/g, '-')}-logo.${defaultExtension}`;
+
 			answers['logo'] = {
 				type: 'ai-generated',
 				fileData: logoData,
-				filename: result.filename || `${brandName.toLowerCase().replace(/\s+/g, '-')}-logo.svg`,
-				status: 'pending-acceptance'
+				filename: defaultFilename,
+				status: 'pending-acceptance',
+				format: regeneratedFormat
 			};
 
 			const logoMessage = await addBotMessage(
 				"I've regenerated the logo. Please review and let me know if you'd like to accept or make more changes.",
-				{ logoData: logoData }
+				{ logoData: logoData, logoFilename: defaultFilename }
 			);
+
+			// Update previous logo context for branching (this becomes the new reference)
+			previousLogoContext = {
+				logoData: logoData,
+				filename: defaultFilename,
+				format: regeneratedFormat,
+				messageId: logoMessage.id
+			};
 
 			chatState.logoStatus = 'pending-acceptance';
 			chatState.currentLogoMessageId = logoMessage.id;
@@ -1463,15 +1752,32 @@ CURRENT CONTENT: ${typeof currentContent === 'string' ? currentContent.substring
 			shortDescription = parts.filter(Boolean).join(', ') || `${brandName || 'A brand'} in the ${industry || 'business'} industry`;
 		}
 
-		// Format logo data
-		let logoData = answers['logo'];
-		if (logoData?.type === 'ai-generated' && logoData.fileData) {
+		// Format logo data - prioritize accepted logo
+		let logoData: any = null;
+		
+		// Use accepted logo if available (even if newer logos were generated)
+		if (acceptedLogo && acceptedLogo.logoData) {
 			logoData = {
 				type: 'ai-generated',
-				fileData: logoData.fileData,
-				filename: logoData.filename || `${brandName.toLowerCase().replace(/\s+/g, '-')}-logo.svg`,
-				status: 'generated'
+				fileData: acceptedLogo.logoData,
+				filename: acceptedLogo.filename,
+				status: 'accepted',
+				format: acceptedLogo.format,
+				storageId: acceptedLogo.storageId
 			};
+		} else if (answers['logo']) {
+			const logoAnswer = answers['logo'];
+			// Only use logo from answers if it's accepted
+			if (logoAnswer.fileData && (logoAnswer.status === 'accepted' || logoAnswer.status === 'generated')) {
+				logoData = {
+					type: logoAnswer.type || 'ai-generated',
+					fileData: logoAnswer.fileData,
+					filename: logoAnswer.filename || `${brandName.toLowerCase().replace(/\s+/g, '-')}-logo.svg`,
+					status: logoAnswer.status || 'generated',
+					format: logoAnswer.format,
+					storageId: logoAnswer.storageId
+				};
+			}
 		}
 
 		const formData = {
