@@ -405,24 +405,46 @@ src/
 
 ## 🚀 Deployment
 
-### Deploy to Vercel (Recommended)
+### Deploy to Vercel
 
-This application is optimized for Vercel deployment:
+This application is optimized for Vercel deployment with the Vercel adapter configured.
 
+#### Quick Deploy
+
+**Option 1: Vercel CLI**
 ```bash
 # Install Vercel CLI
 npm i -g vercel
+
+# Login to Vercel
+vercel login
 
 # Deploy
 vercel
 ```
 
-Or connect your Git repository to Vercel Dashboard for automatic deployments.
+**Option 2: Vercel Dashboard**
+1. Go to [vercel.com](https://vercel.com)
+2. Click "New Project"
+3. Import your Git repository
+4. Vercel will automatically detect SvelteKit
+5. Configure environment variables
+6. Click "Deploy"
 
-**Environment Variables for Vercel:**
-- Set all environment variables from `.env` in Vercel dashboard
-- Ensure `DATABASE_URL` is set for production database
-- Configure `AUTH_SECRET` and other auth variables
+#### Environment Variables
+
+Set all required environment variables in the Vercel dashboard:
+
+- `DATABASE_URL` - PostgreSQL connection string (use Vercel Postgres or external database)
+- `AUTH_SECRET` - Authentication secret key (generate a secure random string)
+- `AUTH_TRUST_HOST=true` - Required for Vercel
+- `GOOGLE_GEMINI_API` - Google Gemini API key
+- `UNSPLASH_ACCESS_KEY` - Unsplash API key (optional)
+- `COLOR_SERVICE_URL` - Color extraction service URL (if deploying separately)
+- `GOOGLE_CLIENT_ID` - Google OAuth client ID (optional)
+- `GOOGLE_CLIENT_SECRET` - Google OAuth client secret (optional)
+
+**Note:** For the color service, you'll need to deploy it separately (e.g., Railway, Render, or another platform) and update the `COLOR_SERVICE_URL` environment variable.
 
 📖 **See [DEPLOYMENT.md](./DEPLOYMENT.md) for detailed deployment instructions.**
 
