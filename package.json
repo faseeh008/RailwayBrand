@@ -18,8 +18,9 @@
 	"type": "module",
 	"scripts": {
 		"dev": "vite dev",
-		"prebuild": "npx svelte-kit sync",
+		"prebuild": "npx svelte-kit sync || true",
 		"build": "vite build",
+		"build:render": "npx svelte-kit sync && vite build",
 		"preview": "vite preview",
 		"prepare": "true",
 		"postinstall": "echo 'Skipping Playwright installation for production build'",
