@@ -20,7 +20,7 @@
 		"dev": "vite dev",
 		"prebuild": "npx svelte-kit sync || true",
 		"build": "vite build",
-		"build:render": "node scripts/create-svelte-kit-dir.js && vite build",
+		"build:render": "node scripts/verify-and-build.js && vite build",
 		"preview": "vite preview",
 		"prepare": "true",
 		"postinstall": "echo 'Skipping Playwright installation for production build'",
