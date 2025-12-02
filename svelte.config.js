@@ -11,7 +11,9 @@ const config = {
 		// Vercel adapter for optimized deployment
 		// See https://kit.svelte.dev/docs/adapter-vercel for more information
 		adapter: adapter({
-			runtime: 'nodejs20.x'
+			runtime: 'nodejs20.x',
+			// Exclude large dependencies that aren't needed in serverless functions
+			external: ['puppeteer', 'playwright', 'sharp', 'canvas']
 		})
 	}
 };

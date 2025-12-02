@@ -2,5 +2,20 @@
 	"framework": "sveltekit",
 	"buildCommand": "npm run build",
 	"devCommand": "npm run dev",
-	"installCommand": "npm install"
+	"installCommand": "npm install",
+	"functions": {
+		"src/routes/**/*.ts": {
+			"maxDuration": 60
+		}
+	},
+	"outputFileTracingExcludes": {
+		"*": [
+			"node_modules/puppeteer/**",
+			"node_modules/playwright/**",
+			"node_modules/sharp/**",
+			"node_modules/canvas/**",
+			"node_modules/puppeteer-core/**",
+			"node_modules/playwright-core/**"
+		]
+	}
 }

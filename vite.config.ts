@@ -17,6 +17,8 @@ export default defineConfig({
 		include: ['lucide-svelte']
 	},
 	ssr: {
-		noExternal: ['lucide-svelte']
+		noExternal: ['lucide-svelte'],
+		// Exclude large dependencies from SSR bundle
+		external: ['puppeteer', 'playwright', 'sharp', 'canvas', 'puppeteer-core', 'playwright-core']
 	}
 });

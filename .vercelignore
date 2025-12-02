@@ -1,0 +1,9 @@
+node_modules/puppeteer
+node_modules/playwright
+node_modules/sharp
+node_modules/canvas
+node_modules/puppeteer-core
+node_modules/playwright-core
+react-templates/*/node_modules
+react-templates/*/build
+
