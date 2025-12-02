@@ -405,25 +405,30 @@ src/
 
 ## 🚀 Deployment
 
-### Deploy to Railway (Recommended for Full Stack)
+### Deploy to Render (Recommended - FREE Tier Available!)
 
-Railway is perfect for deploying the complete application including:
+Render is perfect for deploying the complete application including:
 - SvelteKit frontend/backend
 - Python color-service
 - PostgreSQL database
-- All services in one project
+- All services with automatic deployments
+
+**FREE Tier Includes:**
+- 750 hours/month of web services
+- Free PostgreSQL database
+- Automatic deployments from GitHub
 
 **Quick Start:**
 1. Push your code to GitHub
-2. Go to [railway.app](https://railway.app) → New Project
-3. Deploy from GitHub repo
-4. Add PostgreSQL database
-5. Add color-service (set root directory to `color-service/`)
+2. Go to [render.com](https://render.com) → Sign Up (FREE!)
+3. Connect GitHub repository
+4. Create PostgreSQL database
+5. Deploy services (or use Blueprint for automatic setup)
 6. Configure environment variables
 7. Run database migrations
 
-📖 **See [RAILWAY_DEPLOYMENT.md](./RAILWAY_DEPLOYMENT.md) for detailed Railway deployment instructions.**  
-⚡ **Or check [RAILWAY_QUICKSTART.md](./RAILWAY_QUICKSTART.md) for a 5-minute quick start.**
+📖 **See [RENDER_DEPLOYMENT.md](./RENDER_DEPLOYMENT.md) for detailed Render deployment instructions.**  
+⚡ **Or check [RENDER_QUICKSTART.md](./RENDER_QUICKSTART.md) for a 10-minute quick start.**
 
 ### Deploy to Vercel (Frontend Only)
 
@@ -440,7 +445,7 @@ vercel
 Or connect your Git repository to Vercel Dashboard for automatic deployments.
 
 **Note:** For Vercel deployment, you'll need to:
-- Deploy color-service separately (Railway, Render, etc.)
+- Deploy color-service separately (Render, Railway, etc.)
 - Use external PostgreSQL database
 - Update `COLOR_SERVICE_URL` environment variable
 
