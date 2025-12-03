@@ -115,18 +115,51 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 			// Get project ID and location from environment
 			projectId = process.env.GOOGLE_CLOUD_PROJECT_ID || process.env.GCP_PROJECT_ID || '';
 			location = process.env.GOOGLE_CLOUD_LOCATION || 'us-central1';
-			credentialsPath = process.env.GOOGLE_APPLICATION_CREDENTIALS || null;
 			
-			// Resolve relative path to absolute path if needed
-			if (credentialsPath) {
+			// Handle credentials: either from file path OR base64 JSON string
+			credentialsPath = null;
+			const credentialsJsonBase64 = process.env.GOOGLE_APPLICATION_CREDENTIALS_JSON;
+			const credentialsFilePath = process.env.GOOGLE_APPLICATION_CREDENTIALS;
+			
+			if (credentialsJsonBase64) {
+				// Decode base64 JSON and write to temporary file
+				const path = await import('path');
+				const fs = await import('fs');
+				const os = await import('os');
+				
+				try {
+					// Decode base64 to JSON string
+					const credentialsJson = Buffer.from(credentialsJsonBase64, 'base64').toString('utf-8');
+					
+					// Validate it's valid JSON
+					JSON.parse(credentialsJson);
+					
+					// Create temp file path
+					const tempDir = os.tmpdir();
+					const tempFilePath = path.join(tempDir, 'google-credentials.json');
+					
+					// Write JSON to temp file
+					fs.writeFileSync(tempFilePath, credentialsJson, 'utf-8');
+					
+					// Set permissions (read-only for owner)
+					fs.chmodSync(tempFilePath, 0o600);
+					
+					credentialsPath = tempFilePath;
+					console.log(`[generate-logo] ✅ Credentials loaded from base64 env var and written to: ${credentialsPath}`);
+				} catch (decodeError: any) {
+					console.error(`[generate-logo] ❌ Failed to decode credentials from base64:`, decodeError.message);
+					credentialsPath = null;
+				}
+			} else if (credentialsFilePath) {
+				// Original file path handling
 				const path = await import('path');
 				const fs = await import('fs');
 				const projectRoot = process.cwd();
 				
 				// Resolve path (handles both relative and absolute paths)
-				const resolvedPath = path.isAbsolute(credentialsPath) 
-					? credentialsPath 
-					: path.resolve(projectRoot, credentialsPath);
+				const resolvedPath = path.isAbsolute(credentialsFilePath) 
+					? credentialsFilePath 
+					: path.resolve(projectRoot, credentialsFilePath);
 				
 				// Check if file exists
 				if (fs.existsSync(resolvedPath)) {
