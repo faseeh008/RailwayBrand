@@ -21,6 +21,11 @@ WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
+# Build React templates first (before main app build)
+RUN echo "🔨 Building React templates..." && \
+    chmod +x scripts/build-templates.sh && \
+    ./scripts/build-templates.sh
+
 # Generate database schema
 RUN npm run db:generate
 
@@ -40,6 +45,16 @@ RUN adduser --system --uid 1001 sveltekit
 COPY --from=builder --chown=sveltekit:nodejs /app/build ./build
 COPY --from=builder --chown=sveltekit:nodejs /app/package.json ./package.json
 COPY --from=builder --chown=sveltekit:nodejs /app/drizzle ./drizzle
+
+# Copy React template builds (only build directories and index.html, not node_modules or source)
+COPY --from=builder --chown=sveltekit:nodejs /app/react-templates/Minimalistic/build ./react-templates/Minimalistic/build
+COPY --from=builder --chown=sveltekit:nodejs /app/react-templates/Minimalistic/index.html ./react-templates/Minimalistic/index.html
+COPY --from=builder --chown=sveltekit:nodejs /app/react-templates/Maximalistic/build ./react-templates/Maximalistic/build
+COPY --from=builder --chown=sveltekit:nodejs /app/react-templates/Maximalistic/index.html ./react-templates/Maximalistic/index.html
+COPY --from=builder --chown=sveltekit:nodejs /app/react-templates/Funky/build ./react-templates/Funky/build
+COPY --from=builder --chown=sveltekit:nodejs /app/react-templates/Funky/index.html ./react-templates/Funky/index.html
+COPY --from=builder --chown=sveltekit:nodejs /app/react-templates/Futuristic/build ./react-templates/Futuristic/build
+COPY --from=builder --chown=sveltekit:nodejs /app/react-templates/Futuristic/index.html ./react-templates/Futuristic/index.html
 
 # Install only production dependencies
 COPY --from=deps --chown=sveltekit:nodejs /app/node_modules ./node_modules

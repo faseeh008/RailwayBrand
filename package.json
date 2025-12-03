@@ -33,6 +33,7 @@
 		"db:push": "drizzle-kit push",
 		"db:studio": "drizzle-kit studio",
 		"db:setup": "node scripts/setup-db.js",
+		"build:templates": "bash scripts/build-templates.sh",
 		"docker:up": "docker-compose up -d db",
 		"docker:down": "docker-compose down",
 		"docker:logs": "docker-compose logs -f",

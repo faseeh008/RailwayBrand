@@ -15,6 +15,7 @@ coverage
 *.log
 dist
 build
+!react-templates/*/build
 .next
 .nuxt
 .cache
