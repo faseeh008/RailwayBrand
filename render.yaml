@@ -9,51 +9,29 @@ services:
     envVars:
       - key: NODE_ENV
         value: production
-      - key: PORT
-        fromService:
-          type: web
-          name: eternabrand
-          property: port
       - key: HOST
         value: 0.0.0.0
-      # Database URL - Set this in Render dashboard
       - key: DATABASE_URL
-        sync: false
-      # Google AI API Key - Set this in Render dashboard
-      - key: GOOGLE_GEMINI_API
-        sync: false
-      # Optional: Other API keys - Set these in Render dashboard
-      - key: OPENAI_API_KEY
-        sync: false
-        optional: true
-      - key: AUTH_GOOGLE_ID
-        sync: false
-        optional: true
-      - key: AUTH_GOOGLE_SECRET
-        sync: false
-        optional: true
-      - key: GOOGLE_REFRESH_TOKEN
-        sync: false
-        optional: true
-      - key: CONVERTAPI_SECRET
-        sync: false
-        optional: true
-      - key: UNSPLASH_APPLICATION_ID
-        sync: false
-        optional: true
-      - key: UNSPLASH_ACCESS_KEY
-        sync: false
-        optional: true
-      - key: UNSPLASH_SECRET_KEY
-        sync: false
-        optional: true
-      - key: PEXELS_API_KEY
-        sync: false
-        optional: true
+        fromDatabase:
+          name: eternabrand-db
+          property: connectionString
+      # Set these environment variables in Render dashboard:
+      # GOOGLE_GEMINI_API (required)
+      # OPENAI_API_KEY (optional)
+      # AUTH_GOOGLE_ID (optional)
+      # AUTH_GOOGLE_SECRET (optional)
+      # GOOGLE_REFRESH_TOKEN (optional)
+      # CONVERTAPI_SECRET (optional)
+      # UNSPLASH_APPLICATION_ID (optional)
+      # UNSPLASH_ACCESS_KEY (optional)
+      # UNSPLASH_SECRET_KEY (optional)
+      # PEXELS_API_KEY (optional)
+      # AUTH_SECRET (required - generate a secure random string)
+      # AUTH_TRUST_HOST (set to "true")
 
 databases:
   - name: eternabrand-db
-    databaseName: brandaudit
-    user: eternabrand
+    databaseName: eternabrand
+    user: eternabrand_user
     plan: starter
 
