@@ -1,5 +1,5 @@
 import { fetchIndustryImages } from '$lib/services/image-fetcher';
-import { readFileSync } from 'fs';
+import { readFileSync, existsSync } from 'fs';
 import { join } from 'path';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { env } from '$lib/env';
@@ -440,18 +440,49 @@ export async function buildMaximalistic(sessionData: BrandSessionData): Promise<
 	await sleep(3000);
 	
 	// Step 5: Read the template index.html
-	let templatePath = join(process.cwd(), 'react-templates', 'Maximalistic', 'build', 'index.html');
+	const cwd = process.cwd();
+	console.log('[buildMaximalistic] Current working directory:', cwd);
+
+	let templatePath = join(cwd, 'react-templates', 'Maximalistic', 'build', 'index.html');
 	let html: string;
 	let buildDir: string;
-	
-	try {
-		html = readFileSync(templatePath, 'utf-8');
-		buildDir = join(process.cwd(), 'react-templates', 'Maximalistic', 'build');
-	} catch (e) {
+
+	console.log('[buildMaximalistic] Attempting to read template from:', templatePath);
+
+	if (existsSync(templatePath)) {
+		try {
+			html = readFileSync(templatePath, 'utf-8');
+			buildDir = join(cwd, 'react-templates', 'Maximalistic', 'build');
+			console.log('[buildMaximalistic] ✅ Successfully read template from build directory');
+		} catch (e) {
+			console.error('[buildMaximalistic] ❌ Failed to read build template:', e);
+			throw new Error(`Failed to read template file: ${templatePath}. Error: ${e instanceof Error ? e.message : String(e)}`);
+		}
+	} else {
 		// Fallback to source index.html if build doesn't exist
-		templatePath = join(process.cwd(), 'react-templates', 'Maximalistic', 'index.html');
-		html = readFileSync(templatePath, 'utf-8');
-		buildDir = join(process.cwd(), 'react-templates', 'Maximalistic');
+		templatePath = join(cwd, 'react-templates', 'Maximalistic', 'index.html');
+		console.log('[buildMaximalistic] ⚠️ Build directory not found, trying fallback:', templatePath);
+		
+		if (!existsSync(templatePath)) {
+			console.error('[buildMaximalistic] ❌ Template file not found at:', templatePath);
+			console.error('[buildMaximalistic] Diagnostic info:', {
+				cwd,
+				buildPath: join(cwd, 'react-templates', 'Maximalistic', 'build'),
+				sourcePath: join(cwd, 'react-templates', 'Maximalistic'),
+				buildExists: existsSync(join(cwd, 'react-templates', 'Maximalistic', 'build')),
+				sourceExists: existsSync(join(cwd, 'react-templates', 'Maximalistic'))
+			});
+			throw new Error(`Template file not found. Tried: ${join(cwd, 'react-templates', 'Maximalistic', 'build', 'index.html')} and ${templatePath}`);
+		}
+		
+		try {
+			html = readFileSync(templatePath, 'utf-8');
+			buildDir = join(cwd, 'react-templates', 'Maximalistic');
+			console.log('[buildMaximalistic] ✅ Successfully read template from source directory');
+		} catch (e) {
+			console.error('[buildMaximalistic] ❌ Failed to read fallback template:', e);
+			throw new Error(`Failed to read fallback template file: ${templatePath}. Error: ${e instanceof Error ? e.message : String(e)}`);
+		}
 	}
 	
 	// Step 5.5: Inline CSS and JS assets for blob URL compatibility
@@ -460,11 +491,19 @@ export async function buildMaximalistic(sessionData: BrandSessionData): Promise<
 	if (cssMatch) {
 		const cssPath = cssMatch[1].replace(/^\.\//, '');
 		const fullCssPath = join(buildDir, cssPath);
-		try {
-			const cssContent = readFileSync(fullCssPath, 'utf-8');
-			html = html.replace(cssMatch[0], `<style>${cssContent}</style>`);
-		} catch (e) {
-			console.warn('[buildMaximalistic] Failed to inline CSS:', e);
+		console.log('[buildMaximalistic] Attempting to inline CSS from:', fullCssPath);
+		
+		if (existsSync(fullCssPath)) {
+			try {
+				const cssContent = readFileSync(fullCssPath, 'utf-8');
+				html = html.replace(cssMatch[0], `<style>${cssContent}</style>`);
+				console.log('[buildMaximalistic] ✅ CSS inlined successfully');
+			} catch (e) {
+				console.error('[buildMaximalistic] ❌ Failed to inline CSS:', e);
+				console.error('[buildMaximalistic] CSS path:', fullCssPath);
+			}
+		} else {
+			console.warn('[buildMaximalistic] ⚠️ CSS file not found:', fullCssPath);
 		}
 	}
 	
@@ -473,13 +512,21 @@ export async function buildMaximalistic(sessionData: BrandSessionData): Promise<
 	if (jsMatch) {
 		const jsPath = jsMatch[1].replace(/^\.\//, '');
 		const fullJsPath = join(buildDir, jsPath);
-		try {
-			const jsContent = readFileSync(fullJsPath, 'utf-8');
-			// Use data URL for ES modules - this works better than inlining
-			const base64Js = Buffer.from(jsContent, 'utf-8').toString('base64');
-			html = html.replace(jsMatch[0], `<script type="module" src="data:text/javascript;base64,${base64Js}"></script>`);
-		} catch (e) {
-			console.warn('[buildMaximalistic] Failed to inline JS:', e);
+		console.log('[buildMaximalistic] Attempting to inline JS from:', fullJsPath);
+		
+		if (existsSync(fullJsPath)) {
+			try {
+				const jsContent = readFileSync(fullJsPath, 'utf-8');
+				// Use data URL for ES modules - this works better than inlining
+				const base64Js = Buffer.from(jsContent, 'utf-8').toString('base64');
+				html = html.replace(jsMatch[0], `<script type="module" src="data:text/javascript;base64,${base64Js}"></script>`);
+				console.log('[buildMaximalistic] ✅ JS inlined successfully');
+			} catch (e) {
+				console.error('[buildMaximalistic] ❌ Failed to inline JS:', e);
+				console.error('[buildMaximalistic] JS path:', fullJsPath);
+			}
+		} else {
+			console.warn('[buildMaximalistic] ⚠️ JS file not found:', fullJsPath);
 		}
 	}
 	

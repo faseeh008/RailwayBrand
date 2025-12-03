@@ -1,5 +1,5 @@
 import { fetchIndustryImages } from '$lib/services/image-fetcher';
-import { readFileSync } from 'fs';
+import { readFileSync, existsSync } from 'fs';
 import { join } from 'path';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { env } from '$lib/env';
@@ -324,18 +324,49 @@ export async function buildFunky(sessionData: BrandSessionData): Promise<string>
 	await sleep(3000);
 	
 	// Step 5: Read the template index.html
-	let templatePath = join(process.cwd(), 'react-templates', 'Funky', 'build', 'index.html');
+	const cwd = process.cwd();
+	console.log('[buildFunky] Current working directory:', cwd);
+
+	let templatePath = join(cwd, 'react-templates', 'Funky', 'build', 'index.html');
 	let html: string;
 	let buildDir: string;
-	
-	try {
-		html = readFileSync(templatePath, 'utf-8');
-		buildDir = join(process.cwd(), 'react-templates', 'Funky', 'build');
-	} catch (e) {
+
+	console.log('[buildFunky] Attempting to read template from:', templatePath);
+
+	if (existsSync(templatePath)) {
+		try {
+			html = readFileSync(templatePath, 'utf-8');
+			buildDir = join(cwd, 'react-templates', 'Funky', 'build');
+			console.log('[buildFunky] ✅ Successfully read template from build directory');
+		} catch (e) {
+			console.error('[buildFunky] ❌ Failed to read build template:', e);
+			throw new Error(`Failed to read template file: ${templatePath}. Error: ${e instanceof Error ? e.message : String(e)}`);
+		}
+	} else {
 		// Fallback to source index.html if build doesn't exist
-		templatePath = join(process.cwd(), 'react-templates', 'Funky', 'index.html');
-		html = readFileSync(templatePath, 'utf-8');
-		buildDir = join(process.cwd(), 'react-templates', 'Funky');
+		templatePath = join(cwd, 'react-templates', 'Funky', 'index.html');
+		console.log('[buildFunky] ⚠️ Build directory not found, trying fallback:', templatePath);
+		
+		if (!existsSync(templatePath)) {
+			console.error('[buildFunky] ❌ Template file not found at:', templatePath);
+			console.error('[buildFunky] Diagnostic info:', {
+				cwd,
+				buildPath: join(cwd, 'react-templates', 'Funky', 'build'),
+				sourcePath: join(cwd, 'react-templates', 'Funky'),
+				buildExists: existsSync(join(cwd, 'react-templates', 'Funky', 'build')),
+				sourceExists: existsSync(join(cwd, 'react-templates', 'Funky'))
+			});
+			throw new Error(`Template file not found. Tried: ${join(cwd, 'react-templates', 'Funky', 'build', 'index.html')} and ${templatePath}`);
+		}
+		
+		try {
+			html = readFileSync(templatePath, 'utf-8');
+			buildDir = join(cwd, 'react-templates', 'Funky');
+			console.log('[buildFunky] ✅ Successfully read template from source directory');
+		} catch (e) {
+			console.error('[buildFunky] ❌ Failed to read fallback template:', e);
+			throw new Error(`Failed to read fallback template file: ${templatePath}. Error: ${e instanceof Error ? e.message : String(e)}`);
+		}
 	}
 	
 	// Step 5.5: Inline CSS and JS assets for blob URL compatibility
@@ -344,11 +375,19 @@ export async function buildFunky(sessionData: BrandSessionData): Promise<string>
 	if (cssMatch) {
 		const cssPath = cssMatch[1].replace(/^\.\//, '');
 		const fullCssPath = join(buildDir, cssPath);
-		try {
-			const cssContent = readFileSync(fullCssPath, 'utf-8');
-			html = html.replace(cssMatch[0], `<style>${cssContent}</style>`);
-		} catch (e) {
-			console.warn('[buildFunky] Failed to inline CSS:', e);
+		console.log('[buildFunky] Attempting to inline CSS from:', fullCssPath);
+		
+		if (existsSync(fullCssPath)) {
+			try {
+				const cssContent = readFileSync(fullCssPath, 'utf-8');
+				html = html.replace(cssMatch[0], `<style>${cssContent}</style>`);
+				console.log('[buildFunky] ✅ CSS inlined successfully');
+			} catch (e) {
+				console.error('[buildFunky] ❌ Failed to inline CSS:', e);
+				console.error('[buildFunky] CSS path:', fullCssPath);
+			}
+		} else {
+			console.warn('[buildFunky] ⚠️ CSS file not found:', fullCssPath);
 		}
 	}
 	
@@ -357,13 +396,21 @@ export async function buildFunky(sessionData: BrandSessionData): Promise<string>
 	if (jsMatch) {
 		const jsPath = jsMatch[1].replace(/^\.\//, '');
 		const fullJsPath = join(buildDir, jsPath);
-		try {
-			const jsContent = readFileSync(fullJsPath, 'utf-8');
-			// Use data URL for ES modules - this works better than inlining
-			const base64Js = Buffer.from(jsContent, 'utf-8').toString('base64');
-			html = html.replace(jsMatch[0], `<script type="module" src="data:text/javascript;base64,${base64Js}"></script>`);
-		} catch (e) {
-			console.warn('[buildFunky] Failed to inline JS:', e);
+		console.log('[buildFunky] Attempting to inline JS from:', fullJsPath);
+		
+		if (existsSync(fullJsPath)) {
+			try {
+				const jsContent = readFileSync(fullJsPath, 'utf-8');
+				// Use data URL for ES modules - this works better than inlining
+				const base64Js = Buffer.from(jsContent, 'utf-8').toString('base64');
+				html = html.replace(jsMatch[0], `<script type="module" src="data:text/javascript;base64,${base64Js}"></script>`);
+				console.log('[buildFunky] ✅ JS inlined successfully');
+			} catch (e) {
+				console.error('[buildFunky] ❌ Failed to inline JS:', e);
+				console.error('[buildFunky] JS path:', fullJsPath);
+			}
+		} else {
+			console.warn('[buildFunky] ⚠️ JS file not found:', fullJsPath);
 		}
 	}
 	
