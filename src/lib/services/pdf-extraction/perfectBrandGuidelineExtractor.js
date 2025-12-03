@@ -19,9 +19,17 @@ export class PerfectBrandGuidelineExtractor {
     this.colorExtractor = new AdvancedColorExtractor();
     this.fontExtractor = new ContextAwareFontExtractor();
     this.categoryEnforcer = new CategoryAwareExtractor();
-    this.llmExtractor = new EnhancedLLMExtractor();
+    // Lazy initialization - don't create LLM extractor during build time
+    this.llmExtractor = null;
     this.spacingExtractor = new EnhancedSpacingExtractor();
     this.robustFontDetector = new RobustFontDetector();
+  }
+
+  _getLLMExtractor() {
+    if (!this.llmExtractor) {
+      this.llmExtractor = new EnhancedLLMExtractor();
+    }
+    return this.llmExtractor;
   }
 
   /**
@@ -57,7 +65,7 @@ export class PerfectBrandGuidelineExtractor {
       
       // Step 3: Run LLM with focus on validation and completion
       console.log('🧠 Step 5: Running LLM extraction...');
-      const llmResult = await this.llmExtractor.extractWithLLM(rawText, companyName, preprocessedData);
+      const llmResult = await this._getLLMExtractor().extractWithLLM(rawText, companyName, preprocessedData);
       
       // Step 4: Merge results, prioritizing enhanced extraction
       console.log('🔄 Step 6: Merging results...');

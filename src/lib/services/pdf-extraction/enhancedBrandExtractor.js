@@ -21,15 +21,11 @@ export class EnhancedBrandExtractor {
       low: 0.4
     };
     
-    // Initialize LLM Enhancement Service
-    this.llmEnhancement = new LLMEnhancementService();
-    this.specializedCoordinator = null; // Will be initialized lazily
-    
-    // Initialize Perfect Brand Guideline Extractor
-    this.perfectExtractor = new PerfectBrandGuidelineExtractor();
-    
-    // Initialize Enhanced LLM Extractor
-    this.enhancedLLMExtractor = new EnhancedLLMExtractor();
+    // Lazy initialization - don't create services during build time
+    this.llmEnhancement = null;
+    this.specializedCoordinator = null;
+    this.perfectExtractor = null;
+    this.enhancedLLMExtractor = null;
     
     // Known brand color defaults
     this.brandColorDefaults = {
@@ -46,6 +42,28 @@ export class EnhancedBrandExtractor {
     };
   }
 
+  // Lazy initialization helpers
+  _getLLMEnhancement() {
+    if (!this.llmEnhancement) {
+      this.llmEnhancement = new LLMEnhancementService();
+    }
+    return this.llmEnhancement;
+  }
+
+  _getPerfectExtractor() {
+    if (!this.perfectExtractor) {
+      this.perfectExtractor = new PerfectBrandGuidelineExtractor();
+    }
+    return this.perfectExtractor;
+  }
+
+  _getEnhancedLLMExtractor() {
+    if (!this.enhancedLLMExtractor) {
+      this.enhancedLLMExtractor = new EnhancedLLMExtractor();
+    }
+    return this.enhancedLLMExtractor;
+  }
+
   /**
    * Comprehensive extraction with enhanced color & spacing focus
    */
@@ -58,7 +76,7 @@ export class EnhancedBrandExtractor {
       await this.saveDebugTextFile(text, brandName);
       
       // Use perfect extractor's comprehensive method
-      const result = await this.perfectExtractor.extractWithComprehensiveFocus(text, brandName);
+      const result = await this._getPerfectExtractor().extractWithComprehensiveFocus(text, brandName);
       
       console.log('✅ Comprehensive extraction completed!');
       console.log('📊 Result summary:', {
@@ -88,7 +106,7 @@ export class EnhancedBrandExtractor {
     
     try {
       // Use enhanced LLM extractor directly
-      const result = await this.enhancedLLMExtractor.extractWithLLM(text, brandName);
+      const result = await this._getEnhancedLLMExtractor().extractWithLLM(text, brandName);
       
       console.log('✅ Enhanced LLM extraction completed!');
       console.log('📊 Result summary:', {
@@ -117,7 +135,7 @@ export class EnhancedBrandExtractor {
     
     try {
       // Use the perfect extractor with all improvements
-      const result = await this.perfectExtractor.extractPerfectGuidelines(text, brandName);
+      const result = await this._getPerfectExtractor().extractPerfectGuidelines(text, brandName);
       
       console.log('✅ Perfect extraction completed successfully!');
       console.log('📊 Result summary:', {
@@ -222,7 +240,7 @@ export class EnhancedBrandExtractor {
     console.log('🧠 Applying LLM semantic enhancement...');
     let enhancedResult;
     try {
-      enhancedResult = await this.llmEnhancement.enhanceExtraction(text, initialResult, brandName);
+      enhancedResult = await this._getLLMEnhancement().enhanceExtraction(text, initialResult, brandName);
       console.log('✅ LLM semantic enhancement completed');
     } catch (error) {
       console.warn('⚠️ LLM enhancement failed, using original data:', error.message);
@@ -1945,5 +1963,21 @@ export class EnhancedBrandExtractor {
   }
 }
 
-// Export singleton instance
-export const enhancedBrandExtractor = new EnhancedBrandExtractor();
+// Export singleton with lazy initialization - only create when actually used
+let _enhancedBrandExtractorInstance = null;
+
+function getInstance() {
+  if (!_enhancedBrandExtractorInstance) {
+    _enhancedBrandExtractorInstance = new EnhancedBrandExtractor();
+  }
+  return _enhancedBrandExtractorInstance;
+}
+
+// Use Proxy to forward all property access lazily
+export const enhancedBrandExtractor = new Proxy({}, {
+  get(target, prop) {
+    const instance = getInstance();
+    const value = instance[prop];
+    return typeof value === 'function' ? value.bind(instance) : value;
+  }
+});

@@ -10,12 +10,29 @@ dotenv.config();
 
 export class EnhancedLLMExtractor {
   constructor() {
+    // Lazy initialization - don't throw during build time
+    this.apiKey = null;
+    this.genAI = null;
+    this.model = null;
+    this._initialized = false;
+    this.maxInputLength = 12000; // Reduced for better focus
+  }
+
+  _initialize() {
+    if (this._initialized) return;
+    
     // Check for Google_Gemini_Api first (as specified by user), then fallback to other names
     this.apiKey = process.env.Google_Gemini_Api || 
                   process.env.GOOGLE_GEMINI_API || 
                   process.env.GOOGLE_AI_API_KEY;
+    
+    // Only throw at runtime when actually used, not during build
     if (!this.apiKey) {
-      throw new Error('Google AI API key not found. Please set Google_Gemini_Api environment variable.');
+      // During build time, just set to null and let it fail gracefully at runtime
+      if (process.env.NODE_ENV === 'production' && !process.env.RENDER) {
+        throw new Error('Google AI API key not found. Please set Google_Gemini_Api environment variable.');
+      }
+      return;
     }
     
     this.genAI = new GoogleGenerativeAI(this.apiKey);
@@ -28,14 +45,19 @@ export class EnhancedLLMExtractor {
         maxOutputTokens: 4000
       }
     });
-    
-    this.maxInputLength = 12000; // Reduced for better focus
+    this._initialized = true;
   }
 
   /**
    * Main extraction method with unified single-pass approach
    */
   async extractWithLLM(rawText, brandName, preprocessedData = {}) {
+    this._initialize();
+    
+    if (!this.model) {
+      throw new Error('LLM API key not configured');
+    }
+    
     console.log('🤖 Starting unified LLM extraction...');
     console.log(`📄 Text length: ${rawText.length}`);
     console.log(`🏢 Brand: ${brandName}`);
@@ -383,6 +405,11 @@ Look for ANY mention of:
    * Generate structured content with robust error handling
    */
   async generateStructuredContent(prompt, input) {
+    this._initialize();
+    
+    if (!this.model) {
+      throw new Error('LLM API key not configured');
+    }
     const fullContent = `${prompt}\n\nBRAND GUIDELINE TEXT TO ANALYZE:\n${input}`;
     
     // Truncate if needed (safety measure)

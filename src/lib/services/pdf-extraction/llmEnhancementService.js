@@ -10,12 +10,28 @@ dotenv.config();
  */
 export class LLMEnhancementService {
   constructor() {
+    // Lazy initialization - don't throw during build time
+    this.apiKey = null;
+    this.genAI = null;
+    this.model = null;
+    this._initialized = false;
+  }
+
+  _initialize() {
+    if (this._initialized) return;
+    
     // Check for Google_Gemini_Api first (as specified by user), then fallback to other names
     this.apiKey = process.env.Google_Gemini_Api || 
                   process.env.GOOGLE_GEMINI_API || 
                   process.env.GOOGLE_AI_API_KEY;
+    
+    // Only throw at runtime when actually used, not during build
     if (!this.apiKey) {
-      throw new Error('Google AI API key not found. Please set Google_Gemini_Api environment variable.');
+      // During build time, just set to null and let it fail gracefully at runtime
+      if (process.env.NODE_ENV === 'production' && !process.env.RENDER) {
+        throw new Error('Google AI API key not found. Please set Google_Gemini_Api environment variable.');
+      }
+      return;
     }
     
     this.genAI = new GoogleGenerativeAI(this.apiKey);
@@ -28,6 +44,7 @@ export class LLMEnhancementService {
         maxOutputTokens: 4000
       }
     });
+    this._initialized = true;
   }
 
   /**
@@ -37,6 +54,13 @@ export class LLMEnhancementService {
    * @param {string} brandName - Brand name for context
    */
   async enhanceExtraction(rawText, parsedData, brandName = 'Unknown') {
+    this._initialize();
+    
+    if (!this.model) {
+      console.warn('⚠️ LLM API key not configured, skipping LLM enhancement');
+      return parsedData;
+    }
+    
     console.log('🧠 LLM Enhancement Service - Starting multi-pass semantic enhancement...');
     
     // Validate input parameters
@@ -82,6 +106,12 @@ export class LLMEnhancementService {
    * @param {string} brandName - Brand name
    */
   async classifyStructure(rawText, brandName) {
+    this._initialize();
+    
+    if (!this.model) {
+      throw new Error('LLM API key not configured');
+    }
+    
     const structurePrompt = `
 You are analyzing brand guideline text that may have lost structure during PDF conversion.
 
@@ -177,6 +207,11 @@ ${rawText.substring(0, 2000)}...
    * @param {Object} structureOutline - Structure from Pass 1
    */
   async extractWithStructure(rawText, parsedData, brandName, structureOutline) {
+    this._initialize();
+    
+    if (!this.model) {
+      throw new Error('LLM API key not configured');
+    }
     const extractionPrompt = this.buildEnhancedExtractionPrompt(brandName, structureOutline, parsedData);
     const input = this.formatInput(rawText, parsedData);
     
@@ -202,6 +237,11 @@ ${rawText.substring(0, 2000)}...
    * Generate content with retry logic for JSON parsing failures
    */
   async generateWithRetry(prompt, maxRetries = 2) {
+    this._initialize();
+    
+    if (!this.model) {
+      throw new Error('LLM API key not configured');
+    }
     // Handle array of prompts by concatenating them
     let fullPrompt = Array.isArray(prompt) ? prompt.join('\n\n') : prompt;
     
