@@ -1,12 +1,23 @@
 // Real LLM Integration for Brand Compliance Analysis
-import { GOOGLE_AI_API_KEY } from '$env/static/private';
+
+// Get API key from environment variables with fallbacks
+function getApiKey() {
+	// Try Google_Gemini_Api first (user's variable name), then fallback to other names
+	if (typeof process !== 'undefined' && process.env) {
+		return process.env.Google_Gemini_Api || 
+		       process.env.GOOGLE_GEMINI_API || 
+		       process.env.GOOGLE_AI_API_KEY || '';
+	}
+	return '';
+}
 
 export async function analyzeWithLLM(scrapedData, brandGuideline) {
 	try {
+		const apiKey = getApiKey();
 		// Debug logging for API keys
 		console.log('🔑 API Key Debug:');
-		console.log('  GOOGLE_AI_API_KEY exists:', !!GOOGLE_AI_API_KEY);
-		console.log('  GOOGLE_AI_API_KEY value:', GOOGLE_AI_API_KEY ? GOOGLE_AI_API_KEY.substring(0, 10) + '...' : 'undefined');
+		console.log('  API Key exists:', !!apiKey);
+		console.log('  API Key value:', apiKey ? apiKey.substring(0, 10) + '...' : 'undefined');
 
 		
 	} catch (error) {
@@ -68,8 +79,14 @@ ${JSON.stringify(brandGuideline, null, 2)}
 WEBSITE DATA:
 ${JSON.stringify(relevantData, null, 2)}`;
 
+	// Get API key
+	const apiKey = getApiKey();
+	if (!apiKey) {
+		throw new Error('Google Gemini API key is not configured. Please set Google_Gemini_Api environment variable.');
+	}
+
 	// Call Google AI Studio API
-	const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent?key=${GOOGLE_AI_API_KEY}`, {
+	const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent?key=${apiKey}`, {
 		method: 'POST',
 		headers: {
 			'Content-Type': 'application/json'
