@@ -1,4 +1,4 @@
-import adapter from '@sveltejs/adapter-vercel';
+import adapter from '@sveltejs/adapter-node';
 import { vitePreprocess } from '@sveltejs/vite-plugin-svelte';
 
 /** @type {import('@sveltejs/kit').Config} */
@@ -8,21 +8,12 @@ const config = {
 	preprocess: vitePreprocess(),
 
 	kit: {
-		// Vercel adapter for optimized deployment
-		// See https://kit.svelte.dev/docs/adapter-vercel for more information
+		// Node adapter for Render deployment
+		// See https://kit.svelte.dev/docs/adapter-node for more information
 		adapter: adapter({
-			runtime: 'nodejs20.x',
-			// Exclude large dependencies from serverless function bundle
-			outputFileTracingExcludes: {
-				'*': [
-					'node_modules/puppeteer/**',
-					'node_modules/playwright/**',
-					'node_modules/sharp/**',
-					'node_modules/canvas/**',
-					'node_modules/puppeteer-core/**',
-					'node_modules/playwright-core/**'
-				]
-			}
+			out: 'build',
+			precompress: false,
+			envPrefix: ''
 		})
 	}
 };

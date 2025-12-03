@@ -1,0 +1,59 @@
+services:
+  - type: web
+    name: eternabrand
+    env: node
+    plan: starter
+    nodeVersion: 22
+    buildCommand: npm install && npm run build
+    startCommand: npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        fromService:
+          type: web
+          name: eternabrand
+          property: port
+      - key: HOST
+        value: 0.0.0.0
+      # Database URL - Set this in Render dashboard
+      - key: DATABASE_URL
+        sync: false
+      # Google AI API Key - Set this in Render dashboard
+      - key: GOOGLE_GEMINI_API
+        sync: false
+      # Optional: Other API keys - Set these in Render dashboard
+      - key: OPENAI_API_KEY
+        sync: false
+        optional: true
+      - key: AUTH_GOOGLE_ID
+        sync: false
+        optional: true
+      - key: AUTH_GOOGLE_SECRET
+        sync: false
+        optional: true
+      - key: GOOGLE_REFRESH_TOKEN
+        sync: false
+        optional: true
+      - key: CONVERTAPI_SECRET
+        sync: false
+        optional: true
+      - key: UNSPLASH_APPLICATION_ID
+        sync: false
+        optional: true
+      - key: UNSPLASH_ACCESS_KEY
+        sync: false
+        optional: true
+      - key: UNSPLASH_SECRET_KEY
+        sync: false
+        optional: true
+      - key: PEXELS_API_KEY
+        sync: false
+        optional: true
+
+databases:
+  - name: eternabrand-db
+    databaseName: brandaudit
+    user: eternabrand
+    plan: starter
+
