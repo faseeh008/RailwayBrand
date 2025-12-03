@@ -19,6 +19,7 @@
 	"scripts": {
 		"dev": "vite dev",
 		"build": "vite build",
+		"build:render": "vite build",
 		"preview": "vite preview",
 		"start": "node build/index.js",
 		"prepare": "svelte-kit sync || echo ''",
