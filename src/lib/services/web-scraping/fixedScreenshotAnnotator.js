@@ -20,6 +20,8 @@ export class FixedScreenshotAnnotator {
   async createTargetedAnnotations(screenshotPath, auditResults, elementPositions) {
     console.log('🎯 Creating IMPROVED targeted annotations...');
     
+    // Dynamic import to avoid bundling canvas in serverless functions
+    const { createCanvas, loadImage } = await import('canvas');
     const image = await loadImage(screenshotPath);
     
     // Expand canvas with margins for overlays outside screenshot
@@ -608,6 +610,8 @@ export class FixedScreenshotAnnotator {
   async createTargetedAnnotations(screenshotPath, auditResults, elementPositions) {
     console.log('🎯 Creating IMPROVED targeted annotations...');
     
+    // Dynamic import to avoid bundling canvas in serverless functions
+    const { createCanvas, loadImage } = await import('canvas');
     const image = await loadImage(screenshotPath);
     
     // Expand canvas with margins for overlays outside screenshot

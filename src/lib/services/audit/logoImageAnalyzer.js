@@ -35,6 +35,8 @@ export class LogoImageAnalyzer {
     
     try {
       // Step 1: Extract logo region from screenshot if logo element position provided
+      // Dynamic import to avoid bundling canvas in serverless functions
+      const { createCanvas, loadImage } = await import('canvas');
       let logoImage = null;
       let logoRegion = null;
       
@@ -137,6 +139,8 @@ export class LogoImageAnalyzer {
    */
   async extractLogoFromScreenshot(screenshotPath, position) {
     try {
+      // Dynamic import to avoid bundling canvas in serverless functions
+      const { createCanvas, loadImage } = await import('canvas');
       const screenshot = await loadImage(screenshotPath);
       const { x = 0, y = 0, width = 0, height = 0 } = position;
       

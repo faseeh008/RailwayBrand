@@ -77,7 +77,9 @@ export class EnhancedWebScraper {
   }
 
   async launchBrowser() {
-    return await puppeteer.launch({
+    // Dynamic import to avoid bundling puppeteer in serverless functions
+    const puppeteer = await import('puppeteer');
+    return await puppeteer.default.launch({
       headless: true,
       args: [
         '--no-sandbox',

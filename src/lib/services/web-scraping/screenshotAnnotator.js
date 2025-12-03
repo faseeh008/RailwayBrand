@@ -21,6 +21,8 @@ export class ScreenshotAnnotator {
     try {
       console.log(`🎨 Starting screenshot annotation...`);
       
+      // Dynamic import to avoid bundling canvas in serverless functions
+      const { createCanvas, loadImage } = await import('canvas');
       const image = await loadImage(screenshotPath);
       const canvas = createCanvas(image.width, image.height);
       const ctx = canvas.getContext('2d');

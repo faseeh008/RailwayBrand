@@ -19,6 +19,8 @@ export class VisualScreenshotAnnotator {
   async createTargetedAnnotations(screenshotPath, auditResults, elementPositions) {
     console.log('🎯 Creating VISUAL annotations (highlights only)...');
     
+    // Dynamic import to avoid bundling canvas in serverless functions
+    const { createCanvas, loadImage } = await import('canvas');
     const image = await loadImage(screenshotPath);
     
     // Expand canvas with margins for legend

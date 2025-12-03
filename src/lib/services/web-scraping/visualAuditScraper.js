@@ -48,6 +48,8 @@ export class VisualAuditScraper {
     try {
       console.log(`:camera_with_flash: Capturing full page screenshot for: ${url}`);
      
+      // Dynamic import to avoid bundling playwright in serverless functions
+      const { chromium } = await import('playwright');
       browser = await chromium.launch({
         headless: true,
         args: [
@@ -139,6 +141,8 @@ export class VisualAuditScraper {
     try {
       console.log(`:mag: Starting enhanced scraping for: ${url}`);
      
+      // Dynamic import to avoid bundling playwright in serverless functions
+      const { chromium } = await import('playwright');
       browser = await chromium.launch({
         headless: true,
         args: [
@@ -204,6 +208,8 @@ export class VisualAuditScraper {
     try {
       console.log(`:round_pushpin: Extracting element positions for: ${url}`);
      
+      // Dynamic import to avoid bundling playwright in serverless functions
+      const { chromium } = await import('playwright');
       browser = await chromium.launch({
         headless: true,
         args: [

@@ -47,6 +47,8 @@ export function exportAsPDF(options: ExportOptions): void {
 	// Add to document temporarily
 	document.body.appendChild(tempContainer);
 
+	// Dynamic import to avoid bundling html2canvas in serverless functions
+	const html2canvas = (await import('html2canvas')).default;
 	// Generate PDF with safer options
 	html2canvas(tempContainer, {
 		scale: 1.5,
