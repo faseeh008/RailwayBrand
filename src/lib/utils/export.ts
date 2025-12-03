@@ -16,7 +16,7 @@ export interface ExportOptions {
 	logoPath?: string;
 }
 
-export function exportAsPDF(options: ExportOptions): void {
+export async function exportAsPDF(options: ExportOptions): Promise<void> {
 	const { brandName, content, includeMetadata = true, metadata, logoPath } = options;
 
 	// Create a temporary container for the content
