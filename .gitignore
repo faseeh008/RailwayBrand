@@ -112,3 +112,4 @@ gen-lang-client-*.json
 *-client-*.json
 
 *.onnx
+.env*.local
