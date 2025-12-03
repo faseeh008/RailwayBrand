@@ -19,6 +19,7 @@
 
 	let websiteUrl = '';
 	let uploadedFile: File | null = null;
+	let uploadedHtmlFile: File | null = null;
 	let showReport = false;
 	let isAnalyzing = false;
 	let currentStep = 1;
@@ -231,16 +232,32 @@
 		}
 	}
 
+	// Handle HTML file upload
+	async function handleHtmlFileUpload(event: Event) {
+		const target = event.target as HTMLInputElement;
+		if (target.files && target.files.length > 0) {
+			uploadedHtmlFile = target.files[0];
+			websiteUrl = ''; // Clear URL if file is selected
+			console.log('📄 HTML file selected:', uploadedHtmlFile.name);
+		}
+	}
+
 	// Step 2: Scrape Website
 	async function scrapeWebsite() {
 		console.log('🔘 Button clicked! scrapeWebsite function called');
 		console.log('🔍 Website URL:', websiteUrl);
+		console.log('🔍 HTML File:', uploadedHtmlFile?.name);
 		console.log('🔍 Selected Brand:', selectedBrand);
 		console.log('🔍 isScraping:', isScraping);
-		console.log('🔍 disabled state:', !websiteUrl.trim() || isScraping);
+		
+		// Check if HTML file is uploaded instead of URL
+		if (uploadedHtmlFile && !websiteUrl.trim()) {
+			await processHtmlFile(uploadedHtmlFile);
+			return;
+		}
 		
 		if (!websiteUrl.trim()) {
-			scrapingError = 'Please enter a website URL';
+			scrapingError = 'Please enter a website URL or upload an HTML file';
 			return;
 		}
 
@@ -334,6 +351,69 @@
 		}
 	}
 
+	// Process uploaded HTML file
+	async function processHtmlFile(file: File) {
+		if (!selectedBrand) {
+			scrapingError = 'Please upload brand guidelines first';
+			return;
+		}
+
+		isScraping = true;
+		scrapingError = '';
+		scrapingMessage = '';
+		scrapedData = null;
+		complianceAnalysis = null;
+
+		try {
+			console.log(`📄 Processing HTML file: ${file.name}`);
+			scrapingMessage = 'Uploading HTML file and analyzing compliance...';
+
+			// Create FormData to upload the file
+			const formData = new FormData();
+			formData.append('htmlFile', file);
+			formData.append('brandId', selectedBrand.id.toString());
+			formData.append('useVisualAudit', useVisualAudit.toString());
+
+			const response = await fetch('/api/audit-html-file', {
+				method: 'POST',
+				body: formData
+			});
+
+			if (!response.ok) {
+				const errorData = await response.json();
+				throw new Error(errorData.error || `HTTP ${response.status}`);
+			}
+
+			const result = await response.json();
+			console.log('✅ HTML file processing completed:', result);
+
+			// Handle response (similar to URL-based response)
+			if (useVisualAudit) {
+				scrapedData = {
+					url: result.url || file.name,
+					screenshot: result.visualData?.annotatedScreenshot || null
+				};
+				complianceAnalysis = result;
+			} else {
+				scrapedData = result.data;
+				complianceAnalysis = result.data?.complianceAnalysis || result;
+			}
+
+			if (!complianceAnalysis) {
+				throw new Error('No compliance analysis data received from server');
+			}
+
+			scrapingMessage = `✅ HTML file analyzed successfully! Compliance Score: ${(complianceAnalysis?.overallScore * 100 || 0).toFixed(1)}%`;
+			currentStep = 3; // Move to results step
+
+		} catch (error: any) {
+			console.error('❌ HTML file processing failed:', error);
+			scrapingError = `Processing failed: ${error.message}`;
+		} finally {
+			isScraping = false;
+		}
+	}
+
 	function startOver() {
 		// Reset to step 2 (URL entry) if brand is saved, otherwise step 1 (upload)
 		const savedBrandData = localStorage.getItem(STORAGE_KEY);
@@ -361,6 +441,8 @@
 		uploadingMessage = '';
 		isUploading = false;
 		isScraping = false;
+		uploadedHtmlFile = null;
+		websiteUrl = '';
 	}
 </script>
 
@@ -533,10 +615,61 @@
 							<Input
 								id="website-url"
 								bind:value={websiteUrl}
-								placeholder="https://example.com or file:///C:/path/to/file.html"
+								placeholder="https://example.com"
 								class="pl-10"
+								oninput={() => {
+									if (websiteUrl.trim()) {
+										uploadedHtmlFile = null; // Clear file if URL is entered
+									}
+								}}
 							/>
 						</div>
+						<p class="text-xs text-muted-foreground">Or upload an HTML file below</p>
+					</div>
+
+					<!-- HTML File Upload Option -->
+					<div class="space-y-2">
+						<Label>Upload HTML File (Alternative to URL)</Label>
+						<div class="border-2 border-dashed border-border rounded-lg p-4 text-center hover:border-gray-400 transition-colors">
+							<input
+								type="file"
+								accept=".html,.htm"
+								onchange={handleHtmlFileUpload}
+								class="hidden"
+								id="html-upload"
+							/>
+							{#if uploadedHtmlFile}
+								<div class="flex items-center justify-between">
+									<div class="flex items-center gap-2">
+										<FileText class="h-4 w-4 text-muted-foreground" />
+										<span class="text-sm text-foreground">{uploadedHtmlFile.name}</span>
+									</div>
+									<button
+										type="button"
+										onclick={() => {
+											uploadedHtmlFile = null;
+											const input = document.getElementById('html-upload') as HTMLInputElement;
+											if (input) input.value = '';
+										}}
+										class="text-muted-foreground hover:text-foreground"
+									>
+										<X class="h-4 w-4" />
+									</button>
+								</div>
+							{:else}
+								<button
+									type="button"
+									onclick={() => document.getElementById('html-upload')?.click()}
+									class="text-sm text-muted-foreground hover:text-foreground"
+								>
+									<Upload class="inline h-4 w-4 mr-2" />
+									Click to upload HTML file
+								</button>
+							{/if}
+						</div>
+						<p class="text-xs text-muted-foreground">
+							Upload an HTML file to analyze it against your brand guidelines
+						</p>
 					</div>
 
 					<!-- Visual Audit Toggle -->
@@ -568,12 +701,12 @@
 
 					<!-- Debug info -->
 					<div class="text-xs text-muted-foreground mb-2">
-						Debug: websiteUrl="{websiteUrl}" | isScraping={isScraping} | disabled={!websiteUrl.trim() || isScraping}
+						Debug: websiteUrl="{websiteUrl}" | htmlFile={uploadedHtmlFile?.name || 'none'} | isScraping={isScraping} | disabled={(!websiteUrl.trim() && !uploadedHtmlFile) || isScraping}
 					</div>
 					
 					<button
 						class="w-full h-10 px-8 rounded-md bg-primary text-white hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
-						disabled={!websiteUrl.trim() || isScraping}
+						disabled={(!websiteUrl.trim() && !uploadedHtmlFile) || isScraping}
 						onclick={scrapeWebsite}
 					>
 						{#if isScraping}

@@ -52,6 +52,7 @@ export class VisualAuditScraper {
       const { chromium } = await import('playwright');
       browser = await chromium.launch({
         headless: true,
+        executablePath: process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH || undefined, // Use system Chromium if available
         args: [
           '--no-sandbox',
           '--disable-setuid-sandbox',
@@ -145,6 +146,7 @@ export class VisualAuditScraper {
       const { chromium } = await import('playwright');
       browser = await chromium.launch({
         headless: true,
+        executablePath: process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH || undefined, // Use system Chromium if available
         args: [
           '--no-sandbox',
           '--disable-setuid-sandbox',
@@ -212,6 +214,7 @@ export class VisualAuditScraper {
       const { chromium } = await import('playwright');
       browser = await chromium.launch({
         headless: true,
+        executablePath: process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH || undefined, // Use system Chromium if available
         args: [
           '--no-sandbox',
           '--disable-setuid-sandbox',

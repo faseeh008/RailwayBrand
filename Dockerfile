@@ -1,10 +1,25 @@
-# Use Node.js 20 Alpine as base image
-FROM node:20-alpine AS base
+# Use Node.js 22 Alpine as base image (matching package.json requirement)
+FROM node:22-alpine AS base
 
 # Install dependencies only when needed
 FROM base AS deps
-# Check https://github.com/nodejs/docker-node/tree/b4117f9333da4138b03a546ec926ef50a31506c3#nodealpine to understand why libc6-compat might be needed.
-RUN apk add --no-cache libc6-compat
+# Install system dependencies for Playwright
+RUN apk add --no-cache \
+    libc6-compat \
+    chromium \
+    nss \
+    freetype \
+    freetype-dev \
+    harfbuzz \
+    ca-certificates \
+    ttf-freefont \
+    curl \
+    && rm -rf /var/cache/apk/*
+
+# Set Playwright environment variables to use system Chromium
+ENV PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 \
+    PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH=/usr/bin/chromium-browser
+
 WORKDIR /app
 
 # Install dependencies based on the preferred package manager
@@ -17,6 +32,22 @@ RUN \
 
 # Rebuild the source code only when needed
 FROM base AS builder
+# Install system dependencies for Playwright in builder stage too
+RUN apk add --no-cache \
+    libc6-compat \
+    chromium \
+    nss \
+    freetype \
+    freetype-dev \
+    harfbuzz \
+    ca-certificates \
+    ttf-freefont \
+    curl \
+    && rm -rf /var/cache/apk/*
+
+ENV PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 \
+    PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH=/usr/bin/chromium-browser
+
 WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
@@ -34,12 +65,32 @@ RUN npm run build
 
 # Production image, copy all the files and run the app
 FROM base AS runner
+# Install system dependencies for Playwright in runner stage
+RUN apk add --no-cache \
+    libc6-compat \
+    chromium \
+    nss \
+    freetype \
+    freetype-dev \
+    harfbuzz \
+    ca-certificates \
+    ttf-freefont \
+    curl \
+    && rm -rf /var/cache/apk/*
+
+# Set Playwright environment variables
+ENV PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 \
+    PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH=/usr/bin/chromium-browser
+
 WORKDIR /app
 
 ENV NODE_ENV=production
 
 RUN addgroup --system --gid 1001 nodejs
 RUN adduser --system --uid 1001 sveltekit
+
+# Create temp uploads and screenshots directories with proper permissions
+RUN mkdir -p /app/temp-uploads /app/screenshots && chown -R sveltekit:nodejs /app/temp-uploads /app/screenshots
 
 # Copy the built application
 COPY --from=builder --chown=sveltekit:nodejs /app/build ./build
