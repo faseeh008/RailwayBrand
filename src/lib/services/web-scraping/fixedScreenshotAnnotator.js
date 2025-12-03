@@ -1,5 +1,7 @@
 // @ts-nocheck
-import { createCanvas, loadImage } from 'canvas';
+// Commented out to avoid bundling in Vercel serverless functions (exceeds 250MB limit)
+// Uncomment if deploying to a platform that supports larger bundles (e.g., Railway, Render)
+// import { createCanvas, loadImage } from 'canvas';
 import fs from 'fs';
 import path from 'path';
 
@@ -20,6 +22,8 @@ export class FixedScreenshotAnnotator {
   async createTargetedAnnotations(screenshotPath, auditResults, elementPositions) {
     console.log('🎯 Creating IMPROVED targeted annotations...');
     
+    // Dynamic import to avoid bundling canvas in serverless functions
+    const { createCanvas, loadImage } = await import('canvas');
     const image = await loadImage(screenshotPath);
     
     // Expand canvas with margins for overlays outside screenshot
@@ -585,7 +589,9 @@ export class FixedScreenshotAnnotator {
   }
 }
 // @ts-nocheck
-import { createCanvas, loadImage } from 'canvas';
+// Commented out to avoid bundling in Vercel serverless functions (exceeds 250MB limit)
+// Uncomment if deploying to a platform that supports larger bundles (e.g., Railway, Render)
+// import { createCanvas, loadImage } from 'canvas';
 import fs from 'fs';
 import path from 'path';
 
@@ -606,6 +612,8 @@ export class FixedScreenshotAnnotator {
   async createTargetedAnnotations(screenshotPath, auditResults, elementPositions) {
     console.log('🎯 Creating IMPROVED targeted annotations...');
     
+    // Dynamic import to avoid bundling canvas in serverless functions
+    const { createCanvas, loadImage } = await import('canvas');
     const image = await loadImage(screenshotPath);
     
     // Expand canvas with margins for overlays outside screenshot

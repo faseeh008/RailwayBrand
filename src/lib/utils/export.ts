@@ -1,5 +1,7 @@
 import jsPDF from 'jspdf';
-import html2canvas from 'html2canvas';
+// Commented out to avoid bundling in Vercel serverless functions (exceeds 250MB limit)
+// Uncomment if deploying to a platform that supports larger bundles (e.g., Railway, Render)
+// import html2canvas from 'html2canvas';
 
 export interface ExportOptions {
 	brandName: string;
@@ -14,7 +16,7 @@ export interface ExportOptions {
 	logoPath?: string;
 }
 
-export function exportAsPDF(options: ExportOptions): void {
+export async function exportAsPDF(options: ExportOptions): Promise<void> {
 	const { brandName, content, includeMetadata = true, metadata, logoPath } = options;
 
 	// Create a temporary container for the content
@@ -45,6 +47,8 @@ export function exportAsPDF(options: ExportOptions): void {
 	// Add to document temporarily
 	document.body.appendChild(tempContainer);
 
+	// Dynamic import to avoid bundling html2canvas in serverless functions
+	const html2canvas = (await import('html2canvas')).default;
 	// Generate PDF with safer options
 	html2canvas(tempContainer, {
 		scale: 1.5,

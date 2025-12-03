@@ -1,5 +1,7 @@
 // @ts-nocheck
-import { createCanvas, loadImage } from 'canvas';
+// Commented out to avoid bundling in Vercel serverless functions (exceeds 250MB limit)
+// Uncomment if deploying to a platform that supports larger bundles (e.g., Railway, Render)
+// import { createCanvas, loadImage } from 'canvas';
 import fs from 'fs';
 import path from 'path';
 
@@ -19,6 +21,8 @@ export class ScreenshotAnnotator {
     try {
       console.log(`🎨 Starting screenshot annotation...`);
       
+      // Dynamic import to avoid bundling canvas in serverless functions
+      const { createCanvas, loadImage } = await import('canvas');
       const image = await loadImage(screenshotPath);
       const canvas = createCanvas(image.width, image.height);
       const ctx = canvas.getContext('2d');

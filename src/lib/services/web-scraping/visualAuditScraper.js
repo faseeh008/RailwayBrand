@@ -1,6 +1,8 @@
 // @ts-nocheck
-import { chromium } from 'playwright';
-import { createCanvas, loadImage } from 'canvas';
+// Commented out to avoid bundling in Vercel serverless functions (exceeds 250MB limit)
+// Uncomment if deploying to a platform that supports larger bundles (e.g., Railway, Render)
+// import { chromium } from 'playwright';
+// import { createCanvas, loadImage } from 'canvas';
 import fs from 'fs';
 import path from 'path';
 
@@ -46,6 +48,8 @@ export class VisualAuditScraper {
     try {
       console.log(`:camera_with_flash: Capturing full page screenshot for: ${url}`);
      
+      // Dynamic import to avoid bundling playwright in serverless functions
+      const { chromium } = await import('playwright');
       browser = await chromium.launch({
         headless: true,
         args: [
@@ -137,6 +141,8 @@ export class VisualAuditScraper {
     try {
       console.log(`:mag: Starting enhanced scraping for: ${url}`);
      
+      // Dynamic import to avoid bundling playwright in serverless functions
+      const { chromium } = await import('playwright');
       browser = await chromium.launch({
         headless: true,
         args: [
@@ -202,6 +208,8 @@ export class VisualAuditScraper {
     try {
       console.log(`:round_pushpin: Extracting element positions for: ${url}`);
      
+      // Dynamic import to avoid bundling playwright in serverless functions
+      const { chromium } = await import('playwright');
       browser = await chromium.launch({
         headless: true,
         args: [

@@ -6,7 +6,9 @@
  * HTML templates and Puppeteer.
  */
 
-import puppeteer from 'puppeteer';
+// Commented out to avoid bundling in Vercel serverless functions (exceeds 250MB limit)
+// Uncomment if deploying to a platform that supports larger bundles (e.g., Railway, Render)
+// import puppeteer from 'puppeteer';
 import PptxGenJS from 'pptxgenjs';
 import fs from 'fs';
 import path from 'path';
@@ -500,7 +502,9 @@ function replaceTemplateVars(html: string, brandInput: any, fileName?: string, t
  * Convert HTML to image using Puppeteer
  */
 async function htmlToImage(htmlPath: string, outputPath: string, brandInput: any, templateSet?: string): Promise<void> {
-	const browser = await puppeteer.launch({
+	// Dynamic import to avoid bundling puppeteer in serverless functions
+	const puppeteer = await import('puppeteer');
+	const browser = await puppeteer.default.launch({
 		headless: true,
 		args: [
 			'--no-sandbox', 
@@ -754,7 +758,9 @@ export async function convertHtmlToPptxFromSlides(savedSlides: Array<{ name: str
  * Convert HTML string directly to image using Puppeteer
  */
 async function htmlToImageFromString(htmlContent: string, outputPath: string): Promise<void> {
-	const browser = await puppeteer.launch({
+	// Dynamic import to avoid bundling puppeteer in serverless functions
+	const puppeteer = await import('puppeteer');
+	const browser = await puppeteer.default.launch({
 		headless: true,
 		args: ['--no-sandbox', '--disable-setuid-sandbox']
 	});

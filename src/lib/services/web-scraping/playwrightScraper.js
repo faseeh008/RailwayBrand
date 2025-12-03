@@ -1,4 +1,6 @@
-import { chromium } from 'playwright';
+// Commented out to avoid bundling in Vercel serverless functions (exceeds 250MB limit)
+// Uncomment if deploying to a platform that supports larger bundles (e.g., Railway, Render)
+// import { chromium } from 'playwright';
 
 export class PlaywrightScraper {
   async scrapeWebsite(url) {
@@ -7,6 +9,8 @@ export class PlaywrightScraper {
     try {
       console.log(`🎭 Starting Playwright scraping for: ${url}`);
       
+      // Dynamic import to avoid bundling playwright in serverless functions
+      const { chromium } = await import('playwright');
       // Launch browser with anti-detection measures
       browser = await chromium.launch({ 
         headless: true,
@@ -244,6 +248,8 @@ export class PlaywrightScraper {
 
   // Method for single-page applications with interactions
   async scrapeSPA(url, interactions = []) {
+    // Dynamic import to avoid bundling playwright in serverless functions
+    const { chromium } = await import('playwright');
     const browser = await chromium.launch({ 
       headless: true,
       args: ['--no-sandbox', '--disable-setuid-sandbox']
