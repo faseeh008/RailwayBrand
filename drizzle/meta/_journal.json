@@ -113,6 +113,34 @@
       "when": 1764444065576,
       "tag": "0015_lumpy_vulcan",
       "breakpoints": true
+    },
+    {
+      "idx": 16,
+      "version": "7",
+      "when": 1765000000000,
+      "tag": "0016_add_logo_columns",
+      "breakpoints": true
+    },
+    {
+      "idx": 17,
+      "version": "7",
+      "when": 1765100000000,
+      "tag": "0017_create_brand_logos_table",
+      "breakpoints": true
+    },
+    {
+      "idx": 18,
+      "version": "7",
+      "when": 1765200000000,
+      "tag": "0018_drop_brand_logos_table",
+      "breakpoints": true
+    },
+    {
+      "idx": 19,
+      "version": "7",
+      "when": 1765300000000,
+      "tag": "0019_add_mock_pages_column",
+      "breakpoints": true
     }
   ]
 }
