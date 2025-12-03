@@ -1,4 +1,6 @@
-import { chromium } from 'playwright';
+// Commented out to avoid bundling in Vercel serverless functions (exceeds 250MB limit)
+// Uncomment if deploying to a platform that supports larger bundles (e.g., Railway, Render)
+// import { chromium } from 'playwright';
 
 export class PlaywrightScraper {
   async scrapeWebsite(url) {

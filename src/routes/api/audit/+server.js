@@ -1,5 +1,7 @@
 import { json } from '@sveltejs/kit';
-import { chromium } from 'playwright';
+// Commented out to avoid bundling in Vercel serverless functions (exceeds 250MB limit)
+// Uncomment if deploying to a platform that supports larger bundles (e.g., Railway, Render)
+// import { chromium } from 'playwright';
 import { mockBrandGuideline } from '$lib/mockBrandGuideline.js';
 import { githubBrandGuideline } from '$lib/githubBrandGuideline.js';
 import { bufferBrandGuideline } from '$lib/bufferBrandGuideline.js';
@@ -23,6 +25,8 @@ export async function POST({ request }) {
 
 		let browser = null;
 		try {
+			// Dynamic import to avoid bundling playwright in serverless functions
+			const { chromium } = await import('playwright');
 			// Launch headless browser with more permissive settings
 			browser = await chromium.launch({ 
 				headless: true,

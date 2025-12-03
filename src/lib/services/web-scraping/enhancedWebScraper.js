@@ -1,5 +1,7 @@
 // @ts-nocheck
-import puppeteer from 'puppeteer';
+// Commented out to avoid bundling in Vercel serverless functions (exceeds 250MB limit)
+// Uncomment if deploying to a platform that supports larger bundles (e.g., Railway, Render)
+// import puppeteer from 'puppeteer';
 
 export class EnhancedWebScraper {
   constructor() {

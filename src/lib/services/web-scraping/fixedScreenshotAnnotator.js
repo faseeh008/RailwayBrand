@@ -585,7 +585,9 @@ export class FixedScreenshotAnnotator {
   }
 }
 // @ts-nocheck
-import { createCanvas, loadImage } from 'canvas';
+// Commented out to avoid bundling in Vercel serverless functions (exceeds 250MB limit)
+// Uncomment if deploying to a platform that supports larger bundles (e.g., Railway, Render)
+// import { createCanvas, loadImage } from 'canvas';
 import fs from 'fs';
 import path from 'path';
 

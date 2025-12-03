@@ -1,4 +1,6 @@
-import puppeteer from 'puppeteer';
+// Commented out to avoid bundling in Vercel serverless functions (exceeds 250MB limit)
+// Uncomment if deploying to a platform that supports larger bundles (e.g., Railway, Render)
+// import puppeteer from 'puppeteer';
 import { PDFDocument } from 'pdf-lib';
 
 /**
@@ -7,12 +9,14 @@ import { PDFDocument } from 'pdf-lib';
 export async function convertHtmlSlidesToPdf(
 	slides: Array<{ name: string; html: string }>
 ): Promise<Buffer> {
-	let browser: puppeteer.Browser | null = null;
+	// Dynamic import to avoid bundling puppeteer in serverless functions
+	const puppeteer = await import('puppeteer');
+	let browser: typeof puppeteer.Browser | null = null;
 	
 	try {
 		console.log('🚀 Launching Puppeteer browser...');
 		
-		browser = await puppeteer.launch({
+		browser = await puppeteer.default.launch({
 			headless: 'new',
 			args: [
 				'--no-sandbox',

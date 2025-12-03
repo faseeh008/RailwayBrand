@@ -1,5 +1,7 @@
 import jsPDF from 'jspdf';
-import html2canvas from 'html2canvas';
+// Commented out to avoid bundling in Vercel serverless functions (exceeds 250MB limit)
+// Uncomment if deploying to a platform that supports larger bundles (e.g., Railway, Render)
+// import html2canvas from 'html2canvas';
 
 export interface ExportOptions {
 	brandName: string;
