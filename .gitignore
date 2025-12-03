@@ -91,6 +91,7 @@ temp/
 *.njsproj
 *.sln
 *.sw?
+.claude/
 
 # OS generated files
 .DS_Store
