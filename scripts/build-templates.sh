@@ -17,9 +17,16 @@ for template in Minimalistic Maximalistic Funky Futuristic; do
   # Install dependencies (try npm ci first, fallback to npm install)
   echo "   Installing dependencies..."
   if [ -f "package-lock.json" ]; then
-    npm ci --silent || npm install --silent
+    npm ci || npm install
   else
-    npm install --silent
+    npm install
+  fi
+  
+  # Verify installation succeeded by checking for node_modules
+  if [ ! -d "node_modules" ]; then
+    echo "❌ ERROR: node_modules not found after installation for $template"
+    echo "   Installation may have failed"
+    exit 1
   fi
   
   # Build the template
