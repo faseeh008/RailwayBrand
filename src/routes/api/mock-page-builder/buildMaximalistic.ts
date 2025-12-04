@@ -268,44 +268,61 @@ function findTemplatePath(templateName: string): { htmlPath: string; buildDir: s
 	console.log(`[findTemplatePath] Current working directory: ${cwd}`);
 	console.log(`[findTemplatePath] Checking ${possibleBasePaths.length} possible base paths`);
 
-	// First, try to find build directory
+	// Try to find build directory - REQUIRED for production
+	const triedBuildPaths: string[] = [];
 	for (const basePath of possibleBasePaths) {
 		const buildPath = join(basePath, 'react-templates', templateName, 'build', 'index.html');
+		const buildDir = join(basePath, 'react-templates', templateName, 'build');
+		triedBuildPaths.push(buildPath);
+		
 		if (existsSync(buildPath)) {
+			// Verify build directory has assets
+			const assetsDir = join(buildDir, 'assets');
+			const hasAssets = existsSync(assetsDir);
+			
 			console.log(`[findTemplatePath] ✅ Found build directory at: ${buildPath}`);
+			console.log(`[findTemplatePath] Build directory: ${buildDir}`);
+			console.log(`[findTemplatePath] Assets directory exists: ${hasAssets}`);
+			
+			if (!hasAssets) {
+				console.warn(`[findTemplatePath] ⚠️ Warning: Assets directory not found at ${assetsDir}`);
+			}
+			
 			return {
 				htmlPath: buildPath,
-				buildDir: join(basePath, 'react-templates', templateName, 'build'),
+				buildDir: buildDir,
 				isBuild: true
 			};
 		}
 	}
 
-	// Fallback to source
+	// Build directory is REQUIRED - source files won't work in production (blob URLs can't load /src/main.tsx)
+	// Collect diagnostic information
+	const diagnosticInfo: Record<string, boolean> = {};
 	for (const basePath of possibleBasePaths) {
-		const sourcePath = join(basePath, 'react-templates', templateName, 'index.html');
-		if (existsSync(sourcePath)) {
-			console.log(`[findTemplatePath] ⚠️ Found source directory at: ${sourcePath} (build not found)`);
-			return {
-				htmlPath: sourcePath,
-				buildDir: join(basePath, 'react-templates', templateName),
-				isBuild: false
-			};
-		}
+		const baseExists = existsSync(basePath);
+		const templatesDir = join(basePath, 'react-templates');
+		const templateDir = join(templatesDir, templateName);
+		const buildDir = join(templateDir, 'build');
+		
+		diagnosticInfo[`${basePath} exists`] = baseExists;
+		diagnosticInfo[`${templatesDir} exists`] = existsSync(templatesDir);
+		diagnosticInfo[`${templateDir} exists`] = existsSync(templateDir);
+		diagnosticInfo[`${buildDir} exists`] = existsSync(buildDir);
 	}
-
-	// If nothing found, throw error with diagnostic info
-	const triedPaths = possibleBasePaths.flatMap(base => [
-		join(base, 'react-templates', templateName, 'build', 'index.html'),
-		join(base, 'react-templates', templateName, 'index.html')
-	]);
 	
-	console.error(`[findTemplatePath] ❌ Template not found for ${templateName}`);
-	console.error(`[findTemplatePath] Tried paths:`, triedPaths);
+	console.error(`[findTemplatePath] ❌ Build directory not found for ${templateName}`);
+	console.error(`[findTemplatePath] Current working directory: ${cwd}`);
+	console.error(`[findTemplatePath] Tried build paths:`, triedBuildPaths);
+	console.error(`[findTemplatePath] Diagnostic info:`, diagnosticInfo);
 	
 	throw new Error(
-		`Template not found for ${templateName}. Tried paths:\n${triedPaths.join('\n')}\n` +
-		`Current working directory: ${cwd}`
+		`Build directory not found for ${templateName}. ` +
+		`React templates must be built before deployment. ` +
+		`Source files cannot be used in production (they reference /src/main.tsx which doesn't work in blob URLs).\n\n` +
+		`Tried build paths:\n${triedBuildPaths.map(p => `  - ${p}`).join('\n')}\n\n` +
+		`Current working directory: ${cwd}\n` +
+		`Please ensure the Dockerfile builds the React templates and copies them to the production image.`
 	);
 }
 
