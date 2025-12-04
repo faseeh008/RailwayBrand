@@ -232,6 +232,65 @@ function getDefaultContent(brandName: string, industry: string) {
 	};
 }
 
+/**
+ * Find template path by checking multiple possible locations
+ * Handles different deployment scenarios (Docker, Render, local dev)
+ */
+function findTemplatePath(templateName: string): { htmlPath: string; buildDir: string; isBuild: boolean } {
+	const cwd = process.cwd();
+	const possibleBasePaths = [
+		cwd, // Current working directory
+		join(cwd, '..'), // One level up
+		'/app', // Docker default
+		join(cwd, '..', '..'), // Two levels up (in case we're in src/)
+		join(process.cwd(), '..', '..', '..'), // Three levels up
+	];
+
+	console.log(`[findTemplatePath] Searching for ${templateName} template...`);
+	console.log(`[findTemplatePath] Current working directory: ${cwd}`);
+	console.log(`[findTemplatePath] Checking ${possibleBasePaths.length} possible base paths`);
+
+	// First, try to find build directory
+	for (const basePath of possibleBasePaths) {
+		const buildPath = join(basePath, 'react-templates', templateName, 'build', 'index.html');
+		if (existsSync(buildPath)) {
+			console.log(`[findTemplatePath] ✅ Found build directory at: ${buildPath}`);
+			return {
+				htmlPath: buildPath,
+				buildDir: join(basePath, 'react-templates', templateName, 'build'),
+				isBuild: true
+			};
+		}
+	}
+
+	// Fallback to source
+	for (const basePath of possibleBasePaths) {
+		const sourcePath = join(basePath, 'react-templates', templateName, 'index.html');
+		if (existsSync(sourcePath)) {
+			console.log(`[findTemplatePath] ⚠️ Found source directory at: ${sourcePath} (build not found)`);
+			return {
+				htmlPath: sourcePath,
+				buildDir: join(basePath, 'react-templates', templateName),
+				isBuild: false
+			};
+		}
+	}
+
+	// If nothing found, throw error with diagnostic info
+	const triedPaths = possibleBasePaths.flatMap(base => [
+		join(base, 'react-templates', templateName, 'build', 'index.html'),
+		join(base, 'react-templates', templateName, 'index.html')
+	]);
+	
+	console.error(`[findTemplatePath] ❌ Template not found for ${templateName}`);
+	console.error(`[findTemplatePath] Tried paths:`, triedPaths);
+	
+	throw new Error(
+		`Template not found for ${templateName}. Tried paths:\n${triedPaths.join('\n')}\n` +
+		`Current working directory: ${cwd}`
+	);
+}
+
 export async function buildMinimalistic(sessionData: BrandSessionData): Promise<string> {
 	console.log('[buildMinimalistic] Starting build with data:', sessionData);
 	
@@ -365,50 +424,24 @@ export async function buildMinimalistic(sessionData: BrandSessionData): Promise<
 	await sleep(3000);
 	
 	// Step 5: Read the template index.html
-	const cwd = process.cwd();
-	console.log('[buildMinimalistic] Current working directory:', cwd);
-
-	let templatePath = join(cwd, 'react-templates', 'Minimalistic', 'build', 'index.html');
-	let html: string;
-	let buildDir: string;
-
-	console.log('[buildMinimalistic] Attempting to read template from:', templatePath);
-
-	if (existsSync(templatePath)) {
-		try {
-			html = readFileSync(templatePath, 'utf-8');
-			buildDir = join(cwd, 'react-templates', 'Minimalistic', 'build');
-			console.log('[buildMinimalistic] ✅ Successfully read template from build directory');
-		} catch (e) {
-			console.error('[buildMinimalistic] ❌ Failed to read build template:', e);
-			throw new Error(`Failed to read template file: ${templatePath}. Error: ${e instanceof Error ? e.message : String(e)}`);
-		}
-	} else {
-		// Fallback to source index.html if build doesn't exist
-		templatePath = join(cwd, 'react-templates', 'Minimalistic', 'index.html');
-		console.log('[buildMinimalistic] ⚠️ Build directory not found, trying fallback:', templatePath);
-		
-		if (!existsSync(templatePath)) {
-			console.error('[buildMinimalistic] ❌ Template file not found at:', templatePath);
-			console.error('[buildMinimalistic] Diagnostic info:', {
-				cwd,
-				buildPath: join(cwd, 'react-templates', 'Minimalistic', 'build'),
-				sourcePath: join(cwd, 'react-templates', 'Minimalistic'),
-				buildExists: existsSync(join(cwd, 'react-templates', 'Minimalistic', 'build')),
-				sourceExists: existsSync(join(cwd, 'react-templates', 'Minimalistic'))
-			});
-			throw new Error(`Template file not found. Tried: ${join(cwd, 'react-templates', 'Minimalistic', 'build', 'index.html')} and ${templatePath}`);
-		}
-		
-		try {
-			html = readFileSync(templatePath, 'utf-8');
-			buildDir = join(cwd, 'react-templates', 'Minimalistic');
-			console.log('[buildMinimalistic] ✅ Successfully read template from source directory');
-		} catch (e) {
-			console.error('[buildMinimalistic] ❌ Failed to read fallback template:', e);
-			throw new Error(`Failed to read fallback template file: ${templatePath}. Error: ${e instanceof Error ? e.message : String(e)}`);
-		}
+	let templateInfo;
+	try {
+		templateInfo = findTemplatePath('Minimalistic');
+	} catch (error) {
+		console.error('[buildMinimalistic] ❌ Failed to find template:', error);
+		throw error;
 	}
+
+	let html: string;
+	try {
+		html = readFileSync(templateInfo.htmlPath, 'utf-8');
+		console.log(`[buildMinimalistic] ✅ Successfully read template from ${templateInfo.isBuild ? 'build' : 'source'} directory`);
+	} catch (e) {
+		console.error('[buildMinimalistic] ❌ Failed to read template file:', e);
+		throw new Error(`Failed to read template file: ${templateInfo.htmlPath}. Error: ${e instanceof Error ? e.message : String(e)}`);
+	}
+
+	const buildDir = templateInfo.buildDir;
 	
 	// Step 5.5: Inline CSS and JS assets for blob URL compatibility
 	// Extract CSS file path and inline it
