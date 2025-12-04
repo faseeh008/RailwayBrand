@@ -1,5 +1,5 @@
 import { fetchIndustryImages } from '$lib/services/image-fetcher';
-import { readFileSync, existsSync } from 'fs';
+import { readFileSync, existsSync, readdirSync } from 'fs';
 import { join } from 'path';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { env } from '$lib/env';
@@ -307,7 +307,6 @@ function getDefaultContent(brandName: string, industry: string) {
  */
 function findTemplatePath(templateName: string): { htmlPath: string; buildDir: string; isBuild: boolean } {
 	const cwd = process.cwd();
-	const { readdirSync } = require('fs');
 	
 	// Try to find where the built app is located to infer base path
 	let inferredBasePath = cwd;
