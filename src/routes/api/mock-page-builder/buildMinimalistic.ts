@@ -13,6 +13,24 @@ export interface BrandSessionData {
 		secondary: string;
 		accent: string;
 	};
+	typography?: {
+		primary_font: {
+			name: string;
+			weights?: string[];
+			usage?: string;
+		};
+		secondary_font: {
+			name: string;
+			weights?: string[];
+			usage?: string;
+		};
+		font_hierarchy: Array<{
+			label: string;  // "H1", "H2", "Body"
+			font: string;   // Font name
+			weight: string; // "700", "bold", "regular", "400"
+			size: string;   // "48px", "32px", "16px"
+		}>;
+	};
 }
 
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
@@ -413,6 +431,16 @@ export async function buildMinimalistic(sessionData: BrandSessionData): Promise<
 			border: border,
 			mutedText: mutedText
 		},
+		typography: sessionData.typography ? {
+			primaryFont: sessionData.typography.primary_font.name,
+			secondaryFont: sessionData.typography.secondary_font.name,
+			fontHierarchy: sessionData.typography.font_hierarchy.map(h => ({
+				label: h.label,
+				font: h.font,
+				weight: h.weight,
+				size: h.size
+			}))
+		} : undefined,
 		images: {
 			hero: images.hero,
 			gallery: images.gallery

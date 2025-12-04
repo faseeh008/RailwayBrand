@@ -535,6 +535,16 @@ export async function buildMaximalistic(sessionData: BrandSessionData): Promise<
 	const brandConfig = {
 		brandName: sessionData.brand_name,
 		industry: sessionData.brand_industry,
+		typography: sessionData.typography ? {
+			primaryFont: sessionData.typography.primary_font.name,
+			secondaryFont: sessionData.typography.secondary_font.name,
+			fontHierarchy: sessionData.typography.font_hierarchy.map(h => ({
+				label: h.label,
+				font: h.font,
+				weight: h.weight,
+				size: h.size
+			}))
+		} : undefined,
 		colors: {
 			primary: primaryColor,
 			secondary: secondaryColor,

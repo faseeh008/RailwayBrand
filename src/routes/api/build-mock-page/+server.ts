@@ -7,6 +7,52 @@ import { buildMockPage, type Vibe, type BrandSessionData } from '../mock-page-bu
 
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
+// Helper function to extract typography from slide elements
+function extractTypographyFromSlideElements(elements: any[]): any {
+	const typography: any = {
+		primary_font: null,
+		secondary_font: null,
+		font_hierarchy: []
+	};
+	
+	// Look for font name elements
+	for (const element of elements) {
+		if (element.id === 'primary-name' || element.id === 'primary-font-name') {
+			const fontName = element.text || element.fontFace;
+			if (fontName) {
+				typography.primary_font = { name: fontName };
+			}
+		}
+		if (element.id === 'secondary-name' || element.id === 'secondary-font-name') {
+			const fontName = element.text || element.fontFace;
+			if (fontName) {
+				typography.secondary_font = { name: fontName };
+			}
+		}
+		
+		// Look for hierarchy elements
+		if (element.id?.startsWith('hierarchy-') || element.type === 'typography-hierarchy') {
+			const label = element.id?.replace('hierarchy-', '').toUpperCase() || element.label || '';
+			const font = element.fontFace || element.font || '';
+			const size = element.fontSize ? `${element.fontSize}px` : element.size || '';
+			const weight = element.bold ? '700' : (element.fontWeight || element.weight || '400');
+			
+			if (label && font && size) {
+				typography.font_hierarchy.push({
+					label,
+					font,
+					weight,
+					size
+				});
+			}
+		}
+	}
+	
+	return (typography.primary_font && typography.secondary_font && typography.font_hierarchy.length > 0) 
+		? typography 
+		: null;
+}
+
 export const POST: RequestHandler = async ({ request, locals }) => {
 	try {
 		const session = await locals.auth();
@@ -292,7 +338,194 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 			throw new Error(`Missing required colors from brand guidelines. Primary: ${primaryColor || 'MISSING'}, Secondary: ${secondaryColor || 'MISSING'}, Accent: ${accentColor || 'MISSING'}`);
 		}
 
-		// Build the session data object - use data from slides if available
+		// Extract typography from slides
+		let typographyData: any = null;
+		let typographySource = 'none';
+		
+		// Try to extract from slides' svelteContent or slideData
+		for (const slide of slides) {
+			// Try svelteContent first (SlideData structure)
+			if (slide.svelteContent) {
+				try {
+					const svelteData = typeof slide.svelteContent === 'string'
+						? JSON.parse(slide.svelteContent)
+						: slide.svelteContent;
+					
+					// Check if this is a typography slide
+					if (svelteData?.slideType === 'typography' || svelteData?.stepId === 'typography') {
+						// Try to extract from elements
+						if (svelteData?.elements && Array.isArray(svelteData.elements)) {
+							typographyData = extractTypographyFromSlideElements(svelteData.elements);
+							if (typographyData) {
+								typographySource = `slide ${slide.slideNumber} svelteContent`;
+								break;
+							}
+						}
+					}
+				} catch (e) {
+					// Ignore parse errors
+				}
+			}
+			
+			// Try slideData (step content structure)
+			if (slide.slideData && !typographyData) {
+				try {
+					const slideData = typeof slide.slideData === 'string'
+						? JSON.parse(slide.slideData)
+						: slide.slideData;
+					
+					// Check for typography in slideData
+					if (slideData?.stepId === 'typography' || slideData?.step === 'typography' || slideData?.typography) {
+						typographyData = slideData.typography || slideData;
+						typographySource = `slide ${slide.slideNumber} slideData`;
+						break;
+					}
+				} catch (e) {
+					// Ignore parse errors
+				}
+			}
+		}
+		
+		// Strategy 2: Try structuredData.stepHistory (where step content is stored)
+		if (!typographyData && guidelineData.structuredData) {
+			try {
+				const structuredData = typeof guidelineData.structuredData === 'string'
+					? JSON.parse(guidelineData.structuredData)
+					: guidelineData.structuredData;
+				
+				if (structuredData?.stepHistory) {
+					const typoStep = structuredData.stepHistory.find((s: any) => 
+						s.stepId === 'typography' || s.step === 'typography' || s.stepType === 'typography'
+					);
+					
+					if (typoStep?.content) {
+						try {
+							const typoContent = typeof typoStep.content === 'string'
+								? JSON.parse(typoStep.content)
+								: typoStep.content;
+							typographyData = typoContent;
+							typographySource = 'structuredData.stepHistory';
+						} catch (e) {
+							console.error('[build-mock-page] Failed to parse typography from stepHistory:', e);
+						}
+					}
+				}
+			} catch (e) {
+				console.error('[build-mock-page] Failed to parse structuredData:', e);
+			}
+		}
+		
+		// Parse typography to extract font hierarchy
+		let parsedTypography: any = null;
+		if (typographyData) {
+			try {
+				// Handle different structures
+				let primaryFont: any = null;
+				let secondaryFont: any = null;
+				let fontHierarchy: any[] = [];
+				
+				// Extract from enhanced generator structure
+				if (typographyData.primary_font) {
+					primaryFont = typeof typographyData.primary_font === 'string'
+						? { name: typographyData.primary_font }
+						: typographyData.primary_font;
+				} else if (typographyData.primaryFont) {
+					primaryFont = typeof typographyData.primaryFont === 'string'
+						? { name: typographyData.primaryFont }
+						: typographyData.primaryFont;
+				}
+				
+				if (typographyData.secondary_font) {
+					secondaryFont = typeof typographyData.secondary_font === 'string'
+						? { name: typographyData.secondary_font }
+						: typographyData.secondary_font;
+				} else if (typographyData.secondaryFont) {
+					secondaryFont = typeof typographyData.secondaryFont === 'string'
+						? { name: typographyData.secondaryFont }
+						: typographyData.secondaryFont;
+				}
+				
+				// Extract font_hierarchy
+				if (Array.isArray(typographyData.font_hierarchy)) {
+					fontHierarchy = typographyData.font_hierarchy;
+				} else if (Array.isArray(typographyData.fontHierarchy)) {
+					fontHierarchy = typographyData.fontHierarchy;
+				}
+				
+				// Build parsed typography
+				if (primaryFont && secondaryFont && fontHierarchy.length > 0) {
+					// Normalize weight values
+					const normalizeWeight = (weight: string | number): string => {
+						if (typeof weight === 'number') return String(weight);
+						const w = String(weight).toLowerCase();
+						if (w === 'bold' || w === '700') return '700';
+						if (w === 'semibold' || w === '600') return '600';
+						if (w === 'medium' || w === '500') return '500';
+						if (w === 'regular' || w === 'normal' || w === '400') return '400';
+						if (w === 'light' || w === '300') return '300';
+						return w.match(/^\d+$/) ? w : '400';
+					};
+					
+					// Normalize size values
+					const normalizeSize = (size: string | number): string => {
+						if (typeof size === 'number') return `${size}px`;
+						const s = String(size).trim();
+						if (s.match(/^\d+px$/)) return s;
+						if (s.match(/^\d+$/)) return `${s}px`;
+						if (s.match(/^\d+pt$/)) {
+							// Convert pt to px (1pt ≈ 1.33px)
+							const pt = parseFloat(s);
+							return `${Math.round(pt * 1.33)}px`;
+						}
+						return s || '16px';
+					};
+					
+					parsedTypography = {
+						primary_font: {
+							name: String(primaryFont.name || primaryFont).trim(),
+							weights: Array.isArray(primaryFont.weights) ? primaryFont.weights : [],
+							usage: primaryFont.usage || 'Headlines'
+						},
+						secondary_font: {
+							name: String(secondaryFont.name || secondaryFont).trim(),
+							weights: Array.isArray(secondaryFont.weights) ? secondaryFont.weights : [],
+							usage: secondaryFont.usage || 'Body'
+						},
+						font_hierarchy: fontHierarchy
+							.filter((h: any) => h.label && h.font && (h.size || h.fontSize))
+							.map((h: any) => ({
+								label: String(h.label || h.type || '').trim(),
+								font: String(h.font || h.fontName || '').trim(),
+								weight: normalizeWeight(h.weight || h.fontWeight || '400'),
+								size: normalizeSize(h.size || h.fontSize || '16px')
+							}))
+					};
+					
+					console.log('[build-mock-page] Parsed typography:', parsedTypography);
+				} else {
+					console.warn('[build-mock-page] Typography data missing required fields:', {
+						hasPrimary: !!primaryFont,
+						hasSecondary: !!secondaryFont,
+						hasHierarchy: fontHierarchy.length > 0
+					});
+				}
+			} catch (e) {
+				console.error('[build-mock-page] Failed to parse typography:', e);
+			}
+		}
+		
+		console.log(`[build-mock-page] Typography source: ${typographySource}`);
+		if (parsedTypography) {
+			console.log('[build-mock-page] Typography extracted:', {
+				primaryFont: parsedTypography.primary_font?.name,
+				secondaryFont: parsedTypography.secondary_font?.name,
+				hierarchyCount: parsedTypography.font_hierarchy?.length || 0
+			});
+		} else {
+			console.warn('[build-mock-page] No typography data found - mock pages will not use generated fonts');
+		}
+
+		// Build the session data object - include typography
 		const sessionData: BrandSessionData = {
 			brand_name: brandNameFromSlides || guidelineData.brandName || slides[0]?.brandName || '',
 			brand_industry: industryFromSlides || guidelineData.industry || guidelineData.brandDomain || '',
@@ -301,7 +534,8 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 				primary: primaryColor,
 				secondary: secondaryColor,
 				accent: accentColor
-			}
+			},
+			typography: parsedTypography || undefined
 		};
 
 		if (!sessionData.vibe) {

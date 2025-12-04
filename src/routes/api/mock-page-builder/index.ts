@@ -8,6 +8,26 @@ import { join } from 'path';
 
 export type Vibe = 'Minimalistic' | 'Maximalistic' | 'Funky' | 'Futuristic';
 
+// Export typography type for use across files
+export interface TypographyData {
+	primary_font: {
+		name: string;
+		weights?: string[];
+		usage?: string;
+	};
+	secondary_font: {
+		name: string;
+		weights?: string[];
+		usage?: string;
+	};
+	font_hierarchy: Array<{
+		label: string;  // "H1", "H2", "Body"
+		font: string;   // Font name
+		weight: string; // "700", "bold", "regular", "400"
+		size: string;   // "48px", "32px", "16px"
+	}>;
+}
+
 export async function buildMockPage(sessionData: BrandSessionData, vibe: Vibe): Promise<string> {
 	console.log(`[buildMockPage] Building ${vibe} theme for brand: ${sessionData.brand_name}`);
 	console.log('[buildMockPage] Current working directory:', process.cwd());
