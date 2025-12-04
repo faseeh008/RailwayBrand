@@ -57,6 +57,29 @@ RUN echo "🔨 Building React templates..." && \
     chmod +x scripts/build-templates.sh && \
     ./scripts/build-templates.sh
 
+# Verify build directories were created
+RUN echo "🔍 Verifying React template builds..." && \
+    for template in Minimalistic Maximalistic Funky Futuristic; do \
+      if [ ! -d "react-templates/$template/build" ]; then \
+        echo "❌ ERROR: Build directory not found for $template"; \
+        echo "Listing react-templates/$template:"; \
+        ls -la "react-templates/$template/" || echo "Directory does not exist"; \
+        exit 1; \
+      else \
+        echo "✅ Build directory exists for $template"; \
+        if [ ! -f "react-templates/$template/build/index.html" ]; then \
+          echo "❌ ERROR: index.html not found in $template/build"; \
+          echo "Contents of react-templates/$template/build:"; \
+          ls -la "react-templates/$template/build/" || echo "Directory is empty"; \
+          exit 1; \
+        else \
+          echo "✅ index.html found in $template/build"; \
+          echo "   File size: $(du -h react-templates/$template/build/index.html | cut -f1)"; \
+        fi; \
+      fi; \
+    done && \
+    echo "🎉 All React template builds verified successfully!"
+
 # Generate database schema
 RUN npm run db:generate
 
@@ -98,6 +121,13 @@ COPY --from=builder --chown=sveltekit:nodejs /app/package.json ./package.json
 COPY --from=builder --chown=sveltekit:nodejs /app/drizzle ./drizzle
 
 # Copy React template builds (only build directories and index.html, not node_modules or source)
+# Create directories first to ensure they exist
+RUN mkdir -p react-templates/Minimalistic/build \
+    react-templates/Maximalistic/build \
+    react-templates/Funky/build \
+    react-templates/Futuristic/build
+
+# Copy build directories and index.html files
 COPY --from=builder --chown=sveltekit:nodejs /app/react-templates/Minimalistic/build ./react-templates/Minimalistic/build
 COPY --from=builder --chown=sveltekit:nodejs /app/react-templates/Minimalistic/index.html ./react-templates/Minimalistic/index.html
 COPY --from=builder --chown=sveltekit:nodejs /app/react-templates/Maximalistic/build ./react-templates/Maximalistic/build
@@ -106,6 +136,25 @@ COPY --from=builder --chown=sveltekit:nodejs /app/react-templates/Funky/build ./
 COPY --from=builder --chown=sveltekit:nodejs /app/react-templates/Funky/index.html ./react-templates/Funky/index.html
 COPY --from=builder --chown=sveltekit:nodejs /app/react-templates/Futuristic/build ./react-templates/Futuristic/build
 COPY --from=builder --chown=sveltekit:nodejs /app/react-templates/Futuristic/index.html ./react-templates/Futuristic/index.html
+
+# Verify build directories were copied successfully
+RUN echo "🔍 Verifying copied React template builds..." && \
+    for template in Minimalistic Maximalistic Funky Futuristic; do \
+      if [ -f "react-templates/$template/build/index.html" ]; then \
+        echo "✅ $template build/index.html copied successfully"; \
+        echo "   File size: $(du -h react-templates/$template/build/index.html | cut -f1)"; \
+        if [ -d "react-templates/$template/build/assets" ]; then \
+          echo "   Assets directory exists with $(ls react-templates/$template/build/assets | wc -l) files"; \
+        else \
+          echo "   ⚠️ WARNING: Assets directory not found for $template"; \
+        fi; \
+      else \
+        echo "❌ ERROR: $template build/index.html not found after copy"; \
+        echo "   Checking if directory exists:"; \
+        ls -la "react-templates/$template/" || echo "   Directory does not exist"; \
+      fi; \
+    done && \
+    echo "🎉 React template build verification complete!"
 
 # Install only production dependencies
 COPY --from=deps --chown=sveltekit:nodejs /app/node_modules ./node_modules

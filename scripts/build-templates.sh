@@ -26,12 +26,25 @@ for template in Minimalistic Maximalistic Funky Futuristic; do
   echo "   Building..."
   npm run build
   
-  # Verify build directory exists
+  # Verify build directory exists and contains index.html
   if [ ! -d "build" ]; then
-    echo "⚠️  Warning: build directory not found for $template after build"
-  else
-    echo "✅ $template built successfully"
+    echo "❌ ERROR: build directory not found for $template after build"
+    echo "   Current directory: $(pwd)"
+    echo "   Directory contents:"
+    ls -la || echo "   Cannot list directory"
+    exit 1
   fi
+  
+  if [ ! -f "build/index.html" ]; then
+    echo "❌ ERROR: build/index.html not found for $template after build"
+    echo "   Build directory contents:"
+    ls -la build/ || echo "   Cannot list build directory"
+    exit 1
+  fi
+  
+  echo "✅ $template built successfully"
+  echo "   Build directory size: $(du -sh build | cut -f1)"
+  echo "   index.html size: $(du -h build/index.html | cut -f1)"
   
   cd ../..
 done
