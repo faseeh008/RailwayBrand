@@ -41,7 +41,6 @@ const iconNameMap: Record<string, string> = {
 	'down': 'ChevronDown',
 	'navigation': 'Navigation',
 	'menu': 'Menu',
-	'home': 'Home',
 	'search': 'Search',
 	'filter': 'Filter',
 	'sort': 'ArrowUpDown',
@@ -142,7 +141,6 @@ const iconNameMap: Record<string, string> = {
 	'delivery': 'Truck',
 	'delivery-truck': 'Truck',
 	'shipping': 'Truck',
-	'truck': 'Truck',
 	
 	// Social & Engagement
 	'like': 'Heart',
@@ -204,7 +202,6 @@ const iconNameMap: Record<string, string> = {
 	'location': 'MapPin',
 	'pin': 'MapPin',
 	'map': 'Map',
-	'navigation': 'Navigation',
 	'compass': 'Compass',
 	'route': 'Route',
 	'directions': 'Navigation',
@@ -247,7 +244,6 @@ const iconNameMap: Record<string, string> = {
 	'monitor': 'Monitor',
 	'laptop': 'Laptop',
 	'mobile': 'Smartphone',
-	'phone': 'Smartphone',
 	'smartphone': 'Smartphone',
 	'tablet': 'Tablet',
 	'server': 'Server',
@@ -255,7 +251,6 @@ const iconNameMap: Record<string, string> = {
 	'bluetooth': 'Bluetooth',
 	'battery': 'Battery',
 	'power': 'Power',
-	'zap': 'Zap',
 	'plug': 'Plug',
 	'usb': 'Usb',
 	'hard-drive': 'HardDrive',
@@ -265,8 +260,6 @@ const iconNameMap: Record<string, string> = {
 	'code': 'FileText', // Use FileText as code icon
 	'coding': 'FileText',
 	'programming': 'FileText',
-	'database': 'Database',
-	'cloud': 'Cloud',
 	
 	// Food & Drink
 	'food': 'Utensils',
@@ -282,7 +275,6 @@ const iconNameMap: Record<string, string> = {
 	'pizza': 'Utensils',
 	'meal': 'Utensils',
 	'dining': 'Utensils',
-	'delivery-truck': 'Truck',
 	
 	// Transportation
 	'car': 'Car',
@@ -307,7 +299,6 @@ const iconNameMap: Record<string, string> = {
 	'shop': 'Store',
 	'bank': 'Building',
 	'hospital': 'Building',
-	'school': 'Building',
 	'office': 'Building',
 	'factory': 'Building',
 	'warehouse': 'Warehouse',
@@ -322,7 +313,6 @@ const iconNameMap: Record<string, string> = {
 	'first-aid': 'Bandage',
 	'bandage': 'Bandage',
 	'stethoscope': 'Heart', // Use Heart as closest match (stethoscope not in Lucide)
-	'hospital': 'Building',
 	'ambulance': 'Truck',
 	'user-md': 'User',
 	'medical-cross': 'Plus', // Use Plus as closest match
@@ -341,8 +331,6 @@ const iconNameMap: Record<string, string> = {
 	'lesson': 'Book',
 	'graduation-cap': 'GraduationCap',
 	'certificate': 'FileText',
-	'pencil': 'Pencil',
-	'pen': 'Pencil',
 	
 	// Sports & Fitness
 	'sport': 'Trophy',
@@ -465,7 +453,6 @@ const iconNameMap: Record<string, string> = {
 	'brand': 'Sparkles',
 	'featured': 'Star',
 	'premium': 'Crown',
-	'success': 'CheckCircle',
 	'warning': 'AlertTriangle',
 	'error': 'AlertCircle',
 	'info': 'Info',
