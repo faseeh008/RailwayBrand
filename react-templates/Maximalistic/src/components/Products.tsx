@@ -2,7 +2,6 @@ import type { BrandConfig } from "../shared-brand-config";
 import type { BrandTokens } from "../theme/brand-tokens";
 import type { TemplateContent } from "../template-content";
 import { withAlpha } from "../utils/color";
-import { getTypographyStyle } from "../utils/typography";
 import { ImageWithFallback } from "./figma/ImageWithFallback";
 import { Button } from "./ui/button";
 import { getIconComponent } from "../utils/icon-mapper";
@@ -55,11 +54,13 @@ export function Products({ config, tokens, content }: ProductsProps) {
             {content.badgeLabel}
           </div>
 
-          <h2 
-            className="leading-tight space-y-2" 
-            style={{ 
-              ...getTypographyStyle(config, 'H2'),
-              color: tokens.colors.text 
+          <h2
+            className="leading-tight space-y-2"
+            style={{
+              color: tokens.colors.text,
+              fontFamily: 'var(--font-h1-family, inherit)',
+              fontSize: 'var(--font-h1-size, 3.75rem)',
+              fontWeight: 'var(--font-h1-weight, 600)'
             }}
           >
             {content.headingLines.map((line) => (
@@ -69,11 +70,13 @@ export function Products({ config, tokens, content }: ProductsProps) {
             ))}
           </h2>
 
-          <p 
-            className="max-w-2xl mx-auto" 
-            style={{ 
-              ...getTypographyStyle(config, 'Body'),
-              color: tokens.colors.mutedText 
+          <p
+            className="max-w-2xl mx-auto"
+            style={{
+              color: tokens.colors.mutedText,
+              fontFamily: 'var(--font-body-family, inherit)',
+              fontSize: 'var(--font-body-size, 1.25rem)',
+              fontWeight: 'var(--font-body-weight, 400)'
             }}
           >
             {content.description}
@@ -134,12 +137,28 @@ export function Products({ config, tokens, content }: ProductsProps) {
                     const Icon = getIconComponent(product.icon);
                     return Icon ? <Icon className="w-5 h-5" style={{ color: tokens.colors.primary }} /> : null;
                   })()}
-                  <h3 className="text-2xl" style={{ color: tokens.colors.text }}>
+                  <h3
+                    style={{
+                      color: tokens.colors.text,
+                      fontFamily: 'var(--font-h2-family, inherit)',
+                      fontSize: 'var(--font-h2-size, 1.5rem)',
+                      fontWeight: 'var(--font-h2-weight, 600)'
+                    }}
+                  >
                     {product.name}
                   </h3>
                 </div>
 
-                <p style={{ color: tokens.colors.mutedText }}>{product.description}</p>
+                <p
+                  style={{
+                    color: tokens.colors.mutedText,
+                    fontFamily: 'var(--font-body-family, inherit)',
+                    fontSize: 'var(--font-body-size, 1rem)',
+                    fontWeight: 'var(--font-body-weight, 400)'
+                  }}
+                >
+                  {product.description}
+                </p>
 
                 <div
                   className="flex items-center justify-between pt-4"

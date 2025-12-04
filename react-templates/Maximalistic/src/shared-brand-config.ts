@@ -1,3 +1,16 @@
+export interface FontHierarchyItem {
+  label: string;  // "Heading 1", "Heading 2", "Body Text"
+  font: string;   // Font family name
+  size: string;   // e.g., "48px", "32px", "16px"
+  weight: string; // e.g., "700", "400"
+}
+
+export interface Typography {
+  primaryFont: string;
+  secondaryFont: string;
+  fontHierarchy: FontHierarchyItem[];
+}
+
 export interface BrandConfig {
   brandName: string;
   industry: string;
@@ -10,6 +23,7 @@ export interface BrandConfig {
     white?: string;
     black?: string;
   };
+  typography?: Typography;
   images: {
     hero: string;
     gallery: string[];
@@ -17,16 +31,6 @@ export interface BrandConfig {
   brandDescription: string;
   stats: Array<{ value: string; label: string }>;
   templateContent?: any; // Will be used by template-content.ts
-  typography?: {
-    primaryFont: string;
-    secondaryFont: string;
-    fontHierarchy: Array<{
-      label: string;
-      font: string;
-      weight: string;
-      size: string;
-    }>;
-  };
 }
 
 // Helper to compute colors if not already provided

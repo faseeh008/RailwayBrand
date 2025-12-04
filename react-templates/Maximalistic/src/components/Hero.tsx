@@ -2,7 +2,6 @@ import type { BrandConfig } from "../shared-brand-config";
 import type { BrandTokens } from "../theme/brand-tokens";
 import type { TemplateContent } from "../template-content";
 import { withAlpha } from "../utils/color";
-import { getTypographyStyle } from "../utils/typography";
 import { ImageWithFallback } from "./figma/ImageWithFallback";
 import { Button } from "./ui/button";
 import { getIconComponent } from "../utils/icon-mapper";
@@ -60,11 +59,12 @@ export function Hero({ config, tokens, content }: HeroProps) {
               {content.badgeLabel}
             </div>
 
-            <h1 
+            <h1
               className="space-y-2 leading-none"
               style={{
-                ...getTypographyStyle(config, 'H1'),
-                fontSize: config.typography?.fontHierarchy?.find(h => h.label.toLowerCase() === 'h1')?.size || '48px',
+                fontFamily: 'var(--font-h1-family, inherit)',
+                fontSize: 'var(--font-h1-size, 4.5rem)',
+                fontWeight: 'var(--font-h1-weight, 600)'
               }}
             >
               <div className="relative inline-block">
@@ -81,8 +81,10 @@ export function Hero({ config, tokens, content }: HeroProps) {
             <p
               className="max-w-lg"
               style={{
-                ...getTypographyStyle(config, 'Body'),
                 color: withAlpha(tokens.colors.onPrimary, 0.9),
+                fontFamily: 'var(--font-body-family, inherit)',
+                fontSize: 'var(--font-body-size, 1.25rem)',
+                fontWeight: 'var(--font-body-weight, 400)'
               }}
             >
               {content.description}

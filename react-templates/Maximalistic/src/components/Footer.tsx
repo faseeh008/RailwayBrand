@@ -1,20 +1,16 @@
-import type { BrandConfig } from "../shared-brand-config";
 import type { BrandTokens } from "../theme/brand-tokens";
 import type { TemplateContent } from "../template-content";
-import { getBrandConfig } from "../shared-brand-config";
 import { withAlpha } from "../utils/color";
-import { getTypographyStyle } from "../utils/typography";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { getIconComponent } from "../utils/icon-mapper";
 
 interface FooterProps {
-  config: BrandConfig;
   tokens: BrandTokens;
   content: TemplateContent["footer"];
 }
 
-export function Footer({ config, tokens, content }: FooterProps) {
+export function Footer({ tokens, content }: FooterProps) {
   return (
     <footer
       className="relative overflow-hidden"
@@ -33,19 +29,23 @@ export function Footer({ config, tokens, content }: FooterProps) {
         <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-12">
           <div className="space-y-6">
             <div>
-              <h3 
-                className="mb-2" 
-                style={{ 
-                  ...getTypographyStyle(config, 'H3'),
+              <h3
+                className="mb-2"
+                style={{
+                  fontFamily: 'var(--font-h1-family, inherit)',
+                  fontSize: 'var(--font-h1-size, 2.25rem)',
+                  fontWeight: 'var(--font-h1-weight, 600)'
                 }}
               >
                 <span>{content.brandLines[0]}</span>
                 <span className="block">{content.brandLines[1]}</span>
               </h3>
-              <p 
-                style={{ 
-                  ...getTypographyStyle(config, 'Body'),
-                  color: withAlpha(tokens.colors.onPrimary, 0.7) 
+              <p
+                style={{
+                  color: withAlpha(tokens.colors.onPrimary, 0.7),
+                  fontFamily: 'var(--font-body-family, inherit)',
+                  fontSize: 'var(--font-body-size, 1rem)',
+                  fontWeight: 'var(--font-body-weight, 400)'
                 }}
               >
                 {content.tagline}
@@ -73,7 +73,16 @@ export function Footer({ config, tokens, content }: FooterProps) {
           </div>
 
           <div>
-            <h4 className="text-2xl mb-6">Quick links</h4>
+            <h4
+              className="mb-6"
+              style={{
+                fontFamily: 'var(--font-h2-family, inherit)',
+                fontSize: 'var(--font-h2-size, 1.5rem)',
+                fontWeight: 'var(--font-h2-weight, 600)'
+              }}
+            >
+              Quick links
+            </h4>
             <ul className="space-y-3">
               {content.quickLinks.map((link) => (
                 <li key={link.label}>
@@ -90,7 +99,16 @@ export function Footer({ config, tokens, content }: FooterProps) {
           </div>
 
           <div>
-            <h4 className="text-2xl mb-6">Contact</h4>
+            <h4
+              className="mb-6"
+              style={{
+                fontFamily: 'var(--font-h2-family, inherit)',
+                fontSize: 'var(--font-h2-size, 1.5rem)',
+                fontWeight: 'var(--font-h2-weight, 600)'
+              }}
+            >
+              Contact
+            </h4>
             <ul className="space-y-4" style={{ color: withAlpha(tokens.colors.onPrimary, 0.8) }}>
               <li>{content.contact.address}</li>
               <li>{content.contact.phone}</li>
@@ -99,7 +117,16 @@ export function Footer({ config, tokens, content }: FooterProps) {
           </div>
 
           <div>
-            <h4 className="text-2xl mb-6">Newsletter</h4>
+            <h4
+              className="mb-6"
+              style={{
+                fontFamily: 'var(--font-h2-family, inherit)',
+                fontSize: 'var(--font-h2-size, 1.5rem)',
+                fontWeight: 'var(--font-h2-weight, 600)'
+              }}
+            >
+              Newsletter
+            </h4>
             <p className="mb-4" style={{ color: withAlpha(tokens.colors.onPrimary, 0.8) }}>
               {content.newsletter.intro}
             </p>

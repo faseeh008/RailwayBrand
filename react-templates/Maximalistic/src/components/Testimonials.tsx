@@ -2,7 +2,6 @@ import type { BrandConfig } from "../shared-brand-config";
 import type { BrandTokens } from "../theme/brand-tokens";
 import type { TemplateContent } from "../template-content";
 import { withAlpha } from "../utils/color";
-import { getTypographyStyle } from "../utils/typography";
 import { ImageWithFallback } from "./figma/ImageWithFallback";
 import { Card } from "./ui/card";
 
@@ -47,11 +46,13 @@ export function Testimonials({ config, tokens, content }: TestimonialsProps) {
             {content.badgeLabel}
           </div>
 
-          <h2 
-            className="space-y-2" 
-            style={{ 
-              ...getTypographyStyle(config, 'H2'),
-              color: tokens.colors.text 
+          <h2
+            className="space-y-2"
+            style={{
+              color: tokens.colors.text,
+              fontFamily: 'var(--font-h1-family, inherit)',
+              fontSize: 'var(--font-h1-size, 3.75rem)',
+              fontWeight: 'var(--font-h1-weight, 600)'
             }}
           >
             {content.headingLines.map((line) => (
@@ -72,11 +73,13 @@ export function Testimonials({ config, tokens, content }: TestimonialsProps) {
               <div className="text-sm font-medium mb-4" style={{ color: tokens.colors.mutedText }}>
                 Rating {entry.rating.toFixed(1)}/5
               </div>
-              <p 
-                className="leading-relaxed mb-6" 
-                style={{ 
-                  ...getTypographyStyle(config, 'Body'),
-                  color: tokens.colors.text 
+              <p
+                className="leading-relaxed mb-6"
+                style={{
+                  color: tokens.colors.text,
+                  fontFamily: 'var(--font-body-family, inherit)',
+                  fontSize: 'var(--font-body-size, 1.125rem)',
+                  fontWeight: 'var(--font-body-weight, 400)'
                 }}
               >
                 "{entry.quote}"

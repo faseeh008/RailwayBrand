@@ -1,3 +1,17 @@
+// Typography interfaces
+export interface FontHierarchyItem {
+  label: string;  // "Heading 1", "Heading 2", "Body Text"
+  font: string;   // Font family name
+  size: string;   // e.g., "48px", "32px", "16px"
+  weight: string; // e.g., "700", "400"
+}
+
+export interface Typography {
+  primaryFont: string;
+  secondaryFont: string;
+  fontHierarchy: FontHierarchyItem[];
+}
+
 // User-provided JSON structure
 export interface UserBrandConfig {
   brandName: string;
@@ -7,6 +21,7 @@ export interface UserBrandConfig {
     secondary: string;
     accent: string;
   };
+  typography?: Typography;
   images?: {
     hero?: string;
     technology?: string;
@@ -52,6 +67,7 @@ export interface BrandConfig {
     border?: string;
     surface?: string;
   };
+  typography?: Typography;
   fonts: {
     heading: string;
     body: string;
@@ -114,16 +130,6 @@ export interface BrandConfig {
     description: string;
     columns: FooterColumn[];
     copyright: string;
-  };
-  typography?: {
-    primaryFont: string;
-    secondaryFont: string;
-    fontHierarchy: Array<{
-      label: string;
-      font: string;
-      weight: string;
-      size: string;
-    }>;
   };
 }
 
