@@ -487,23 +487,12 @@
           const iconName = icon.name || 'Icon';
           const iconImageSize = Math.round(iconCircleSizePx * 0.45); // Icon size in pixels
           
-          console.log(`🔄 [IconographySlide] Converting icon ${index} "${iconName}" (same as UI) (size: ${iconImageSize}px)...`);
-          
           // Convert to PNG image using the same logic as DynamicIcon
           const iconImageData = await iconNameToBase64Image(iconName, iconImageSize, '#FFFFFF', 2);
           
           if (!iconImageData) {
-            console.error(`❌ [IconographySlide] Failed to convert icon ${index} "${iconName}" - no image data returned`);
             continue; // Skip this icon
           }
-          
-          console.log(`📊 [IconographySlide] Icon ${index} "${iconName}" conversion result:`, {
-            hasData: !!iconImageData,
-            dataLength: iconImageData?.length,
-            isPNG: iconImageData?.startsWith('data:image/png'),
-            isSVG: iconImageData?.startsWith('data:image/svg'),
-            preview: iconImageData?.substring(0, 50)
-          });
           
           // Get circle element to calculate position
           const iconCircleElement = slideData.elements.find(e => e.id === `icon-circle-${index}`);
@@ -529,15 +518,6 @@
               imageData: iconImageData,
               zIndex: 3
             });
-            
-            console.log(`✅ Converted icon ${index} "${iconName}" to image (PNG: ${iconImageData.startsWith('data:image/png')})`);
-          } else {
-            if (!iconCircleElement) {
-              console.error(`❌ Could not convert icon ${index} "${iconName}": circle element not found`);
-            }
-            if (!iconImageData) {
-              console.error(`❌ Could not convert icon ${index} "${iconName}": image data is null/empty`);
-            }
           }
         }
       }
@@ -572,37 +552,18 @@
             imageData: demoIconData,
             zIndex: 3
           });
-          
-          console.log(`✅ Converted demo icon "${demoIconName}" to image`);
         }
       }
     }
     
     // Remove text elements (in reverse order to maintain indices)
     elementsToRemove.sort((a, b) => b - a);
-    console.log(`🗑️ Removing ${elementsToRemove.length} text icon elements at indices:`, elementsToRemove);
     for (const index of elementsToRemove) {
-      const removed = slideData.elements.splice(index, 1);
-      console.log(`   Removed element: ${removed[0]?.id} (type: ${removed[0]?.type})`);
+      slideData.elements.splice(index, 1);
     }
     
     // Add image elements
-    console.log(`➕ Adding ${elementsToAdd.length} image icon elements`);
     slideData.elements.push(...elementsToAdd);
-    
-    // Verify: count remaining text icon elements
-    const remainingTextIcons = slideData.elements.filter(e => 
-      e.id.startsWith('icon-symbol-') || e.id === 'demo-icon-symbol'
-    );
-    if (remainingTextIcons.length > 0) {
-      console.warn(`⚠️ WARNING: ${remainingTextIcons.length} text icon elements still remain:`, remainingTextIcons.map(e => e.id));
-    }
-    
-    // Verify: count image icon elements
-    const imageIcons = slideData.elements.filter(e => 
-      e.id.startsWith('icon-image-') || e.id === 'demo-icon-image'
-    );
-    console.log(`✅ Conversion complete: ${imageIcons.length} image icons, ${remainingTextIcons.length} text icons remaining`);
     
     return slideData;
   }

@@ -1201,13 +1201,7 @@ export async function buildFilledSvelteSlides(brandInput: any): Promise<SlideDat
 		// Convert icon name to base64 image (same as UI uses DynamicIcon)
 		const iconName = icon.name || 'Icon';
 		const iconImageSize = Math.round(iconCircleSizePx * 0.45); // Icon size within circle (45% of circle size)
-		console.log(`🔄 Converting icon "${iconName}" to image (size: ${iconImageSize}px)...`);
 		const iconImageData = await iconNameToBase64Image(iconName, iconImageSize, '#FFFFFF', 2);
-		if (iconImageData) {
-			console.log(`✅ Successfully converted icon "${iconName}" to base64 image (length: ${iconImageData.length})`);
-		} else {
-			console.warn(`⚠️ Failed to convert icon "${iconName}" to image`);
-		}
 		
 		// Icon image position (centered in circle with padding)
 		const iconImagePadding = iconCircleSize * 0.15; // 15% padding around icon

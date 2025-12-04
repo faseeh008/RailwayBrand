@@ -47,7 +47,6 @@ async function getLucideIconSVG(
 		try {
 			lucide = await import('lucide');
 		} catch (e) {
-			console.warn('Lucide package not available:', e);
 			return null;
 		}
 		
@@ -103,8 +102,6 @@ async function getLucideIconSVG(
 			tryKeys.push(camelCase);
 		}
 		
-		console.log(`🔍 Looking for icon "${iconName}" (trying: ${tryKeys.join(', ')})`);
-		
 		// Find the icon in lucide
 		let iconData: any = null;
 		let foundKey: string | null = null;
@@ -149,11 +146,8 @@ async function getLucideIconSVG(
 		}
 		
 		if (!iconData || !Array.isArray(iconData) || iconData.length === 0) {
-			console.warn(`⚠️ Lucide icon not found: "${iconName}" (tried: ${tryKeys.join(', ')})`);
 			return null;
 		}
-		
-		console.log(`✅ Found Lucide icon: "${iconName}" -> "${foundKey}"`);
 		
 		// Lucide icons are arrays of [type, attributes] tuples
 		// Example: [["path", { "d": "M4 14..." }], ["path", { "d": "..." }]]
@@ -233,13 +227,10 @@ async function getLucideIconSVG(
 		if (svgElements.length > 0) {
 			// Use viewBox="0 0 24 24" (Lucide's standard viewBox) and scale to desired size
 			const svgString = `<svg width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">${svgElements.join('')}</svg>`;
-			console.log(`✅ Built SVG for "${iconName}" (${svgElements.length} elements, ${svgString.length} chars)`);
 			return svgString;
-		} else {
-			console.warn(`⚠️ No SVG elements found for icon "${iconName}"`);
 		}
 	} catch (error) {
-		console.warn(`Failed to load Lucide icon "${iconName}":`, error);
+		// Silently fail if icon cannot be loaded
 	}
 	
 	return null;
@@ -255,8 +246,6 @@ export async function iconNameToBase64Image(
 	color: string = '#FFFFFF',
 	strokeWidth: number = 2
 ): Promise<string> {
-	console.log(`🔍 Converting icon "${iconName}" to base64 image...`);
-	
 	// Try to get Lucide icon SVG first
 	const lucideSvg = await getLucideIconSVG(iconName, size, color, strokeWidth);
 	
@@ -264,33 +253,26 @@ export async function iconNameToBase64Image(
 	if (lucideSvg) {
 		// Use actual Lucide icon
 		svgString = lucideSvg;
-		console.log(`✅ Found Lucide icon "${iconName}", converting SVG to PNG...`);
 	} else {
 		// Fallback to generateIconSVG (letter-based icons)
-		console.warn(`⚠️ Lucide icon not found for "${iconName}", using fallback letter-based icon`);
 		svgString = generateIconSVG(iconName, size, color, strokeWidth);
 	}
 	
 	// Convert SVG to PNG (pptxgenjs works better with PNG than SVG)
 	// PowerPoint doesn't support SVG natively, so we MUST convert to PNG
 	try {
-		console.log(`🔄 Converting SVG to PNG for "${iconName}" (${size}x${size})...`);
 		const pngDataUrl = await svgToPng(svgString, size, size);
 		
 		// Verify it's a valid PNG data URL
 		if (pngDataUrl && pngDataUrl.startsWith('data:image/png')) {
-			console.log(`✅ Successfully converted icon "${iconName}" to PNG (length: ${pngDataUrl.length})`);
 			return pngDataUrl;
 		} else {
-			console.warn(`⚠️ PNG conversion returned invalid format for "${iconName}", got: ${pngDataUrl?.substring(0, 50)}`);
 			// Try SVG as last resort
 			return svgToBase64(svgString);
 		}
 	} catch (error) {
-		console.error(`❌ Failed to convert SVG to PNG for "${iconName}":`, error);
 		// Fallback to SVG base64 if PNG conversion fails
 		const svgBase64 = svgToBase64(svgString);
-		console.warn(`⚠️ Using SVG fallback for "${iconName}"`);
 		return svgBase64;
 	}
 }
