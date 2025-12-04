@@ -165,8 +165,55 @@ export const authOptions = {
 					return true;
 				}
 
-				// Provider not linked yet - Auth.js will auto-link due to allowDangerousEmailAccountLinking
+				// Provider not linked yet - manually link it to prevent OAuthAccountNotLinked error
 				console.log(`🔗 Linking ${authAccount.provider} account to existing user: ${existingUser.email}`);
+				
+				// Check if account already exists for this provider+providerAccountId (race condition check)
+				const [existingAccountByProvider] = await db
+					.select()
+					.from(account)
+					.where(
+						and(
+							eq(account.provider, authAccount.provider),
+							eq(account.providerAccountId, String(authAccount.providerAccountId))
+						)
+					);
+				
+				if (!existingAccountByProvider) {
+					// Manually link the account to the existing user
+					try {
+						await db.insert(account).values({
+							userId: existingUser.id,
+							type: (authAccount.type || 'oauth') as 'oauth' | 'oidc' | 'email',
+							provider: authAccount.provider,
+							providerAccountId: String(authAccount.providerAccountId),
+							refresh_token: authAccount.refresh_token ? String(authAccount.refresh_token) : null,
+							access_token: authAccount.access_token ? String(authAccount.access_token) : null,
+							expires_at: typeof authAccount.expires_at === 'number' ? authAccount.expires_at : null,
+							token_type: authAccount.token_type ? String(authAccount.token_type) : null,
+							scope: authAccount.scope ? String(authAccount.scope) : null,
+							id_token: authAccount.id_token ? String(authAccount.id_token) : null,
+							session_state: authAccount.session_state ? String(authAccount.session_state) : null
+						});
+						console.log(`✅ Successfully linked ${authAccount.provider} account to user: ${existingUser.email}`);
+					} catch (linkError: any) {
+						// If account already exists (race condition), that's fine
+						if (linkError?.code !== '23505' && !linkError?.message?.includes('duplicate')) {
+							// 23505 is PostgreSQL unique violation
+							console.error('❌ Error linking account:', linkError);
+						} else {
+							console.log(`ℹ️ Account already linked (race condition): ${existingUser.email}`);
+						}
+					}
+				}
+				
+				// Update the user param to use existing user ID so Auth.js uses the correct user
+				// This is crucial - it tells Auth.js to use the existing user instead of creating a new one
+				if (params.user && existingUser) {
+					(params.user as any).id = existingUser.id;
+					(params.user as any).email = existingUser.email;
+				}
+				
 				return true;
 				
 			} catch (error) {
