@@ -1,306 +1,524 @@
 /**
- * Utility to convert icon names to base64 image data for PPTX export
- * This ensures icons appear the same in downloaded slides as in the UI
+ * Icon Mapper Utility
+ * Maps icon names to Lucide icon component names
+ * Provides intelligent matching for common icon names
  */
 
-import { generateIconSVG } from './icon-generator';
-import { getIconName } from './icon-mapper';
-import { svgToPng } from './svg-to-png';
+// Common icon name mappings to Lucide icon names (only real icons that exist)
+const iconNameMap: Record<string, string> = {
+	// Common actions
+	'add': 'Plus',
+	'plus': 'Plus',
+	'create': 'Plus',
+	'new': 'Plus',
+	'edit': 'Edit',
+	'update': 'Edit',
+	'modify': 'Edit',
+	'delete': 'Trash',
+	'remove': 'Trash',
+	'save': 'Save',
+	'cancel': 'X',
+	'close': 'X',
+	'check': 'Check',
+	'checkmark': 'Check',
+	'success': 'CheckCircle',
+	'confirm': 'CheckCircle',
+	'approve': 'CheckCircle',
+	'deny': 'XCircle',
+	'reject': 'XCircle',
+	
+	// Navigation
+	'arrow': 'ArrowRight',
+	'arrow-right': 'ArrowRight',
+	'arrow-left': 'ArrowLeft',
+	'arrow-up': 'ArrowUp',
+	'arrow-down': 'ArrowDown',
+	'next': 'ChevronRight',
+	'previous': 'ChevronLeft',
+	'back': 'ChevronLeft',
+	'forward': 'ChevronRight',
+	'up': 'ChevronUp',
+	'down': 'ChevronDown',
+	'navigation': 'Navigation',
+	'menu': 'Menu',
+	'search': 'Search',
+	'filter': 'Filter',
+	'sort': 'ArrowUpDown',
+	
+	// User & Account
+	'user': 'User',
+	'users': 'Users',
+	'person': 'User',
+	'people': 'Users',
+	'account': 'User',
+	'profile': 'User',
+	'settings': 'Settings',
+	'preferences': 'Settings',
+	'config': 'Settings',
+	'gear': 'Settings',
+	'logout': 'LogOut',
+	'login': 'LogIn',
+	'signin': 'LogIn',
+	'signout': 'LogOut',
+	'signup': 'UserPlus',
+	'register': 'UserPlus',
+	
+	// Communication
+	'mail': 'Mail',
+	'email': 'Mail',
+	'message': 'MessageCircle',
+	'chat': 'MessageCircle',
+	'comment': 'MessageSquare',
+	'send': 'Send',
+	'reply': 'Reply',
+	'phone': 'Phone',
+	'call': 'Phone',
+	'contact': 'Phone',
+	'notification': 'Bell',
+	'notifications': 'Bell',
+	'alert': 'Bell',
+	'alerts': 'Bell',
+	'bell': 'Bell',
+	
+	// Media
+	'image': 'Image',
+	'photo': 'Camera',
+	'picture': 'Image',
+	'gallery': 'Images',
+	'video': 'Video',
+	'film': 'Film',
+	'movie': 'Film',
+	'play': 'Play',
+	'pause': 'Pause',
+	// 'stop' - not mapped, will use AI generation (square icon)
+	'skip': 'SkipForward',
+	'volume': 'Volume2',
+	'mute': 'VolumeX',
+	'music': 'Music',
+	'song': 'Music',
+	'audio': 'Volume2',
+	
+	// Files & Documents
+	'file': 'File',
+	'document': 'FileText',
+	'folder': 'Folder',
+	'directory': 'Folder',
+	'download': 'Download',
+	'upload': 'Upload',
+	'share': 'Share',
+	'link': 'Link',
+	'external-link': 'ExternalLink',
+	'copy': 'Copy',
+	'cut': 'Scissors',
+	'paste': 'Clipboard',
+	'print': 'Printer',
+	'scan': 'Scan',
+	'archive': 'Archive',
+	
+	// Commerce
+	'shopping-cart': 'ShoppingCart',
+	'cart': 'ShoppingCart',
+	'bag': 'ShoppingBag',
+	'shopping-bag': 'ShoppingBag',
+	'basket': 'ShoppingBasket',
+	'shopping-basket': 'ShoppingBasket',
+	'buy': 'ShoppingCart',
+	'purchase': 'ShoppingCart',
+	'checkout': 'ShoppingCart',
+	'payment': 'CreditCard',
+	'card': 'CreditCard',
+	'credit-card': 'CreditCard',
+	'wallet': 'Wallet',
+	'money': 'DollarSign',
+	'dollar-sign': 'DollarSign',
+	'price': 'Tag',
+	'tag': 'Tag',
+	'tags': 'Tags',
+	'discount': 'Percent',
+	'coupon': 'Ticket',
+	'gift': 'Gift',
+	'package': 'Package',
+	'delivery': 'Truck',
+	'delivery-truck': 'Truck',
+	'shipping': 'Truck',
+	
+	// Social & Engagement
+	'like': 'Heart',
+	'love': 'Heart',
+	'favorite': 'Heart',
+	'favorites': 'Heart',
+	'bookmark': 'Bookmark',
+	'star': 'Star',
+	'rating': 'Star',
+	'review': 'Star',
+	'follow': 'UserPlus',
+	'unfollow': 'UserMinus',
+	
+	// Security & Privacy
+	'lock': 'Lock',
+	'unlock': 'Unlock',
+	'security': 'Shield',
+	'shield': 'Shield',
+	'key': 'Key',
+	'password': 'Key',
+	'eye': 'Eye',
+	'view': 'Eye',
+	'hide': 'EyeOff',
+	'eye-off': 'EyeOff',
+	'privacy': 'Shield',
+	'protected': 'Lock',
+	
+	// Data & Analytics
+	'chart': 'BarChart',
+	'graph': 'BarChart',
+	'analytics': 'BarChart',
+	'stats': 'BarChart',
+	'statistics': 'BarChart',
+	'dashboard': 'LayoutDashboard',
+	'report': 'FileText',
+	'data': 'Database',
+	'database': 'Database',
+	'table': 'Table',
+	'list': 'List',
+	'grid': 'Grid',
+	'trending-up': 'TrendingUp',
+	'trending-down': 'TrendingDown',
+	'activity': 'Activity',
+	'zap': 'Zap',
+	'bolt': 'Zap',
+	'lightning': 'Zap',
+	
+	// Time & Date
+	'calendar': 'Calendar',
+	'date': 'Calendar',
+	'clock': 'Clock',
+	'time': 'Clock',
+	'schedule': 'Calendar',
+	'event': 'Calendar',
+	'reminder': 'Bell',
+	'timer': 'Timer',
+	
+	// Location & Map
+	'location': 'MapPin',
+	'pin': 'MapPin',
+	'map': 'Map',
+	'compass': 'Compass',
+	'route': 'Route',
+	'directions': 'Navigation',
+	
+	// Weather & Nature
+	'sun': 'Sun',
+	'moon': 'Moon',
+	'cloud': 'Cloud',
+	'rain': 'CloudRain',
+	'snow': 'CloudSnow',
+	'wind': 'Wind',
+	'storm': 'CloudLightning',
+	'weather': 'Cloud',
+	'umbrella': 'Umbrella',
+	
+	// Objects & Tools
+	'wrench': 'Wrench',
+	'tool': 'Wrench',
+	'tools': 'Wrench',
+	'scissors': 'Scissors',
+	'brush': 'Brush',
+	'pen': 'PenTool',
+	'pencil': 'Pencil',
+	'paint': 'Palette',
+	'palette': 'Palette',
+	'color': 'Palette',
+	'layers': 'Layers',
+	'crop': 'Crop',
+	'rotate': 'RotateCw',
+	'flip': 'FlipHorizontal',
+	'zoom-in': 'ZoomIn',
+	'zoom-out': 'ZoomOut',
+	'maximize': 'Maximize',
+	'minimize': 'Minimize',
+	'fullscreen': 'Maximize',
+	
+	// Technology
+	'computer': 'Monitor',
+	'desktop': 'Monitor',
+	'monitor': 'Monitor',
+	'laptop': 'Laptop',
+	'mobile': 'Smartphone',
+	'smartphone': 'Smartphone',
+	'tablet': 'Tablet',
+	'server': 'Server',
+	'wifi': 'Wifi',
+	'bluetooth': 'Bluetooth',
+	'battery': 'Battery',
+	'power': 'Power',
+	'plug': 'Plug',
+	'usb': 'Usb',
+	'hard-drive': 'HardDrive',
+	'harddrive': 'HardDrive',
+	'memory': 'Database',
+	'storage': 'HardDrive',
+	'code': 'FileText', // Use FileText as code icon
+	'coding': 'FileText',
+	'programming': 'FileText',
+	
+	// Food & Drink
+	'food': 'Utensils',
+	'restaurant': 'Utensils',
+	'coffee': 'Coffee',
+	'drink': 'Coffee',
+	'wine': 'Wine',
+	'beer': 'Beer',
+	'cake': 'Cake',
+	'chef-hat': 'ChefHat', // Use Utensils if ChefHat doesn't exist
+	'chef': 'Utensils',
+	'burger': 'Utensils',
+	'pizza': 'Utensils',
+	'meal': 'Utensils',
+	'dining': 'Utensils',
+	
+	// Transportation
+	'car': 'Car',
+	'vehicle': 'Car',
+	'truck': 'Truck',
+	'bus': 'Bus',
+	'train': 'Train',
+	'plane': 'Plane',
+	'flight': 'Plane',
+	'airplane': 'Plane',
+	'ship': 'Ship',
+	'boat': 'Ship',
+	'bike': 'Bike',
+	'bicycle': 'Bike',
+	'motorcycle': 'Bike',
+	
+	// Buildings & Places
+	'building': 'Building',
+	'home': 'Home',
+	'house': 'Home',
+	'store': 'Store',
+	'shop': 'Store',
+	'bank': 'Building',
+	'hospital': 'Building',
+	'office': 'Building',
+	'factory': 'Building',
+	'warehouse': 'Warehouse',
+	
+	// Health & Medical
+	'health': 'Heart',
+	'medical': 'Heart',
+	'doctor': 'User',
+	'patient': 'User',
+	'medicine': 'Pill',
+	'pill': 'Pill',
+	'first-aid': 'Bandage',
+	'bandage': 'Bandage',
+	'stethoscope': 'Heart', // Use Heart as closest match (stethoscope not in Lucide)
+	'ambulance': 'Truck',
+	'user-md': 'User',
+	'medical-cross': 'Plus', // Use Plus as closest match
+	
+	// Education
+	'education': 'GraduationCap',
+	'school': 'GraduationCap',
+	'student': 'User',
+	'teacher': 'User',
+	'book': 'Book',
+	'book-open': 'BookOpen',
+	'library': 'BookOpen',
+	'learn': 'BookOpen',
+	'study': 'BookOpen',
+	'course': 'Book',
+	'lesson': 'Book',
+	'graduation-cap': 'GraduationCap',
+	'certificate': 'FileText',
+	
+	// Sports & Fitness
+	'sport': 'Trophy',
+	'sports': 'Trophy',
+	'fitness': 'Dumbbell',
+	'gym': 'Dumbbell',
+	'exercise': 'Dumbbell',
+	'workout': 'Dumbbell',
+	'trophy': 'Trophy',
+	'medal': 'Award',
+	'award': 'Award',
+	'winner': 'Trophy',
+	'champion': 'Trophy',
+	'game': 'Gamepad2',
+	'gaming': 'Gamepad2',
+	
+	// Entertainment
+	'tv': 'Tv',
+	'television': 'Tv',
+	'radio': 'Radio',
+	'podcast': 'Radio',
+	'streaming': 'Video',
+	'theater': 'Film',
+	'concert': 'Music',
+	'performance': 'Music',
+	
+	// Travel & Tourism
+	'travel': 'Plane',
+	'trip': 'Plane',
+	'vacation': 'Plane',
+	'holiday': 'Plane',
+	'hotel': 'Building',
+	'resort': 'Building',
+	'beach': 'Sun',
+	'mountain': 'Mountain',
+	'forest': 'TreePine',
+	'park': 'TreePine',
+	'nature': 'TreePine',
+	'camping': 'Tent',
+	'tent': 'Tent',
+	'hiking': 'Mountain',
+	'climbing': 'Mountain',
+	'skiing': 'Mountain',
+	'snowboarding': 'Mountain',
+	'surfing': 'Waves',
+	'swimming': 'Waves',
+	'diving': 'Waves',
+	'fishing': 'Fish',
+	'hunting': 'Target',
+	'shooting': 'Target',
+	'archery': 'Target',
+	
+	// Animals & Pets
+	'animal': 'Heart',
+	'pet': 'Heart',
+	'dog': 'Dog',
+	'cat': 'Cat',
+	'bird': 'Bird',
+	'fish': 'Fish',
+	'rabbit': 'Rabbit',
+	'mouse': 'Mouse',
+	'rat': 'Mouse',
+	'snake': 'Snake',
+	'lizard': 'Lizard',
+	'turtle': 'Turtle',
+	'frog': 'Frog',
+	'spider': 'Spider',
+	'bee': 'Bee',
+	'butterfly': 'Butterfly',
+	'dragonfly': 'Dragonfly',
+	'ant': 'Ant',
+	'beetle': 'Beetle',
+	'grasshopper': 'Grasshopper',
+	'cricket': 'Cricket',
+	'mosquito': 'Mosquito',
+	'fly': 'Fly',
+	'moth': 'Butterfly',
+	'caterpillar': 'Caterpillar',
+	'worm': 'Worm',
+	'snail': 'Snail',
+	'octopus': 'Octopus',
+	'squid': 'Squid',
+	'crab': 'Crab',
+	'whale': 'Whale',
+	'dolphin': 'Dolphin',
+	'seal': 'Seal',
+	'horse': 'Horse',
+	'pony': 'Horse',
+	'donkey': 'Donkey',
+	'mule': 'Donkey',
+	'zebra': 'Zebra',
+	'giraffe': 'Giraffe',
+	'elephant': 'Elephant',
+	'rhino': 'Rhino',
+	'hippo': 'Hippo',
+	'pig': 'Pig',
+	'cow': 'Cow',
+	'bull': 'Bull',
+	'ox': 'Ox',
+	'buffalo': 'Buffalo',
+	'bison': 'Bison',
+	'sheep': 'Sheep',
+	'deer': 'Deer',
+	'elk': 'Elk',
+	'moose': 'Moose',
+	'reindeer': 'Reindeer',
+	'camel': 'Camel',
+	'llama': 'Llama',
+	'lion': 'Lion',
+	'tiger': 'Tiger',
+	'leopard': 'Leopard',
+	'jaguar': 'Jaguar',
+	'cheetah': 'Cheetah',
+	'puma': 'Puma',
+	'panther': 'Panther',
+	'lynx': 'Lynx',
+	'bobcat': 'Lynx',
+	
+	// Common brand icons
+	'brand': 'Sparkles',
+	'featured': 'Star',
+	'premium': 'Crown',
+	'warning': 'AlertTriangle',
+	'error': 'AlertCircle',
+	'info': 'Info',
+	'help': 'HelpCircle',
+	'question': 'HelpCircle'
+};
 
 /**
- * Convert SVG string to base64 data URL
- * This works in both Node.js (server-side) and browser environments
+ * Normalize icon name for matching
  */
-function svgToBase64(svgString: string): string {
-	// Clean the SVG string
-	const cleanSvg = svgString.trim().replace(/\s+/g, ' ');
+function normalizeIconName(name: string): string {
+	if (!name) return '';
 	
-	// Encode SVG to base64
-	// Use Buffer in Node.js, or btoa in browser
-	let base64: string;
-	if (typeof Buffer !== 'undefined') {
-		// Node.js environment
-		base64 = Buffer.from(cleanSvg, 'utf-8').toString('base64');
-	} else {
-		// Browser environment
-		base64 = btoa(unescape(encodeURIComponent(cleanSvg)));
-	}
-	
-	// Return as data URL
-	return `data:image/svg+xml;base64,${base64}`;
+	// Convert to lowercase and remove special characters
+	return name
+		.toLowerCase()
+		.trim()
+		.replace(/[^a-z0-9\s-]/g, '')
+		.replace(/\s+/g, '-')
+		.replace(/-+/g, '-');
 }
 
 /**
- * Get Lucide icon SVG string (server-side)
- * Uses lucide package to get actual icon SVG data
- * This converts React/Component icons to pure SVG strings for PPTX export
+ * Get Lucide icon name from user input
+ * Returns the Lucide icon component name or null if not found
  */
-async function getLucideIconSVG(
-	iconName: string,
-	size: number = 32,
-	color: string = '#FFFFFF',
-	strokeWidth: number = 2
-): Promise<string | null> {
-	try {
-		// Import lucide package dynamically (works in both browser and server)
-		let lucide: any;
-		try {
-			lucide = await import('lucide');
-		} catch (e) {
-			return null;
+export function getIconName(iconName: string): string | null {
+	if (!iconName) return null;
+	
+	const normalized = normalizeIconName(iconName);
+	
+	// Direct match
+	if (iconNameMap[normalized]) {
+		return iconNameMap[normalized];
+	}
+	
+	// Try partial match (e.g., "shopping cart" -> "shopping-cart")
+	const parts = normalized.split('-');
+	for (let i = parts.length; i > 0; i--) {
+		const combined = parts.slice(0, i).join('-');
+		if (iconNameMap[combined]) {
+			return iconNameMap[combined];
 		}
-		
-		if (!lucide || typeof lucide !== 'object') {
-			return null;
+	}
+	
+	// Try reverse partial match (e.g., "cart shopping" -> "shopping-cart")
+	for (let i = parts.length - 1; i >= 0; i--) {
+		const combined = parts.slice(i).join('-');
+		if (iconNameMap[combined]) {
+			return iconNameMap[combined];
 		}
-		
-		// Lucide icons use PascalCase (e.g., "Zap", "Cloud", "Server")
-		// Try multiple strategies to find the icon (same as DynamicIcon)
-		const tryKeys: string[] = [];
-		const lucideKeys = Object.keys(lucide);
-			
-		// Strategy 1: Direct name match (case-insensitive)
-		const directMatch = lucideKeys.find(k => k.toLowerCase() === iconName.toLowerCase());
-		if (directMatch) {
-			tryKeys.push(directMatch);
+	}
+	
+	// Try fuzzy match on individual words
+	for (const part of parts) {
+		if (iconNameMap[part]) {
+			return iconNameMap[part];
 		}
-		
-		// Strategy 2: PascalCase the original name
-		const pascalCase = iconName.charAt(0).toUpperCase() + iconName.slice(1);
-		if (lucideKeys.includes(pascalCase) && !tryKeys.includes(pascalCase)) {
-			tryKeys.push(pascalCase);
-		}
-		
-		// Strategy 3: Try mapped name
-		const mappedName = getIconName(iconName);
-		if (mappedName) {
-			const mappedPascal = mappedName.charAt(0).toUpperCase() + mappedName.slice(1);
-			if (lucideKeys.includes(mappedPascal) && !tryKeys.includes(mappedPascal)) {
-				tryKeys.push(mappedPascal);
-			}
-			// Also try exact match of mapped name
-			if (lucideKeys.includes(mappedName) && !tryKeys.includes(mappedName)) {
-				tryKeys.push(mappedName);
-			}
-		}
-		
-		// Strategy 4: Try removing hyphens and matching
-		const noHyphens = iconName.replace(/-/g, '');
-		const noHyphensMatch = lucideKeys.find(k => 
-			k.toLowerCase().replace(/-/g, '') === noHyphens.toLowerCase()
-		);
-		if (noHyphensMatch && !tryKeys.includes(noHyphensMatch)) {
-			tryKeys.push(noHyphensMatch);
-		}
-		
-		// Strategy 5: Try camelCase conversion
-		const camelCase = iconName.split(/[-_\s]/).map((word, i) => 
-			i === 0 ? word.charAt(0).toUpperCase() + word.slice(1).toLowerCase() :
-			word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
-		).join('');
-		if (lucideKeys.includes(camelCase) && !tryKeys.includes(camelCase)) {
-			tryKeys.push(camelCase);
-		}
-		
-		// Find the icon in lucide
-		let iconData: any = null;
-		let foundKey: string | null = null;
-		
-		// Try all possible keys
-		for (const key of tryKeys) {
-			if (lucide[key]) {
-				// Lucide icons are arrays of [type, attributes] tuples
-				if (Array.isArray(lucide[key])) {
-					iconData = lucide[key];
-					foundKey = key;
-					break;
-				}
-				// Some might be functions that return the data
-				else if (typeof lucide[key] === 'function') {
-					try {
-						const result = lucide[key]();
-						if (Array.isArray(result)) {
-							iconData = result;
-							foundKey = key;
-							break;
-						}
-					} catch (e) {
-						// Continue trying
-					}
-				}
-			}
-		}
-		
-		// If still not found, try all keys case-insensitively
-		if (!iconData) {
-			const lowerName = iconName.toLowerCase();
-			for (const key of lucideKeys) {
-				if (key.toLowerCase() === lowerName) {
-					if (Array.isArray(lucide[key])) {
-						iconData = lucide[key];
-						foundKey = key;
-						break;
-					}
-				}
-			}
-		}
-		
-		if (!iconData || !Array.isArray(iconData) || iconData.length === 0) {
-			return null;
-		}
-		
-		// Lucide icons are arrays of [type, attributes] tuples
-		// Example: [["path", { "d": "M4 14..." }], ["path", { "d": "..." }]]
-		const svgElements: string[] = [];
-		
-		// Extract SVG elements from icon data
-		for (const element of iconData) {
-			if (!Array.isArray(element) || element.length < 2) continue;
-			
-			const [type, attrs] = element;
-			
-			if (!attrs || typeof attrs !== 'object') continue;
-			
-			// Handle different SVG element types
-			switch (type) {
-				case 'path':
-					if (attrs.d) {
-						svgElements.push(
-							`<path d="${attrs.d}" fill="none" stroke="${color}" stroke-width="${strokeWidth}" stroke-linecap="round" stroke-linejoin="round"/>`
-						);
-					}
-					break;
-					
-				case 'circle':
-					const cx = attrs.cx ?? 12;
-					const cy = attrs.cy ?? 12;
-					const r = attrs.r ?? 5;
-					svgElements.push(
-						`<circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="${color}" stroke-width="${strokeWidth}" stroke-linecap="round" stroke-linejoin="round"/>`
-					);
-					break;
-					
-				case 'line':
-					const x1 = attrs.x1 ?? 0;
-					const y1 = attrs.y1 ?? 0;
-					const x2 = attrs.x2 ?? 0;
-					const y2 = attrs.y2 ?? 0;
-					svgElements.push(
-						`<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" fill="none" stroke="${color}" stroke-width="${strokeWidth}" stroke-linecap="round" stroke-linejoin="round"/>`
-					);
-					break;
-					
-				case 'rect':
-					const rx = attrs.rx ?? 0;
-					const ry = attrs.ry ?? 0;
-					const rectX = attrs.x ?? 0;
-					const rectY = attrs.y ?? 0;
-					const rectWidth = attrs.width ?? 0;
-					const rectHeight = attrs.height ?? 0;
-					svgElements.push(
-						`<rect x="${rectX}" y="${rectY}" width="${rectWidth}" height="${rectHeight}" ${rx > 0 ? `rx="${rx}" ry="${ry}"` : ''} fill="none" stroke="${color}" stroke-width="${strokeWidth}" stroke-linecap="round" stroke-linejoin="round"/>`
-					);
-					break;
-					
-				case 'ellipse':
-					const ellipseCx = attrs.cx ?? 12;
-					const ellipseCy = attrs.cy ?? 12;
-					const ellipseRx = attrs.rx ?? attrs.r ?? 5;
-					const ellipseRy = attrs.ry ?? attrs.r ?? 5;
-					svgElements.push(
-						`<ellipse cx="${ellipseCx}" cy="${ellipseCy}" rx="${ellipseRx}" ry="${ellipseRy}" fill="none" stroke="${color}" stroke-width="${strokeWidth}" stroke-linecap="round" stroke-linejoin="round"/>`
-					);
-					break;
-					
-				case 'polygon':
-				case 'polyline':
-					if (attrs.points) {
-						svgElements.push(
-							`<${type} points="${attrs.points}" fill="none" stroke="${color}" stroke-width="${strokeWidth}" stroke-linecap="round" stroke-linejoin="round"/>`
-						);
-					}
-					break;
-			}
-		}
-		
-		// Build complete SVG string
-		if (svgElements.length > 0) {
-			// Use viewBox="0 0 24 24" (Lucide's standard viewBox) and scale to desired size
-			const svgString = `<svg width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">${svgElements.join('')}</svg>`;
-			return svgString;
-		}
-	} catch (error) {
-		// Silently fail if icon cannot be loaded
 	}
 	
 	return null;
 }
 
 /**
- * Convert icon name to base64 image data
- * First tries to use actual Lucide icons, falls back to generateIconSVG
+ * Get all available icon names
  */
-export async function iconNameToBase64Image(
-	iconName: string,
-	size: number = 32,
-	color: string = '#FFFFFF',
-	strokeWidth: number = 2
-): Promise<string> {
-	// Try to get Lucide icon SVG first
-	const lucideSvg = await getLucideIconSVG(iconName, size, color, strokeWidth);
-	
-	let svgString: string;
-	if (lucideSvg) {
-		// Use actual Lucide icon
-		svgString = lucideSvg;
-	} else {
-		// Fallback to generateIconSVG (letter-based icons)
-		svgString = generateIconSVG(iconName, size, color, strokeWidth);
-	}
-	
-	// Convert SVG to PNG (pptxgenjs works better with PNG than SVG)
-	// PowerPoint doesn't support SVG natively, so we MUST convert to PNG
-	try {
-		const pngDataUrl = await svgToPng(svgString, size, size);
-		
-		// Verify it's a valid PNG data URL
-		if (pngDataUrl && pngDataUrl.startsWith('data:image/png')) {
-			return pngDataUrl;
-		} else {
-			// Try SVG as last resort
-			return svgToBase64(svgString);
-		}
-	} catch (error) {
-		// Fallback to SVG base64 if PNG conversion fails
-		const svgBase64 = svgToBase64(svgString);
-		return svgBase64;
-	}
+export function getAvailableIconNames(): string[] {
+	return Object.keys(iconNameMap);
 }
-
-/**
- * Synchronous version (for when async is not available)
- * Uses generateIconSVG as fallback
- */
-export function iconNameToBase64ImageSync(
-	iconName: string,
-	size: number = 32,
-	color: string = '#FFFFFF',
-	strokeWidth: number = 2
-): string {
-	const svg = generateIconSVG(iconName, size, color, strokeWidth);
-	return svgToBase64(svg);
-}
-
-/**
- * Get icon SVG string for a given icon name
- * This can be extended to support Lucide icons if needed
- */
-export function getIconSVG(
-	iconName: string,
-	size: number = 32,
-	color: string = '#FFFFFF',
-	strokeWidth: number = 2
-): string {
-	return generateIconSVG(iconName, size, color, strokeWidth);
-}
-
