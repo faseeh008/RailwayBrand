@@ -19,7 +19,6 @@ export const authOptions = {
 	adapter: DrizzleAdapter(db, { user, account, session, verificationToken } as any),
 	trustHost: env?.AUTH_TRUST_HOST ?? false,
 	secret: env?.AUTH_SECRET || 'fallback-secret-key',
-	allowDangerousEmailAccountLinking: true, // Allow linking accounts with same email
 	session: {
 		strategy: 'database' as const,
 		maxAge: 30 * 24 * 60 * 60 // 30 days
@@ -57,6 +56,8 @@ export const authOptions = {
 		Google({
 			clientId: env?.AUTH_GOOGLE_ID || '',
 			clientSecret: env?.AUTH_GOOGLE_SECRET || '',
+			// Allow linking Google account to existing email accounts
+			allowDangerousEmailAccountLinking: true,
 			authorization: {
 				params: {
 					prompt: 'select_account',
@@ -67,7 +68,9 @@ export const authOptions = {
 		}),
 		GitHub({
 			clientId: env?.AUTH_GITHUB_ID || '',
-			clientSecret: env?.AUTH_GITHUB_SECRET || ''
+			clientSecret: env?.AUTH_GITHUB_SECRET || '',
+			// Allow linking GitHub account to existing email accounts
+			allowDangerousEmailAccountLinking: true
 		}),
 		Credentials({
 			credentials: {
@@ -122,7 +125,9 @@ export const authOptions = {
 			credentials?: Record<string, unknown>;
 		}) {
 			try {
-				const { account: authAccount, profile } = params;
+				const { account: authAccount, profile, user: authUser } = params;
+				
+				// Always allow credentials sign-in (handled by authorize)
 				if (!authAccount || authAccount.provider === 'credentials') return true;
 
 				const email = (profile as any)?.email as string | undefined;
@@ -136,20 +141,13 @@ export const authOptions = {
 				
 				if (!existingUser) {
 					// No existing user, allow normal account creation
-					console.log(`Creating new account for: ${email}`);
+					console.log(`✅ Creating new account for: ${email}`);
 					return true;
 				}
 
-				// Check if user is disabled - if yes, let them complete OAuth but we'll catch them in post-auth
+				// Check if user is disabled
 				if (existingUser.disabled) {
-					console.log(`User is disabled but allowing OAuth completion: ${existingUser.email}`);
-					console.log(`User details:`, {
-						id: existingUser.id,
-						email: existingUser.email,
-						disabled: existingUser.disabled
-					});
-
-					// Return true to let OAuth complete, we'll redirect them in post-auth
+					console.log(`⚠️ User is disabled but allowing OAuth completion: ${existingUser.email}`);
 					return true;
 				}
 
@@ -158,26 +156,22 @@ export const authOptions = {
 					.select()
 					.from(account)
 					.where(eq(account.userId, existingUser.id));
-				const linkedProviders = linkedAccounts.map((a) => a.provider);
+				
+				const existingProviderAccount = linkedAccounts.find(a => a.provider === authAccount.provider);
 
-				if (linkedProviders.includes(authAccount.provider)) {
-					// Provider already linked - allow sign-in for existing Google account
-					console.log(
-						`Allowing sign-in for existing ${authAccount.provider} account: ${existingUser.email}`
-					);
+				if (existingProviderAccount) {
+					// Provider already linked - allow sign-in
+					console.log(`✅ Signing in with existing ${authAccount.provider} account: ${existingUser.email}`);
 					return true;
 				}
 
-				// Provider not linked yet, but user exists with same email
-				// Allow the sign-in to proceed - Auth.js will automatically link the account
-				// This allows users to link their Google account to an existing email-based account
-				console.log(
-					`Linking ${authAccount.provider} account to existing user: ${existingUser.email}`
-				);
+				// Provider not linked yet - Auth.js will auto-link due to allowDangerousEmailAccountLinking
+				console.log(`🔗 Linking ${authAccount.provider} account to existing user: ${existingUser.email}`);
 				return true;
+				
 			} catch (error) {
-				console.error('Error in signIn callback:', error);
-				return false; // Block sign-in on any error
+				console.error('❌ Error in signIn callback:', error);
+				return false;
 			}
 		},
 
@@ -200,7 +194,8 @@ export const authOptions = {
 	},
 	pages: {
 		signIn: '/auth/login',
-		signOut: '/auth/login'
+		signOut: '/auth/login',
+		error: '/auth/login' // Redirect errors to login page instead of showing error page
 	},
 	events: {
 		async signIn(params: { user: User; account?: Account | null; profile?: Profile }) {
@@ -214,20 +209,22 @@ export const authOptions = {
 							.set({
 								name: profile.name || authUser.name || null,
 								email: profile.email || authUser.email || '',
-								image: profile.picture || authUser.image || null, // Google profile has picture property
-								emailVerified: new Date() // Auto-verify email for OAuth users
+								image: profile.picture || authUser.image || null,
+								emailVerified: new Date()
 							})
 							.where(eq(user.id, authUser.id));
+						console.log(`✅ Updated Google profile for: ${authUser.email}`);
 					} else if (authAccount.provider === 'github') {
 						await db
 							.update(user)
 							.set({
 								name: profile.name || authUser.name || null,
 								email: profile.email || authUser.email || '',
-								image: (profile as any).avatar_url || authUser.image || null, // GitHub profile has avatar_url property
-								emailVerified: new Date() // Auto-verify email for OAuth users
+								image: (profile as any).avatar_url || authUser.image || null,
+								emailVerified: new Date()
 							})
 							.where(eq(user.id, authUser.id));
+						console.log(`✅ Updated GitHub profile for: ${authUser.email}`);
 					}
 				} catch (error) {
 					console.error('Error updating user profile:', error);
@@ -241,17 +238,15 @@ export const authOptions = {
 			if (authAccount && authAccount.provider !== 'credentials' && authUser && authUser.id) {
 				try {
 					await db.update(user).set({ emailVerified: new Date() }).where(eq(user.id, authUser.id));
-					console.log(
-						`Auto-verified email for new ${authAccount.provider} user: ${authUser.email}`
-					);
+					console.log(`✅ Auto-verified email for new ${authAccount.provider} user: ${authUser.email}`);
 				} catch (error) {
 					console.error('Error auto-verifying email for new OAuth user:', error);
 				}
 			}
 		},
+		
 		async signOut(message: { session: any } | { token: any }) {
-			// Clean up any additional data if needed
-			console.log('User signed out successfully');
+			console.log('👋 User signed out successfully');
 		}
 	}
 };
