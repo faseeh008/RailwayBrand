@@ -40,15 +40,6 @@ function extractIconographyIcons(brandInput: any, fileName?: string, templateSet
 		}
 	}
 	
-	console.log('🔍 Extracting iconography icons:', {
-		hasStepHistory: !!brandInput.stepHistory,
-		stepHistoryLength: stepHistory.length,
-		iconographyStep: !!iconographyStep,
-		contentType: typeof rawContent,
-		iconographyContent: contentString ? contentString.substring(0, 200) : 'No content',
-		templateSet: templateSet
-	});
-	
 	// Determine HTML format based on template (default vs alternate templates)
 	// modern-minimal uses .icon-box wrapper
 	// corporate-professional and creative-bold use .icon wrapper
@@ -82,26 +73,19 @@ function extractIconographyIcons(brandInput: any, fileName?: string, templateSet
 	const icons: Array<{ symbol: string; name: string }> = [];
 	const lines = contentString.split('\n');
 	
-	console.log(`🔍 Processing ${lines.length} lines from iconography content`);
-	
 	for (const line of lines) {
-		console.log('🔍 Processing line:', line);
 		// Match pattern: • Symbol Name (more flexible - any character that's not whitespace)
 		const match = line.match(/^[\s]*[•\-\*]\s*([^\s]+)\s+(.+)/);
 		if (match) {
-			console.log('✅ Found icon:', { symbol: match[1], name: match[2] });
 			icons.push({
 				symbol: match[1].trim(),
 				name: match[2].trim()
 			});
-		} else {
-			console.log('❌ No match for line:', line);
 		}
 	}
 	
 	// Generate HTML for icons
 	if (icons.length === 0) {
-		console.log('⚠️ No icons found, using fallback');
 		// Fallback if no icons found
 		return generateIconHTML([
 			{ symbol: '◐', name: 'Brand' },
@@ -110,7 +94,6 @@ function extractIconographyIcons(brandInput: any, fileName?: string, templateSet
 	}
 	
 	// Generate HTML for each icon
-	console.log(`🎨 Generated ${icons.length} icons:`, icons);
 	return generateIconHTML(icons, iconWrapperClass, iconSymbolClass);
 }
 
@@ -358,18 +341,10 @@ function replaceTemplateVars(html: string, brandInput: any, fileName?: string, t
 	result = result.replace(/\{\{DOMAIN\}\}/g, contact.website || 'your-website.com');
 	
 	// Iconography - Extract icons from step data
-	console.log('🔍 Processing iconography icons for file:', fileName);
 	const iconographyIcons = extractIconographyIcons(brandInput, fileName, templateSet);
-	console.log('🎨 Generated iconography HTML:', iconographyIcons.substring(0, 200) + '...');
 	result = result.replace(/\{\{ICONOGRAPHY_ICONS\}\}/g, iconographyIcons);
 	// Support alternative variable name used in some templates
 	result = result.replace(/\{\{ICON_EXAMPLES\}\}/g, iconographyIcons);
-	
-	// Debug: Check if placeholder was replaced
-	if (fileName && fileName.includes('slide-07-iconography')) {
-		console.log('🔍 Final iconography HTML contains placeholder:', result.includes('{{ICONOGRAPHY_ICONS}}'));
-		console.log('🔍 Final iconography HTML contains generated icons:', result.includes('icon-circle'));
-	}
 	
 	// Logo Guidelines - Extract from brand data
 	const logo = brandInput.logo || {};
@@ -458,7 +433,6 @@ function replaceTemplateVars(html: string, brandInput: any, fileName?: string, t
 	
 	// Fix for creative-bold iconography: black text on black background
 	if (templateSet === 'creative-bold' && fileName && fileName.includes('slide-07-iconography')) {
-		console.log('🔧 Fixing creative-bold iconography text visibility');
 		const iconographyFix = `
 <style>
 /* Fix black text on black background in creative-bold iconography */
