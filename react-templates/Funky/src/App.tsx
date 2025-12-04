@@ -15,6 +15,12 @@ export default function App() {
     const root = document.documentElement;
     const { colors } = brandConfig;
     
+    const setVar = (name: string, value?: string) => {
+      if (value) {
+        root.style.setProperty(name, value);
+      }
+    };
+    
     // Set brand-specific variables
     root.style.setProperty("--brand-primary", colors.primary);
     root.style.setProperty("--brand-secondary", colors.secondary);
@@ -46,6 +52,47 @@ export default function App() {
     }
     if (brandConfig.fonts.body) {
       root.style.setProperty("--font-body", brandConfig.fonts.body);
+    }
+    
+    // Set typography CSS variables if available
+    if (brandConfig.typography) {
+      const { typography } = brandConfig;
+      
+      // Set font families
+      setVar("--font-primary", typography.primaryFont);
+      setVar("--font-secondary", typography.secondaryFont);
+      
+      // Set font hierarchy CSS variables
+      if (Array.isArray(typography.fontHierarchy)) {
+        typography.fontHierarchy.forEach((h) => {
+          const label = String(h.label || '').toLowerCase().replace(/\s+/g, '-');
+          if (label && h.font && h.size && h.weight) {
+            root.style.setProperty(`--font-${label}-family`, h.font);
+            root.style.setProperty(`--font-${label}-size`, h.size);
+            root.style.setProperty(`--font-${label}-weight`, h.weight);
+          }
+        });
+      }
+      
+      // Load Google Fonts if needed
+      if (typography.primaryFont && !typography.primaryFont.includes('Arial') && !typography.primaryFont.includes('sans-serif')) {
+        const fontName = typography.primaryFont.replace(/\s+/g, '+');
+        if (!document.querySelector(`link[href*="${fontName}"]`)) {
+          const link = document.createElement('link');
+          link.rel = 'stylesheet';
+          link.href = `https://fonts.googleapis.com/css2?family=${fontName}:wght@400;500;600;700&display=swap`;
+          document.head.appendChild(link);
+        }
+      }
+      if (typography.secondaryFont && !typography.secondaryFont.includes('Arial') && !typography.secondaryFont.includes('sans-serif')) {
+        const fontName = typography.secondaryFont.replace(/\s+/g, '+');
+        if (!document.querySelector(`link[href*="${fontName}"]`)) {
+          const link = document.createElement('link');
+          link.rel = 'stylesheet';
+          link.href = `https://fonts.googleapis.com/css2?family=${fontName}:wght@400;500;600;700&display=swap`;
+          document.head.appendChild(link);
+        }
+      }
     }
   }, [brandConfig]);
 

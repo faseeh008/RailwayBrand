@@ -2,6 +2,7 @@ import type { BrandConfig } from "../shared-brand-config";
 import type { BrandTokens } from "../theme/brand-tokens";
 import type { TemplateContent } from "../template-content";
 import { withAlpha } from "../utils/color";
+import { getTypographyStyle } from "../utils/typography";
 import { ImageWithFallback } from "./figma/ImageWithFallback";
 
 interface AboutProps {
@@ -78,7 +79,13 @@ export function About({ config, tokens, content }: AboutProps) {
             </div>
 
             <div>
-              <h2 className="text-5xl leading-tight space-y-2" style={{ color: tokens.colors.text }}>
+              <h2 
+                className="leading-tight space-y-2" 
+                style={{ 
+                  ...getTypographyStyle(config, 'H2'),
+                  color: tokens.colors.text 
+                }}
+              >
                 {content.titleLines.map((line) => (
                   <span key={line} className="block">
                     {line}
@@ -87,12 +94,13 @@ export function About({ config, tokens, content }: AboutProps) {
               </h2>
             </div>
 
-            <div className="space-y-4 text-lg">
+            <div className="space-y-4">
               {content.paragraphs.map((paragraph, index) => (
                 <p
                   key={paragraph}
                   className="p-6 rounded-2xl shadow-lg"
                   style={{
+                    ...getTypographyStyle(config, 'Body'),
                     background: tokens.colors.surface,
                     borderLeft: `8px solid ${
                       [tokens.colors.primary, tokens.colors.accent][index % 2]

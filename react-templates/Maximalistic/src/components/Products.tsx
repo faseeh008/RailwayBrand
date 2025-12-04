@@ -2,6 +2,7 @@ import type { BrandConfig } from "../shared-brand-config";
 import type { BrandTokens } from "../theme/brand-tokens";
 import type { TemplateContent } from "../template-content";
 import { withAlpha } from "../utils/color";
+import { getTypographyStyle } from "../utils/typography";
 import { ImageWithFallback } from "./figma/ImageWithFallback";
 import { Button } from "./ui/button";
 import { getIconComponent } from "../utils/icon-mapper";
@@ -54,7 +55,13 @@ export function Products({ config, tokens, content }: ProductsProps) {
             {content.badgeLabel}
           </div>
 
-          <h2 className="text-6xl leading-tight space-y-2" style={{ color: tokens.colors.text }}>
+          <h2 
+            className="leading-tight space-y-2" 
+            style={{ 
+              ...getTypographyStyle(config, 'H2'),
+              color: tokens.colors.text 
+            }}
+          >
             {content.headingLines.map((line) => (
               <span key={line} className="block">
                 {line}
@@ -62,7 +69,13 @@ export function Products({ config, tokens, content }: ProductsProps) {
             ))}
           </h2>
 
-          <p className="text-xl max-w-2xl mx-auto" style={{ color: tokens.colors.mutedText }}>
+          <p 
+            className="max-w-2xl mx-auto" 
+            style={{ 
+              ...getTypographyStyle(config, 'Body'),
+              color: tokens.colors.mutedText 
+            }}
+          >
             {content.description}
           </p>
         </div>

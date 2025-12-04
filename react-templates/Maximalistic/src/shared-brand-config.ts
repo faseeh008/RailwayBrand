@@ -17,6 +17,16 @@ export interface BrandConfig {
   brandDescription: string;
   stats: Array<{ value: string; label: string }>;
   templateContent?: any; // Will be used by template-content.ts
+  typography?: {
+    primaryFont: string;
+    secondaryFont: string;
+    fontHierarchy: Array<{
+      label: string;
+      font: string;
+      weight: string;
+      size: string;
+    }>;
+  };
 }
 
 // Helper to compute colors if not already provided

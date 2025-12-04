@@ -42,7 +42,49 @@ export default function App() {
         document.documentElement.style.setProperty(key, value);
       }
     });
-  }, [colors]);
+    
+    // Set typography CSS variables if available
+    if (brandConfig.typography) {
+      const { typography } = brandConfig;
+      const root = document.documentElement;
+      
+      // Set font families
+      root.style.setProperty("--font-primary", typography.primaryFont);
+      root.style.setProperty("--font-secondary", typography.secondaryFont);
+      
+      // Set font hierarchy CSS variables
+      if (Array.isArray(typography.fontHierarchy)) {
+        typography.fontHierarchy.forEach((h) => {
+          const label = String(h.label || '').toLowerCase().replace(/\s+/g, '-');
+          if (label && h.font && h.size && h.weight) {
+            root.style.setProperty(`--font-${label}-family`, h.font);
+            root.style.setProperty(`--font-${label}-size`, h.size);
+            root.style.setProperty(`--font-${label}-weight`, h.weight);
+          }
+        });
+      }
+      
+      // Load Google Fonts if needed
+      if (typography.primaryFont && !typography.primaryFont.includes('Arial') && !typography.primaryFont.includes('sans-serif')) {
+        const fontName = typography.primaryFont.replace(/\s+/g, '+');
+        if (!document.querySelector(`link[href*="${fontName}"]`)) {
+          const link = document.createElement('link');
+          link.rel = 'stylesheet';
+          link.href = `https://fonts.googleapis.com/css2?family=${fontName}:wght@400;500;600;700&display=swap`;
+          document.head.appendChild(link);
+        }
+      }
+      if (typography.secondaryFont && !typography.secondaryFont.includes('Arial') && !typography.secondaryFont.includes('sans-serif')) {
+        const fontName = typography.secondaryFont.replace(/\s+/g, '+');
+        if (!document.querySelector(`link[href*="${fontName}"]`)) {
+          const link = document.createElement('link');
+          link.rel = 'stylesheet';
+          link.href = `https://fonts.googleapis.com/css2?family=${fontName}:wght@400;500;600;700&display=swap`;
+          document.head.appendChild(link);
+        }
+      }
+    }
+  }, [colors, brandConfig]);
 
   const gradientBackground = useMemo(
     () => `linear-gradient(135deg, ${colors.primary} 0%, ${colors.secondary} 100%)`,

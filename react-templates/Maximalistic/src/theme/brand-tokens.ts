@@ -102,5 +102,47 @@ export const applyBrandTokens = (tokens: BrandTokens) => {
   setVar("--border", colors.border);
   setVar("--input-background", colors.surfaceAlt);
   setVar("--ring", colors.overlay);
+  
+  // Apply typography CSS variables if available
+  const brandConfig = (window as any).__BRAND_CONFIG__;
+  if (brandConfig?.typography) {
+    const { typography } = brandConfig;
+    
+    // Set font families
+    setVar("--font-primary", typography.primaryFont);
+    setVar("--font-secondary", typography.secondaryFont);
+    
+    // Set font hierarchy CSS variables
+    if (Array.isArray(typography.fontHierarchy)) {
+      typography.fontHierarchy.forEach((h: any) => {
+        const label = String(h.label || '').toLowerCase().replace(/\s+/g, '-');
+        if (label && h.font && h.size && h.weight) {
+          setVar(`--font-${label}-family`, h.font);
+          setVar(`--font-${label}-size`, h.size);
+          setVar(`--font-${label}-weight`, h.weight);
+        }
+      });
+    }
+    
+    // Load Google Fonts if needed
+    if (typography.primaryFont && !typography.primaryFont.includes('Arial') && !typography.primaryFont.includes('sans-serif')) {
+      const fontName = typography.primaryFont.replace(/\s+/g, '+');
+      if (!document.querySelector(`link[href*="${fontName}"]`)) {
+        const link = document.createElement('link');
+        link.rel = 'stylesheet';
+        link.href = `https://fonts.googleapis.com/css2?family=${fontName}:wght@400;500;600;700&display=swap`;
+        document.head.appendChild(link);
+      }
+    }
+    if (typography.secondaryFont && !typography.secondaryFont.includes('Arial') && !typography.secondaryFont.includes('sans-serif')) {
+      const fontName = typography.secondaryFont.replace(/\s+/g, '+');
+      if (!document.querySelector(`link[href*="${fontName}"]`)) {
+        const link = document.createElement('link');
+        link.rel = 'stylesheet';
+        link.href = `https://fonts.googleapis.com/css2?family=${fontName}:wght@400;500;600;700&display=swap`;
+        document.head.appendChild(link);
+      }
+    }
+  }
 };
 

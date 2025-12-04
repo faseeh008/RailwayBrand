@@ -1,16 +1,20 @@
+import type { BrandConfig } from "../shared-brand-config";
 import type { BrandTokens } from "../theme/brand-tokens";
 import type { TemplateContent } from "../template-content";
+import { getBrandConfig } from "../shared-brand-config";
 import { withAlpha } from "../utils/color";
+import { getTypographyStyle } from "../utils/typography";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { getIconComponent } from "../utils/icon-mapper";
 
 interface FooterProps {
+  config: BrandConfig;
   tokens: BrandTokens;
   content: TemplateContent["footer"];
 }
 
-export function Footer({ tokens, content }: FooterProps) {
+export function Footer({ config, tokens, content }: FooterProps) {
   return (
     <footer
       className="relative overflow-hidden"
@@ -29,11 +33,21 @@ export function Footer({ tokens, content }: FooterProps) {
         <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-12">
           <div className="space-y-6">
             <div>
-              <h3 className="text-4xl mb-2">
+              <h3 
+                className="mb-2" 
+                style={{ 
+                  ...getTypographyStyle(config, 'H3'),
+                }}
+              >
                 <span>{content.brandLines[0]}</span>
                 <span className="block">{content.brandLines[1]}</span>
               </h3>
-              <p style={{ color: withAlpha(tokens.colors.onPrimary, 0.7) }}>
+              <p 
+                style={{ 
+                  ...getTypographyStyle(config, 'Body'),
+                  color: withAlpha(tokens.colors.onPrimary, 0.7) 
+                }}
+              >
                 {content.tagline}
               </p>
             </div>

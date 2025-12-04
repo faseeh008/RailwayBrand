@@ -115,6 +115,16 @@ export interface BrandConfig {
     columns: FooterColumn[];
     copyright: string;
   };
+  typography?: {
+    primaryFont: string;
+    secondaryFont: string;
+    fontHierarchy: Array<{
+      label: string;
+      font: string;
+      weight: string;
+      size: string;
+    }>;
+  };
 }
 
 // Helper function to compute background and text colors from primary color
