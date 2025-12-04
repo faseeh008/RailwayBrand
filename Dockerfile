@@ -120,22 +120,10 @@ COPY --from=builder --chown=sveltekit:nodejs /app/build ./build
 COPY --from=builder --chown=sveltekit:nodejs /app/package.json ./package.json
 COPY --from=builder --chown=sveltekit:nodejs /app/drizzle ./drizzle
 
-# Copy React template builds (only build directories and index.html, not node_modules or source)
-# Create directories first to ensure they exist
-RUN mkdir -p react-templates/Minimalistic/build \
-    react-templates/Maximalistic/build \
-    react-templates/Funky/build \
-    react-templates/Futuristic/build
-
-# Copy build directories and index.html files
-COPY --from=builder --chown=sveltekit:nodejs /app/react-templates/Minimalistic/build ./react-templates/Minimalistic/build
-COPY --from=builder --chown=sveltekit:nodejs /app/react-templates/Minimalistic/index.html ./react-templates/Minimalistic/index.html
-COPY --from=builder --chown=sveltekit:nodejs /app/react-templates/Maximalistic/build ./react-templates/Maximalistic/build
-COPY --from=builder --chown=sveltekit:nodejs /app/react-templates/Maximalistic/index.html ./react-templates/Maximalistic/index.html
-COPY --from=builder --chown=sveltekit:nodejs /app/react-templates/Funky/build ./react-templates/Funky/build
-COPY --from=builder --chown=sveltekit:nodejs /app/react-templates/Funky/index.html ./react-templates/Funky/index.html
-COPY --from=builder --chown=sveltekit:nodejs /app/react-templates/Futuristic/build ./react-templates/Futuristic/build
-COPY --from=builder --chown=sveltekit:nodejs /app/react-templates/Futuristic/index.html ./react-templates/Futuristic/index.html
+# Copy React template builds - copy entire directory structure
+# This ensures builds are available whether running from /app (Docker) or /opt/render/project/src (Render)
+# Copy only the build directories and index.html files (exclude node_modules and source files)
+COPY --from=builder --chown=sveltekit:nodejs /app/react-templates ./react-templates
 
 # Verify build directories were copied successfully
 RUN echo "🔍 Verifying copied React template builds..." && \

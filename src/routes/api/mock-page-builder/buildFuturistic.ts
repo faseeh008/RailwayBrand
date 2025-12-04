@@ -303,29 +303,53 @@ function getDefaultContent(brandName: string, industry: string) {
 /**
  * Find template path by checking multiple possible locations
  * Handles different deployment scenarios (Docker, Render, local dev)
+ * Updated to check paths relative to where the app actually runs
  */
 function findTemplatePath(templateName: string): { htmlPath: string; buildDir: string; isBuild: boolean } {
 	const cwd = process.cwd();
+	const { readdirSync } = require('fs');
 	
-	// Comprehensive list of possible base paths for different deployment scenarios
+	// Try to find where the built app is located to infer base path
+	let inferredBasePath = cwd;
+	try {
+		// Check if build directory exists relative to current location
+		const buildPaths = [
+			join(cwd, 'build'),
+			join(cwd, '..', 'build'),
+			join(cwd, '..', '..', 'build'),
+		];
+		
+		for (const buildPath of buildPaths) {
+			if (existsSync(buildPath) && existsSync(join(buildPath, 'index.js'))) {
+				// Found the built app, use parent directory as base
+				inferredBasePath = join(buildPath, '..');
+				console.log(`[findTemplatePath] Found built app at ${buildPath}, using base: ${inferredBasePath}`);
+				break;
+			}
+		}
+	} catch (e) {
+		// Ignore errors in inference
+	}
+	
+	// Comprehensive list of possible base paths - prioritize inferred path and cwd
 	const possibleBasePaths = [
-		cwd, // Current working directory
-		join(cwd, '..'), // One level up
+		inferredBasePath, // Inferred from built app location
+		cwd, // Current working directory (most common)
+		join(cwd, '..'), // One level up from cwd
 		join(cwd, '..', '..'), // Two levels up
 		join(cwd, '..', '..', '..'), // Three levels up
-		'/app', // Docker default
+		'/app', // Docker default WORKDIR
 		'/opt/render/project', // Render base directory
-		'/opt/render/project/src', // Render src directory
+		'/opt/render/project/src', // Render src directory (where app runs from)
 		'/opt/render/project/app', // Render app directory (if extracted)
-		join('/opt/render/project', 'src'), // Render src (explicit)
-		join('/opt/render/project', 'app'), // Render app (explicit)
 	];
 
 	console.log(`[findTemplatePath] Searching for ${templateName} template...`);
 	console.log(`[findTemplatePath] Current working directory: ${cwd}`);
+	console.log(`[findTemplatePath] Inferred base path: ${inferredBasePath}`);
 	console.log(`[findTemplatePath] Checking ${possibleBasePaths.length} possible base paths`);
 
-	// First, try to find build directory
+	// First, try to find build directory (prioritize this)
 	for (const basePath of possibleBasePaths) {
 		const buildPath = join(basePath, 'react-templates', templateName, 'build', 'index.html');
 		const buildPathExists = existsSync(buildPath);
@@ -333,21 +357,32 @@ function findTemplatePath(templateName: string): { htmlPath: string; buildDir: s
 		
 		if (buildPathExists) {
 			console.log(`[findTemplatePath] ✅ Found build directory at: ${buildPath}`);
+			const buildDir = join(basePath, 'react-templates', templateName, 'build');
+			// Verify assets directory exists
+			const assetsDir = join(buildDir, 'assets');
+			if (existsSync(assetsDir)) {
+				const assetFiles = readdirSync(assetsDir);
+				console.log(`[findTemplatePath] Assets directory found with ${assetFiles.length} files`);
+			} else {
+				console.log(`[findTemplatePath] ⚠️ Assets directory not found, but build/index.html exists`);
+			}
 			return {
 				htmlPath: buildPath,
-				buildDir: join(basePath, 'react-templates', templateName, 'build'),
+				buildDir: buildDir,
 				isBuild: true
 			};
 		}
 	}
 
-	// Fallback to source (with warnings)
+	// Fallback to source (with warnings) - only if build not found
+	console.log(`[findTemplatePath] Build directory not found, checking source files...`);
 	for (const basePath of possibleBasePaths) {
 		const sourcePath = join(basePath, 'react-templates', templateName, 'index.html');
 		if (existsSync(sourcePath)) {
 			console.log(`[findTemplatePath] ⚠️ Found source directory at: ${sourcePath} (build not found)`);
-			console.log(`[findTemplatePath] ⚠️ WARNING: Using source files may result in blank pages in blob URLs`);
+			console.log(`[findTemplatePath] ⚠️ WARNING: Using source files will result in blank pages in blob URLs`);
 			console.log(`[findTemplatePath] ⚠️ Source files reference /src/main.tsx which cannot be loaded without a dev server`);
+			console.log(`[findTemplatePath] ⚠️ This indicates build directories were not copied correctly in Dockerfile`);
 			
 			return {
 				htmlPath: sourcePath,
@@ -357,18 +392,34 @@ function findTemplatePath(templateName: string): { htmlPath: string; buildDir: s
 		}
 	}
 
-	// If nothing found, throw error with diagnostic info
+	// If nothing found, provide detailed diagnostic info
 	const triedPaths = possibleBasePaths.flatMap(base => [
 		join(base, 'react-templates', templateName, 'build', 'index.html'),
 		join(base, 'react-templates', templateName, 'index.html')
 	]);
 	
 	console.error(`[findTemplatePath] ❌ Template not found for ${templateName}`);
-	console.error(`[findTemplatePath] Tried paths:`, triedPaths);
+	console.error(`[findTemplatePath] Current working directory: ${cwd}`);
+	console.error(`[findTemplatePath] Tried ${triedPaths.length} paths`);
+	
+	// Try to list directory contents for diagnostics
+	try {
+		if (existsSync(cwd)) {
+			const cwdContents = readdirSync(cwd).slice(0, 10);
+			console.error(`[findTemplatePath] Contents of ${cwd}:`, cwdContents);
+		}
+		if (existsSync('/app')) {
+			const appContents = readdirSync('/app').slice(0, 10);
+			console.error(`[findTemplatePath] Contents of /app:`, appContents);
+		}
+	} catch (e) {
+		// Ignore listing errors
+	}
 	
 	throw new Error(
-		`Template not found for ${templateName}. Tried paths:\n${triedPaths.join('\n')}\n` +
-		`Current working directory: ${cwd}`
+		`Template not found for ${templateName}. Tried paths:\n${triedPaths.slice(0, 10).join('\n')}\n` +
+		`Current working directory: ${cwd}\n` +
+		`Please ensure React templates are built and copied in Dockerfile.`
 	);
 }
 
