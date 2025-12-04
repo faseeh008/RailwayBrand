@@ -256,12 +256,19 @@ function getDefaultContent(brandName: string, industry: string) {
  */
 function findTemplatePath(templateName: string): { htmlPath: string; buildDir: string; isBuild: boolean } {
 	const cwd = process.cwd();
+	
+	// Comprehensive list of possible base paths for different deployment scenarios
 	const possibleBasePaths = [
 		cwd, // Current working directory
 		join(cwd, '..'), // One level up
+		join(cwd, '..', '..'), // Two levels up
+		join(cwd, '..', '..', '..'), // Three levels up
 		'/app', // Docker default
-		join(cwd, '..', '..'), // Two levels up (in case we're in src/)
-		join(process.cwd(), '..', '..', '..'), // Three levels up
+		'/opt/render/project', // Render base directory
+		'/opt/render/project/src', // Render src directory
+		'/opt/render/project/app', // Render app directory (if extracted)
+		join('/opt/render/project', 'src'), // Render src (explicit)
+		join('/opt/render/project', 'app'), // Render app (explicit)
 	];
 
 	console.log(`[findTemplatePath] Searching for ${templateName} template...`);
@@ -271,7 +278,10 @@ function findTemplatePath(templateName: string): { htmlPath: string; buildDir: s
 	// First, try to find build directory
 	for (const basePath of possibleBasePaths) {
 		const buildPath = join(basePath, 'react-templates', templateName, 'build', 'index.html');
-		if (existsSync(buildPath)) {
+		const buildPathExists = existsSync(buildPath);
+		console.log(`[findTemplatePath] Checking build: ${buildPath} (exists: ${buildPathExists})`);
+		
+		if (buildPathExists) {
 			console.log(`[findTemplatePath] ✅ Found build directory at: ${buildPath}`);
 			return {
 				htmlPath: buildPath,
@@ -281,11 +291,14 @@ function findTemplatePath(templateName: string): { htmlPath: string; buildDir: s
 		}
 	}
 
-	// Fallback to source
+	// Fallback to source (with warnings)
 	for (const basePath of possibleBasePaths) {
 		const sourcePath = join(basePath, 'react-templates', templateName, 'index.html');
 		if (existsSync(sourcePath)) {
 			console.log(`[findTemplatePath] ⚠️ Found source directory at: ${sourcePath} (build not found)`);
+			console.log(`[findTemplatePath] ⚠️ WARNING: Using source files may result in blank pages in blob URLs`);
+			console.log(`[findTemplatePath] ⚠️ Source files reference /src/main.tsx which cannot be loaded without a dev server`);
+			
 			return {
 				htmlPath: sourcePath,
 				buildDir: join(basePath, 'react-templates', templateName),
@@ -537,6 +550,13 @@ export async function buildMaximalistic(sessionData: BrandSessionData): Promise<
 			}
 		} else {
 			console.warn('[buildMaximalistic] ⚠️ CSS file not found:', fullCssPath);
+			if (!templateInfo.isBuild) {
+				console.warn('[buildMaximalistic] ⚠️ Using source template - CSS may not be available');
+			}
+		}
+	} else {
+		if (!templateInfo.isBuild) {
+			console.warn('[buildMaximalistic] ⚠️ No CSS link found in source template - page may appear unstyled');
 		}
 	}
 	
@@ -560,6 +580,14 @@ export async function buildMaximalistic(sessionData: BrandSessionData): Promise<
 			}
 		} else {
 			console.warn('[buildMaximalistic] ⚠️ JS file not found:', fullJsPath);
+		}
+	} else {
+		// Check if source file has /src/main.tsx reference (won't work in blob URLs)
+		const sourceJsMatch = html.match(/<script[^>]+src=["']([^"']*\/src\/main\.tsx[^"']*)["'][^>]*><\/script>/);
+		if (sourceJsMatch && !templateInfo.isBuild) {
+			console.error('[buildMaximalistic] ❌ Source template uses /src/main.tsx which cannot be loaded in blob URLs');
+			console.error('[buildMaximalistic] ❌ This will result in a blank page. Build directories must be available.');
+			console.error('[buildMaximalistic] ❌ The React app will not load because /src/main.tsx requires a dev server');
 		}
 	}
 	
@@ -592,6 +620,24 @@ export async function buildMaximalistic(sessionData: BrandSessionData): Promise<
 	}
 	
 	console.log('[buildMaximalistic] HTML generated with brand config and generated content');
+	
+	// Validate HTML before returning
+	if (!html || html.trim().length < 100) {
+		console.error('[buildMaximalistic] ❌ Generated HTML is too short or empty');
+		console.error('[buildMaximalistic] HTML length:', html?.length || 0);
+		throw new Error('Generated HTML is empty or invalid. Template processing may have failed.');
+	}
+	
+	// Log HTML info for debugging
+	console.log(`[buildMaximalistic] Generated HTML length: ${html.length} characters`);
+	console.log(`[buildMaximalistic] HTML contains __BRAND_CONFIG__: ${html.includes('__BRAND_CONFIG__')}`);
+	console.log(`[buildMaximalistic] HTML contains root div: ${html.includes('<div id="root">')}`);
+	
+	if (!templateInfo.isBuild) {
+		console.warn('[buildMaximalistic] ⚠️ Using source template - page may be blank in blob URLs');
+		console.warn('[buildMaximalistic] ⚠️ Build directories should be available for production use');
+	}
+	
 	await sleep(3000);
 	
 	return html;
