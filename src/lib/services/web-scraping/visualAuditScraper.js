@@ -8,13 +8,17 @@ import path from 'path';
 
 export class VisualAuditScraper {
   constructor() {
-    this.screenshotDir = 'screenshots';
+    // Use absolute path for screenshots directory
+    this.screenshotDir = path.join(process.cwd(), 'screenshots');
     this.ensureScreenshotDir();
   }
 
   ensureScreenshotDir() {
     if (!fs.existsSync(this.screenshotDir)) {
       fs.mkdirSync(this.screenshotDir, { recursive: true });
+      console.log(`📁 Created screenshots directory: ${this.screenshotDir}`);
+    } else {
+      console.log(`📁 Screenshots directory exists: ${this.screenshotDir}`);
     }
   }
 
@@ -88,9 +92,52 @@ export class VisualAuditScraper {
         console.log(`:file_folder: Processed file path: ${filePath}`);
         await page.goto(filePath, { waitUntil: 'domcontentloaded', timeout: 15000 });
       } else {
-        await page.goto(url, { waitUntil: 'networkidle', timeout: 30000 });
+        // Try multiple navigation strategies - networkidle often fails on sites with continuous requests
+        let navigationSuccess = false;
+        let lastError = null;
+        const strategies = [
+          { waitUntil: 'domcontentloaded', timeout: 20000 },
+          { waitUntil: 'load', timeout: 30000 },
+          { waitUntil: 'networkidle', timeout: 45000 }
+        ];
+        
+        for (const strategy of strategies) {
+          try {
+            console.log(`📡 Attempting navigation with ${strategy.waitUntil} (timeout: ${strategy.timeout}ms) for ${url}`);
+            await page.goto(url, { 
+              waitUntil: strategy.waitUntil, 
+              timeout: strategy.timeout 
+            });
+            navigationSuccess = true;
+            console.log(`✅ Navigation successful with ${strategy.waitUntil}`);
+            break;
+          } catch (navError) {
+            lastError = navError;
+            console.warn(`⚠️ Navigation with ${strategy.waitUntil} failed:`, navError.message);
+            // Continue to next strategy unless this is the last one
+            if (strategy === strategies[strategies.length - 1]) {
+              // Last strategy failed - check if we at least got some content
+              try {
+                const hasContent = await page.evaluate(() => {
+                  return document.body && document.body.innerHTML.length > 100;
+                });
+                if (hasContent) {
+                  console.log(`✅ Page has content despite navigation timeout, continuing...`);
+                  navigationSuccess = true;
+                  break;
+                }
+              } catch (e) {
+                console.warn(`⚠️ Could not verify page content:`, e.message);
+              }
+            }
+          }
+        }
+        
+        if (!navigationSuccess && lastError) {
+          throw lastError;
+        }
       }
-     
+      
       // Wait for content to load
       await this.waitForContent(page);
      
@@ -117,12 +164,26 @@ export class VisualAuditScraper {
      
       // Capture full page screenshot
       const screenshotPath = path.join(this.screenshotDir, `${Date.now()}-audit.png`);
+      console.log(`📸 Saving screenshot to: ${screenshotPath}`);
+      console.log(`📸 Absolute path: ${path.resolve(screenshotPath)}`);
+      
       await page.screenshot({
         path: screenshotPath,
         fullPage: true,
         type: 'png'
       });
-     
+      
+      // Verify file was created
+      if (fs.existsSync(screenshotPath)) {
+        const stats = fs.statSync(screenshotPath);
+        console.log(`✅ Screenshot saved successfully (${stats.size} bytes) at: ${screenshotPath}`);
+      } else {
+        console.error(`❌ Screenshot file was NOT created at: ${screenshotPath}`);
+        console.error(`❌ Current working directory: ${process.cwd()}`);
+        console.error(`❌ Screenshot directory: ${this.screenshotDir}`);
+        throw new Error(`Failed to save screenshot to ${screenshotPath}`);
+      }
+      
       console.log(`:white_check_mark: Screenshot saved to: ${screenshotPath}`);
       return screenshotPath;
      
@@ -182,9 +243,52 @@ export class VisualAuditScraper {
         console.log(`:file_folder: Processed file path: ${filePath}`);
         await page.goto(filePath, { waitUntil: 'domcontentloaded', timeout: 15000 });
       } else {
-        await page.goto(url, { waitUntil: 'networkidle', timeout: 30000 });
+        // Try multiple navigation strategies - networkidle often fails on sites with continuous requests
+        let navigationSuccess = false;
+        let lastError = null;
+        const strategies = [
+          { waitUntil: 'domcontentloaded', timeout: 20000 },
+          { waitUntil: 'load', timeout: 30000 },
+          { waitUntil: 'networkidle', timeout: 45000 }
+        ];
+        
+        for (const strategy of strategies) {
+          try {
+            console.log(`📡 Attempting navigation with ${strategy.waitUntil} (timeout: ${strategy.timeout}ms) for ${url}`);
+            await page.goto(url, { 
+              waitUntil: strategy.waitUntil, 
+              timeout: strategy.timeout 
+            });
+            navigationSuccess = true;
+            console.log(`✅ Navigation successful with ${strategy.waitUntil}`);
+            break;
+          } catch (navError) {
+            lastError = navError;
+            console.warn(`⚠️ Navigation with ${strategy.waitUntil} failed:`, navError.message);
+            // Continue to next strategy unless this is the last one
+            if (strategy === strategies[strategies.length - 1]) {
+              // Last strategy failed - check if we at least got some content
+              try {
+                const hasContent = await page.evaluate(() => {
+                  return document.body && document.body.innerHTML.length > 100;
+                });
+                if (hasContent) {
+                  console.log(`✅ Page has content despite navigation timeout, continuing...`);
+                  navigationSuccess = true;
+                  break;
+                }
+              } catch (e) {
+                console.warn(`⚠️ Could not verify page content:`, e.message);
+              }
+            }
+          }
+        }
+        
+        if (!navigationSuccess && lastError) {
+          throw lastError;
+        }
       }
-     
+      
       // Wait for content to load
       await this.waitForContent(page);
      
@@ -250,9 +354,52 @@ export class VisualAuditScraper {
         console.log(`:file_folder: Processed file path: ${filePath}`);
         await page.goto(filePath, { waitUntil: 'domcontentloaded', timeout: 15000 });
       } else {
-        await page.goto(url, { waitUntil: 'networkidle', timeout: 30000 });
+        // Try multiple navigation strategies - networkidle often fails on sites with continuous requests
+        let navigationSuccess = false;
+        let lastError = null;
+        const strategies = [
+          { waitUntil: 'domcontentloaded', timeout: 20000 },
+          { waitUntil: 'load', timeout: 30000 },
+          { waitUntil: 'networkidle', timeout: 45000 }
+        ];
+        
+        for (const strategy of strategies) {
+          try {
+            console.log(`📡 Attempting navigation with ${strategy.waitUntil} (timeout: ${strategy.timeout}ms) for ${url}`);
+            await page.goto(url, { 
+              waitUntil: strategy.waitUntil, 
+              timeout: strategy.timeout 
+            });
+            navigationSuccess = true;
+            console.log(`✅ Navigation successful with ${strategy.waitUntil}`);
+            break;
+          } catch (navError) {
+            lastError = navError;
+            console.warn(`⚠️ Navigation with ${strategy.waitUntil} failed:`, navError.message);
+            // Continue to next strategy unless this is the last one
+            if (strategy === strategies[strategies.length - 1]) {
+              // Last strategy failed - check if we at least got some content
+              try {
+                const hasContent = await page.evaluate(() => {
+                  return document.body && document.body.innerHTML.length > 100;
+                });
+                if (hasContent) {
+                  console.log(`✅ Page has content despite navigation timeout, continuing...`);
+                  navigationSuccess = true;
+                  break;
+                }
+              } catch (e) {
+                console.warn(`⚠️ Could not verify page content:`, e.message);
+              }
+            }
+          }
+        }
+        
+        if (!navigationSuccess && lastError) {
+          throw lastError;
+        }
       }
-     
+      
       // Wait for content to load
       await this.waitForContent(page);
      
@@ -376,15 +523,23 @@ export class VisualAuditScraper {
   async waitForContent(page) {
     try {
       // Wait for basic content
-      await page.waitForSelector('body', { timeout: 5000 });
-     
+      await page.waitForSelector('body', { timeout: 10000 });
+      
       // Wait for load states (Playwright specific)
-      await page.waitForLoadState('domcontentloaded');
-      await page.waitForLoadState('networkidle');
-     
+      await page.waitForLoadState('domcontentloaded', { timeout: 15000 });
+      
+      // Try networkidle but don't fail if it times out (many sites have continuous requests)
+      try {
+        await page.waitForLoadState('networkidle', { timeout: 10000 });
+        console.log(':white_check_mark: Network idle state reached');
+      } catch (networkIdleError) {
+        console.warn(':warning: Network idle timeout (this is OK for sites with continuous requests like analytics)');
+        // Continue anyway - we already have domcontentloaded
+      }
+      
       // Wait for any dynamic content
       await page.waitForTimeout(2000);
-     
+      
       // Wait for fonts to load (important for web fonts like Google Fonts)
       try {
         await page.evaluate(async () => {
@@ -397,23 +552,24 @@ export class VisualAuditScraper {
       } catch (error) {
         console.log(':warning: Font loading check failed, continuing...');
       }
-     
+      
       // Scroll to trigger lazy loading
       await page.evaluate(() => {
         window.scrollTo(0, document.body.scrollHeight);
       });
-     
+      
       await page.waitForTimeout(1000);
-     
+      
       // Scroll back to top
       await page.evaluate(() => {
         window.scrollTo(0, 0);
       });
-     
+      
       await page.waitForTimeout(1000);
-     
+      
     } catch (error) {
       console.warn(':warning: Content waiting failed:', error.message);
+      // Don't throw - we might still have usable content
     }
   }
 

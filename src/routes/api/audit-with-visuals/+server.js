@@ -494,16 +494,64 @@ export async function POST({ request }) {
     let targetedScreenshotDataUrl = null;
     
     // Check and convert original screenshot
-    if (finalReport.visualData?.screenshot && fs.existsSync(finalReport.visualData.screenshot)) {
-      try {
-        const screenshotBuffer = fs.readFileSync(finalReport.visualData.screenshot);
-        screenshotDataUrl = `data:image/png;base64,${screenshotBuffer.toString('base64')}`;
-        console.log(`✅ Converted original screenshot to base64`);
-      } catch (error) {
-        console.warn('⚠️ Failed to convert screenshot to base64:', error);
+    if (finalReport.visualData?.screenshot) {
+      let screenshotPath = finalReport.visualData.screenshot;
+      
+      // If path is relative, try to resolve it
+      if (!path.isAbsolute(screenshotPath)) {
+        const possiblePaths = [
+          path.join(process.cwd(), screenshotPath),
+          path.join(process.cwd(), 'screenshots', path.basename(screenshotPath)),
+          screenshotPath
+        ];
+        
+        // Try to find the file in possible locations
+        for (const possiblePath of possiblePaths) {
+          if (fs.existsSync(possiblePath)) {
+            screenshotPath = possiblePath;
+            console.log(`✅ Found screenshot at: ${screenshotPath}`);
+            break;
+          }
+        }
+      }
+      
+      console.log(`🔍 Checking screenshot at path: ${screenshotPath}`);
+      console.log(`🔍 Absolute path: ${path.resolve(screenshotPath)}`);
+      console.log(`🔍 File exists: ${fs.existsSync(screenshotPath)}`);
+      
+      if (fs.existsSync(screenshotPath)) {
+        try {
+          const screenshotBuffer = fs.readFileSync(screenshotPath);
+          screenshotDataUrl = `data:image/png;base64,${screenshotBuffer.toString('base64')}`;
+          console.log(`✅ Converted original screenshot to base64 (${screenshotBuffer.length} bytes)`);
+        } catch (error) {
+          console.error('❌ Failed to convert screenshot to base64:', error);
+          console.error('❌ Error details:', {
+            message: error.message,
+            code: error.code,
+            path: screenshotPath
+          });
+        }
+      } else {
+        console.error(`❌ Screenshot file does not exist: ${screenshotPath}`);
+        console.error(`❌ Current working directory: ${process.cwd()}`);
+        console.error(`❌ Attempting to list screenshots directory...`);
+        
+        // Try to list what's in the screenshots directory
+        const screenshotsDir = path.join(process.cwd(), 'screenshots');
+        if (fs.existsSync(screenshotsDir)) {
+          try {
+            const files = fs.readdirSync(screenshotsDir);
+            console.log(`📁 Files in screenshots directory:`, files);
+          } catch (e) {
+            console.error(`❌ Could not read screenshots directory:`, e);
+          }
+        } else {
+          console.error(`❌ Screenshots directory does not exist: ${screenshotsDir}`);
+        }
       }
     } else {
-      console.warn('⚠️ Screenshot file does not exist:', finalReport.visualData?.screenshot);
+      console.warn('⚠️ No screenshot path in visualData');
     }
     
     // Check and convert annotated screenshot
