@@ -133,7 +133,12 @@ export const authOptions = {
 					.select()
 					.from(user)
 					.where(eq(user.email, email.toLowerCase()));
-				if (!existingUser) return true; // No existing user, allow normal account creation
+				
+				if (!existingUser) {
+					// No existing user, allow normal account creation
+					console.log(`Creating new account for: ${email}`);
+					return true;
+				}
 
 				// Check if user is disabled - if yes, let them complete OAuth but we'll catch them in post-auth
 				if (existingUser.disabled) {
@@ -155,16 +160,20 @@ export const authOptions = {
 					.where(eq(account.userId, existingUser.id));
 				const linkedProviders = linkedAccounts.map((a) => a.provider);
 
-				if (!linkedProviders.includes(authAccount.provider)) {
-					// Provider not linked yet, but user exists with same email
-					// Allow the sign-in to proceed - Auth.js will automatically link the account
+				if (linkedProviders.includes(authAccount.provider)) {
+					// Provider already linked - allow sign-in for existing Google account
 					console.log(
-						`Linking ${authAccount.provider} account to existing user: ${existingUser.email}`
+						`Allowing sign-in for existing ${authAccount.provider} account: ${existingUser.email}`
 					);
 					return true;
 				}
 
-				// Provider already linked, proceed normally
+				// Provider not linked yet, but user exists with same email
+				// Allow the sign-in to proceed - Auth.js will automatically link the account
+				// This allows users to link their Google account to an existing email-based account
+				console.log(
+					`Linking ${authAccount.provider} account to existing user: ${existingUser.email}`
+				);
 				return true;
 			} catch (error) {
 				console.error('Error in signIn callback:', error);
