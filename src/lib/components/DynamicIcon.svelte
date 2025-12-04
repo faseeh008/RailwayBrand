@@ -364,10 +364,12 @@
 
 {#if iconComponent}
   <!-- Exact Lucide icon match -->
-  <svelte:component this={iconComponent} {...iconProps} />
+  {@const Icon = iconComponent}
+  <Icon {...iconProps} />
 {:else if fallbackIconComponent}
   <!-- Fallback Lucide icon match -->
-  <svelte:component this={fallbackIconComponent} {...iconProps} />
+  {@const FallbackIcon = fallbackIconComponent}
+  <FallbackIcon {...iconProps} />
 {:else if aiIconSVG}
   <!-- AI-generated icon -->
   <div class="ai-icon-wrapper" class:className style="--icon-size: {typeof size === 'number' ? size + 'px' : size};">
