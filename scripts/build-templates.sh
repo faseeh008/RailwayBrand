@@ -14,12 +14,16 @@ for template in Minimalistic Maximalistic Funky Futuristic; do
     continue
   fi
   
-  # Install dependencies (try npm ci first, fallback to npm install)
-  echo "   Installing dependencies..."
+  # Show current directory for debugging
+  echo "   Current directory: $(pwd)"
+  
+  # Install dependencies INCLUDING devDependencies (needed for build tools)
+  # Use --include=dev to ensure devDependencies are installed even if NODE_ENV=production
+  echo "   Installing dependencies (including devDependencies)..."
   if [ -f "package-lock.json" ]; then
-    npm ci || npm install
+    npm ci --include=dev || npm install --include=dev
   else
-    npm install
+    npm install --include=dev
   fi
   
   # Verify installation succeeded by checking for node_modules
@@ -27,6 +31,17 @@ for template in Minimalistic Maximalistic Funky Futuristic; do
     echo "❌ ERROR: node_modules not found after installation for $template"
     echo "   Installation may have failed"
     exit 1
+  fi
+  
+  # Verify the specific package exists
+  if [ ! -d "node_modules/@vitejs/plugin-react-swc" ]; then
+    echo "❌ ERROR: @vitejs/plugin-react-swc not found in node_modules"
+    echo "   This package is required for building. Attempting to install explicitly..."
+    npm install @vitejs/plugin-react-swc --save-dev
+    if [ ! -d "node_modules/@vitejs/plugin-react-swc" ]; then
+      echo "❌ ERROR: Failed to install @vitejs/plugin-react-swc"
+      exit 1
+    fi
   fi
   
   # Build the template
@@ -57,4 +72,3 @@ for template in Minimalistic Maximalistic Funky Futuristic; do
 done
 
 echo "🎉 All React templates built successfully!"
-
