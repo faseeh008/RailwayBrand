@@ -388,6 +388,9 @@ export const brandBuilderChats = pgTable('brand_builder_chats', {
 	state: text('state'),
 	latestLogoSnapshot: text('latest_logo_snapshot'),
 	logo: text('logo'), // Base64 encoded logo image data for this chat session
+	// History tracking (hybrid approach - backward compatible)
+	messageHistory: jsonb('message_history'), // Tracks all versions of messages
+	logoHistory: jsonb('logo_history'), // Tracks logo regeneration history
 	createdAt: timestamp('created_at', { mode: 'date' })
 		.notNull()
 		.$defaultFn(() => new Date()),

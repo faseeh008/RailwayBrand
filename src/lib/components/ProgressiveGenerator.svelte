@@ -18,7 +18,7 @@
 	import { getDomainSpecificStepInfo } from '$lib/utils/domain-specific-steps';
 
 	export let brandInput: BrandGuidelinesInput;
-	export let logoFiles: Array<{ filename: string; fileData: string; usageTag: string }> = [];
+	export let logoFiles: Array<{ filename: string; fileData: string; usageTag: string; generatedColors?: { primary: string; secondary: string; accent1: string; accent2?: string }; extractedColors?: any }> = [];
 	export let onComplete: (guidelines: any) => void;
 	export let chatbotControlled: boolean = false; // If true, chatbot handles approval
 	export let onStepGenerated: ((step: any) => void) | null = null; // Callback when step is generated
@@ -317,9 +317,12 @@
 							usage_tag: logo.usageTag,
 							fileData: logo.fileData,
 							file_size: 0,
-							extractedColors: (logo as any).extractedColors || undefined // Include extracted colors from uploaded logo
+							extractedColors: logo.extractedColors || undefined, // Include extracted colors from uploaded logo
+							generatedColors: logo.generatedColors || undefined // Include colors from AI-generated logo
 						}))
 					},
+					extractedColors: (brandInput as any).extractedColors || undefined, // Include colors extracted from user prompt
+					extractedTypography: (brandInput as any).extractedTypography || undefined, // Include typography extracted from user prompt
 					userApproval: false
 				}),
 				signal: generationAbortController.signal
@@ -521,11 +524,14 @@
 							usage_tag: logo.usageTag,
 							fileData: logo.fileData,
 							file_size: 0,
-							extractedColors: (logo as any).extractedColors || undefined // Include extracted colors from uploaded logo
+							extractedColors: logo.extractedColors || undefined, // Include extracted colors from uploaded logo
+							generatedColors: logo.generatedColors || undefined // Include colors from AI-generated logo
 						})),
 						// Include stepHistory so the API can access current step content for partial modifications
 						stepHistory: stepHistory
 					},
+					extractedColors: (brandInput as any).extractedColors || undefined, // Include colors extracted from user prompt
+					extractedTypography: (brandInput as any).extractedTypography || undefined, // Include typography extracted from user prompt
 					userApproval: false,
 					feedback: feedback,
 					stepHistory: stepHistory // Also pass directly for API compatibility

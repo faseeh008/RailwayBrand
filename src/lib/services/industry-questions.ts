@@ -147,12 +147,13 @@ CRITICAL RULES FOR PROFESSIONAL QUESTION GENERATION:
 
 3. STRATEGIC VALUE: Questions should uncover information that directly impacts:
    - Brand positioning and competitive differentiation
-   - Industry-specific design requirements and constraints
    - Target market segmentation and customer personas
    - Regulatory or compliance considerations
    - Go-to-market strategies and channel requirements
    - Product/service delivery models
    - Partnership and ecosystem relationships
+   - Business model and operational structure
+   - Service categories and specializations
 
 4. REAL-WORLD GROUNDING: ${groundingSection ? 'EVERY question must reference or be inspired by specific insights, patterns, or examples from the REAL-WORLD INSIGHTS section. Cite actual industry practices, not generic concepts.' : 'Base questions on industry best practices and standards.'}
 
@@ -177,15 +178,26 @@ CRITICAL RULES FOR PROFESSIONAL QUESTION GENERATION:
    - Competitive landscape positioning
    - Technology or platform considerations
    - Partnership and ecosystem dynamics
+   - Service offerings and specializations
+   - Customer journey and touchpoints
 
-8. AVOID DUPLICATION: ${askedQuestionSection ? 'Never repeat topics already covered. Propose entirely new strategic angles.' : 'Ensure questions don\'t overlap with basic information already collected.'}
+8. FORBIDDEN TOPICS - DO NOT ASK ABOUT:
+   - Colors, color palettes, or color preferences
+   - Typography, fonts, or typeface choices
+   - Design styles or visual aesthetics (already covered in style/vibe question)
+   - Logo design preferences
+   - Visual elements or design components
+   
+   These design elements will be generated based on the business/industry information you gather. Focus ONLY on understanding the business, not the design.
 
-9. ${alreadyAskedInfo}
+9. AVOID DUPLICATION: ${askedQuestionSection ? 'Never repeat topics already covered. Propose entirely new strategic angles.' : 'Ensure questions don\'t overlap with basic information already collected.'}
 
-10. HELPER TEXT: Each question must include a professional helper text (20-30 words) that explains:
-    - Why this information is valuable for brand guideline creation
-    - How it will be used in the guidelines
-    - The strategic benefit of providing this detail
+10. ${alreadyAskedInfo}
+
+11. HELPER TEXT: Each question must include a professional helper text (20-30 words) that explains:
+    - Why this business/industry information is valuable for brand guideline creation
+    - How it will inform the design decisions (colors, typography, imagery) indirectly
+    - The strategic benefit of understanding this aspect of their business
 
 REAL-WORLD DATA FOR REFERENCE:\n${groundingSection || 'No additional research data is available. Focus on unique, high-impact questions derived from the existing brand information.'}\n
 
@@ -199,7 +211,17 @@ Example 4 - Fashion Industry:\nIndustry: "Fashion"\nOutput:\n[\n  {\n    "id": "
 NOW GENERATE QUESTIONS FOR THIS INDUSTRY:\nIndustry: "${industry}"${contextInfo}\n
 OUTPUT FORMAT (return ONLY valid JSON array, no markdown, no code blocks):\n[\n  {\n    "id": "uniqueQuestionId",\n    "question": "Question text",\n    "type": "text" | "text-with-suggestions" | "select",\n    "suggestions": ["option1", "option2", ...], // Only if type is "text-with-suggestions"\n    "required": false,\n    "icon": "emoji",\n    "helper": "Optional helper text"\n  }\n]\n
 Return ONLY the JSON array, no additional text.\n
-IMPORTANT: Generate 2-3 questions (preferably 2-3, not just 1) that cover different aspects of the ${industry} industry. Each question should help create more accurate and tailored brand guidelines. Think about what information would be most valuable for generating industry-specific colors, typography, imagery, and tone.`;
+IMPORTANT: Generate 2-3 questions (preferably 2-3, not just 1) that cover different BUSINESS aspects of the ${industry} industry. 
+
+CRITICAL: These must be BUSINESS/INDUSTRY questions, NOT design questions. Ask about:
+- What services/products they offer
+- Who their customers are
+- How they operate
+- What makes them unique in their industry
+- Regulatory or compliance needs
+- Business model and structure
+
+DO NOT ask about colors, fonts, typography, or visual design elements. Those will be determined based on the business information you gather.`;
 }
 
 /**

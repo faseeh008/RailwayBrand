@@ -123,8 +123,9 @@ type LogoFileEntry = {
 	const BUILDER_STATE_PREFIX = 'brandBuilderGeneratorState:';
 
 	onMount(() => {
-		const preferredChatId = getPersistedActiveChatId();
-		loadChatSessions(preferredChatId);
+		// Always start with a new chat when user signs in (don't restore persisted chat)
+		// This ensures fresh start on each sign-in
+		loadChatSessions(null); // Pass null to force new chat initialization
 		if (typeof document !== 'undefined') {
 			const handleClickOutside = (event: MouseEvent) => {
 				if (
@@ -301,7 +302,8 @@ type LogoFileEntry = {
 					fileData: logoAnswer.fileData,
 					usageTag: logoAnswer.usageTag || 'primary',
 					aiGenerated: logoAnswer.type === 'ai-generated',
-					extractedColors: logoAnswer.extractedColors || undefined // Include extracted colors
+					extractedColors: logoAnswer.extractedColors || undefined, // Include extracted colors
+					generatedColors: (logoAnswer as any).generatedColors || undefined // Include generated colors
 				}
 			];
 		} else {
@@ -377,17 +379,20 @@ type LogoFileEntry = {
 				(a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
 			);
 
-			if (chatSessions.length === 0) {
-				await createNewChat(true);
-			} else {
-				const persistedId = preferredId || getPersistedActiveChatId();
-				const preferredSession =
-					(persistedId && chatSessions.find((session) => session.id === persistedId)) ||
-					chatSessions[0];
-				if (preferredSession) {
-					selectChat(preferredSession);
+			// Lazy persistence: Don't auto-create chats, but restore preferred chat if it exists
+			if (preferredId && preferredId !== LOCAL_CHAT_ID) {
+				// Check if preferred chat exists in the list
+				const preferredChat = chatSessions.find(s => s.id === preferredId);
+				if (preferredChat) {
+					// Restore the preferred chat
+					selectChat(preferredChat);
+					return; // Exit early - chat is selected
 				}
 			}
+			
+			// No preferred chat or preferred chat not found - show new chat UI
+			activeChatId = null;
+			activeChatStorageKey = null;
 		} catch (error) {
 			console.error('Failed to load chat sessions', error);
 			const message = error instanceof Error ? error.message : 'Failed to load chat history';
@@ -420,32 +425,17 @@ type LogoFileEntry = {
 			restoreBuilderStateForActiveChat();
 			return;
 		}
-		if (isCreatingChat) return;
-		isCreatingChat = true;
-		try {
-			const response = await fetch('/api/chat-sessions', {
-				method: 'POST',
-				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify({ title: 'Untitled Chat' })
-			});
-			if (!response.ok) {
-				throw new Error(await response.text());
-			}
-			const result = await response.json();
-			if (result?.chat) {
-				chatSessions = [result.chat, ...chatSessions];
-				selectChat(result.chat);
-			}
-		} catch (error) {
-			console.error('Failed to create chat session', error);
-			const message = error instanceof Error ? error.message : 'Unable to create chat';
-			chatSessionsError = message;
-			if (!skipLocalFallback) {
-				enableLocalChatMode(message);
-			}
-		} finally {
-			isCreatingChat = false;
+		
+		// Lazy persistence: Just reset to new chat UI, don't create DB record
+		// Chat will be created on first message by the chatbot component
+		activeChatId = null;
+		activeChatStorageKey = null;
+		persistActiveChatId(null);
+		if (chatbotRef) {
+			chatbotRef.clearChatState();
 		}
+		restoreBuilderStateForActiveChat();
+		showChatDropdown = false;
 	}
 
 	async function handleChatSessionSave(payload: {
@@ -453,9 +443,24 @@ type LogoFileEntry = {
 		brandName?: string;
 		messages: any[];
 		state: any;
+		messageHistory?: any[];
+		logoHistory?: any[];
 	}) {
 		if (useLocalChatOnly) return;
 		if (!payload?.id) return;
+		
+		// If this is a new chat (created on first message), update active chat
+		if (payload.id && !activeChatStorageKey) {
+			// Hydrate sessionStorage with messages BEFORE updating activeChatStorageKey
+			// This ensures messages persist when component re-renders
+			hydrateSessionStorageForChat(payload.id, payload.messages, payload.state);
+			activeChatId = payload.id;
+			activeChatStorageKey = payload.id;
+			persistActiveChatId(payload.id);
+			// Reload chat sessions to include new chat, but preserve the active chat
+			await loadChatSessions(payload.id);
+		}
+		
 		try {
 			await fetch(`/api/chat-sessions/${payload.id}`, {
 				method: 'PUT',
@@ -463,7 +468,9 @@ type LogoFileEntry = {
 				body: JSON.stringify({
 					brandName: payload.brandName,
 					messages: payload.messages,
-					state: payload.state
+					state: payload.state,
+					messageHistory: payload.messageHistory,
+					logoHistory: payload.logoHistory
 				})
 			});
 
@@ -1062,7 +1069,8 @@ ${customPrompt}`;
 								fileUrl: logoSrc,
 								storageId: data.logoData.storageId || data.logoData.logoId,
 								usageTag: 'primary',
-								aiGenerated: true
+								aiGenerated: true,
+								generatedColors: data.logoData.generatedColors
 							}
 						];
 					} else {
@@ -1073,7 +1081,8 @@ ${customPrompt}`;
 								filePath: '',
 								fileData: '',
 								usageTag: 'primary',
-								aiGenerated: true
+								aiGenerated: true,
+								generatedColors: data.logoData.generatedColors
 							}
 						];
 					}
@@ -1087,7 +1096,8 @@ ${customPrompt}`;
 							fileData: logoSrc,
 							fileUrl: logoSrc,
 							storageId: data.logoData.storageId,
-							usageTag: 'primary'
+							usageTag: 'primary',
+							extractedColors: data.logoData.extractedColors // Colors extracted from uploaded logo
 						}
 					];
 				}
@@ -1953,19 +1963,22 @@ ${customPrompt}`;
 						brand_domain: brandDomain,
 						short_description: shortDescription,
 						// Include all brand positioning fields
-						selectedMood: selectedMood || undefined,
-						selectedAudience: selectedAudience || undefined,
-						brandValues: brandValues || undefined,
-						customPrompt: customPrompt || undefined,
-						logo_files: logoFiles.map((logo) => ({
-							filename: logo.filename,
-							usage_tag: logo.usageTag as 'primary' | 'icon' | 'lockup',
-							file_path: logo.filePath,
-							file_size: 0,
-							fileData: logo.fileData, // Include base64 data
-							extractedColors: (logo as any).extractedColors || undefined // Include extracted colors from uploaded logo
-						})),
-						contact: {
+			selectedMood: selectedMood || undefined,
+			selectedAudience: selectedAudience || undefined,
+			brandValues: brandValues || undefined,
+			customPrompt: customPrompt || undefined,
+			logo_files: logoFiles.map((logo) => ({
+				filename: logo.filename,
+				usage_tag: logo.usageTag as 'primary' | 'icon' | 'lockup',
+				file_path: logo.filePath,
+				file_size: 0,
+				fileData: logo.fileData, // Include base64 data
+				extractedColors: (logo as any).extractedColors || undefined, // Include extracted colors from uploaded logo
+				generatedColors: (logo as any).generatedColors || undefined // Include generated colors from logo generation
+			})),
+			extractedColors: chatData?.extractedColors || undefined, // Include colors extracted from user prompt
+			extractedTypography: chatData?.extractedTypography || undefined, // Include typography extracted from user prompt
+			contact: {
 							name: contactName || '',
 							email: contactEmail || '',
 							role: contactRole || '',
@@ -2224,8 +2237,8 @@ ${customPrompt}`;
 					<Loader2 class="h-4 w-4 animate-spin" />
 					<span>Loading assistant…</span>
 				</div>
-			{:else if activeChatStorageKey}
-				{#key activeChatStorageKey}
+			{:else}
+				{#key activeChatStorageKey || 'new-chat'}
 					<BrandBuilderChatbot
 						bind:this={chatbotRef}
 						{questions}
@@ -2238,13 +2251,6 @@ ${customPrompt}`;
 						onSessionSave={handleChatSessionSave}
 					/>
 				{/key}
-			{:else}
-				<div
-					class="flex h-[640px] flex-col items-center justify-center px-6 text-center text-muted-foreground"
-				>
-					<Zap class="mb-4 h-10 w-10 text-orange-500" />
-					<p class="text-sm">Select or create a chat to start building your brand guidelines.</p>
-				</div>
 			{/if}
 		</div>
 	</div>

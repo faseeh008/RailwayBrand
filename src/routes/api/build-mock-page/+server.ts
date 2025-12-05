@@ -543,25 +543,47 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 		}
 
 		// Use requested vibe if provided, otherwise use vibe from session data
-		const vibe: Vibe = (requestedVibe || sessionData.vibe) as Vibe;
+		let vibe: string = (requestedVibe || sessionData.vibe) as string;
+
+		// Normalize vibe: capitalize first letter and handle variations
+		if (vibe && typeof vibe === 'string') {
+			const normalized = vibe.trim();
+			const lowerVibe = normalized.toLowerCase();
+			
+			// Map to correct capitalized format
+			if (lowerVibe === 'minimalistic' || lowerVibe === 'minimal' || lowerVibe === 'minimalist') {
+				vibe = 'Minimalistic';
+			} else if (lowerVibe === 'maximalistic' || lowerVibe === 'maximal' || lowerVibe === 'maximalist') {
+				vibe = 'Maximalistic';
+			} else if (lowerVibe === 'funky' || lowerVibe === 'funk') {
+				vibe = 'Funky';
+			} else if (lowerVibe === 'futuristic' || lowerVibe === 'futurist' || lowerVibe === 'future') {
+				vibe = 'Futuristic';
+			} else {
+				// Fallback: capitalize first letter, lowercase rest
+				vibe = normalized.charAt(0).toUpperCase() + normalized.slice(1).toLowerCase();
+			}
+		}
 
 		// Validate vibe
 		if (!['Minimalistic', 'Maximalistic', 'Funky', 'Futuristic'].includes(vibe)) {
 			throw new Error(`Invalid vibe: ${vibe}. Must be one of: Minimalistic, Maximalistic, Funky, Futuristic`);
 		}
 
-		console.log(`[build-mock-page] Building mock page for vibe: ${vibe}`);
+		const normalizedVibe: Vibe = vibe as Vibe;
+
+		console.log(`[build-mock-page] Building mock page for vibe: ${normalizedVibe}`);
 		await sleep(3000);
 
 		// Step 2: Build the mock page using the new mock-page-builder system
 		// This includes Gemini content generation, dark/light detection, gradients, etc.
-		const htmlContent = await buildMockPage(sessionData, vibe);
+		const htmlContent = await buildMockPage(sessionData, normalizedVibe);
 
 		// Step 3: Save mock page to database in brand-guidelines table
 		console.log('[build-mock-page] Saving mock page to database...');
 		const mockPageData = {
 			html: htmlContent,
-			vibe: vibe,
+			vibe: normalizedVibe,
 			brandConfig: sessionData,
 			createdAt: new Date().toISOString(),
 			updatedAt: new Date().toISOString()
@@ -581,7 +603,7 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 			success: true,
 			html: htmlContent,
 			sessionData,
-			vibe
+			vibe: normalizedVibe
 		});
 	} catch (error) {
 		console.error('Error building mock page:', error);

@@ -18,6 +18,15 @@
 	import TypingIndicator from './TypingIndicator.svelte';
 	import SuggestionChips from './SuggestionChips.svelte';
 	import { getEssentialQuestions } from '$lib/services/industry-questions';
+	import {
+		addMessageVersion,
+		getActiveVersion,
+		getMessageVersions,
+		addLogoVersion,
+		acceptLogoVersion,
+		type MessageVersion,
+		type LogoVersion
+	} from '$lib/services/message-history';
 
 	// ============================================================================
 	// TYPES
@@ -42,6 +51,10 @@
 		stepData?: StepData;
 		waitingForLogoAcceptance?: boolean;
 		logoAccepted?: boolean;
+		// Version tracking (hybrid approach)
+		versionId?: string;
+		hasVersions?: boolean;
+		versionCount?: number;
 	}
 
 	interface StepData {
@@ -71,6 +84,11 @@
 		audience?: string;
 		description?: string;
 		values?: string;
+		extractedColors?: any[];
+		extractedTypography?: any;
+		logoStyle?: string;
+		iconography?: string;
+		imagery?: string;
 	}
 
 	interface ChatState {
@@ -97,11 +115,15 @@
 	export let storageKey: string | null = null;
 	export let onSessionSave: ((payload: { id: string; brandName?: string; messages: any[]; state: any }) => void) | null = null;
 	
+	// Local state to track chat ID during creation (avoids prop mutation)
+	let currentChatId: string | null = null;
+	let isCreatingChat = false; // Flag to prevent reactive block interference during creation
+	
 	// Store accepted logo separately so it persists even if new logos are generated
-	let acceptedLogo: { logoData: string; filename: string; format: string; storageId?: string } | null = null;
+	let acceptedLogo: { logoData: string; filename: string; format: string; storageId?: string; generatedColors?: { primary: string; secondary: string; accent1: string; accent2?: string } } | null = null;
 	
 	// Store previous logo context for branching (when regenerating, we need to reference the previous logo)
-	let previousLogoContext: { logoData: string; filename: string; format: string; messageId: string } | null = null;
+	let previousLogoContext: { logoData: string; filename: string; format: string; messageId: string; generatedColors?: { primary: string; secondary: string; accent1: string; accent2?: string } } | null = null;
 
 	// ============================================================================
 	// STATE - Consolidated into logical groups
@@ -123,6 +145,10 @@
 	let messages: ChatMessage[] = [];
 	let answers: Record<string, any> = {};
 	let collectedInfo: CollectedInfo = {};
+	
+	// Message history (hybrid approach)
+	let messageHistory: MessageVersion[] = [];
+	let logoHistory: LogoVersion[] = [];
 
 	// Questions management
 	let allQuestions: Question[] = [];
@@ -144,7 +170,7 @@
 	// DOM refs
 	let chatContainer: HTMLElement;
 	let fileInput: HTMLInputElement;
-	let inputElement: HTMLInputElement | HTMLTextAreaElement | null = null;
+	let inputElement: HTMLTextAreaElement | null = null;
 
 	// Controllers and timers
 	let abortController: AbortController | null = null;
@@ -164,6 +190,10 @@
 	$: currentQuestion = chatState.questionIndex >= 0 && chatState.questionIndex < questionsToUse.length
 		? questionsToUse[chatState.questionIndex]
 		: null;
+	// Update UI when current question changes (for suggestions display)
+	$: if (currentQuestion) {
+		updateUIForCurrentQuestion();
+	}
 	$: isLogoQuestion = currentQuestion?.type === 'logo';
 	$: isCurrentQuestionOptional = currentQuestion ? !currentQuestion.required : false;
 	$: progressPercentage = chatState.questionIndex >= 0
@@ -183,7 +213,9 @@
 	// ============================================================================
 
 	function getStorageKeys() {
-		const suffix = storageKey ? `:${storageKey}` : '';
+		// Use currentChatId if storageKey is null (during chat creation)
+		const effectiveKey = storageKey || currentChatId;
+		const suffix = effectiveKey ? `:${effectiveKey}` : '';
 		return {
 			messagesKey: `brandBuilderChatMessages${suffix}`,
 			stateKey: `brandBuilderChatState${suffix}`
@@ -205,7 +237,9 @@
 			allQuestions,
 			hasFetchedIndustryQuestions,
 			groundingData,
-			groundingIndustry
+			groundingIndustry,
+			messageHistory,
+			logoHistory
 		};
 	}
 
@@ -227,7 +261,9 @@
 						id: storageKey,
 						brandName: collectedInfo.brandName || answers['brandName'] || '',
 						messages: serializedMessages,
-						state: serializedState
+						state: serializedState,
+						messageHistory,
+						logoHistory
 					});
 				}
 			} catch (error) {
@@ -261,6 +297,8 @@
 			hasFetchedIndustryQuestions = parsedState.hasFetchedIndustryQuestions ?? false;
 			groundingData = parsedState.groundingData ?? null;
 			groundingIndustry = parsedState.groundingIndustry ?? null;
+			messageHistory = parsedState.messageHistory ?? [];
+			logoHistory = parsedState.logoHistory ?? [];
 
 			// Reset any stuck processing states
 			isTyping = false;
@@ -320,6 +358,36 @@
 				inputElement.focus();
 			}
 		}, 100);
+	}
+
+	function handleAutoResize(e: Event) {
+		const textarea = e.target as HTMLTextAreaElement;
+		textarea.style.height = 'auto';
+		const newHeight = Math.max(44, Math.min(textarea.scrollHeight, 200));
+		textarea.style.height = `${newHeight}px`;
+		textarea.style.overflowY = textarea.scrollHeight > 200 ? 'auto' : 'hidden';
+	}
+
+	async function createChatOnFirstMessage(firstMessage: string): Promise<{ id: string } | null> {
+		// Don't call onSessionSave here - it will be called after response is generated
+		// This prevents parent from re-rendering and interrupting the analysis
+		try {
+			const response = await fetch('/api/chat-sessions', {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({
+					title: firstMessage.substring(0, 50) || 'New Chat'
+				})
+			});
+			if (!response.ok) return null;
+			const result = await response.json();
+			if (result?.chat?.id) {
+				return { id: result.chat.id };
+			}
+		} catch (error) {
+			console.error('[Chatbot] Failed to create chat:', error);
+		}
+		return null;
 	}
 
 	function cancelAllAutoApproves() {
@@ -519,6 +587,28 @@
 				answers['brandValues'] = extractedValues;
 			}
 
+			// Store extracted colors and typography from extractedInfo
+			if (analysis.extractedInfo) {
+				if (analysis.extractedInfo.colors && Array.isArray(analysis.extractedInfo.colors)) {
+					collectedInfo.extractedColors = analysis.extractedInfo.colors;
+					answers['extractedColors'] = analysis.extractedInfo.colors;
+				}
+				if (analysis.extractedInfo.typography) {
+					collectedInfo.extractedTypography = analysis.extractedInfo.typography;
+					answers['extractedTypography'] = analysis.extractedInfo.typography;
+				}
+				// Store other extracted design elements
+				if (analysis.extractedInfo.logo_style) {
+					collectedInfo.logoStyle = analysis.extractedInfo.logo_style;
+				}
+				if (analysis.extractedInfo.iconography) {
+					collectedInfo.iconography = analysis.extractedInfo.iconography;
+				}
+				if (analysis.extractedInfo.imagery) {
+					collectedInfo.imagery = analysis.extractedInfo.imagery;
+				}
+			}
+
 			// Fetch grounding data if we have industry
 			if (collectedInfo.industry) {
 				await fetchGroundingData(collectedInfo.industry);
@@ -582,35 +672,37 @@
 	}
 
 	// Helper to normalize style to one of the four allowed values
+	// ONLY accepts explicit style mentions - no keyword inference
+	// This ensures we always ask the user if they didn't explicitly specify a style
 	function normalizeStyle(style: string): string | null {
-		const lower = style.toLowerCase();
+		const lower = style.toLowerCase().trim();
 
-		// Direct matches
-		if (lower === 'minimalistic' || lower === 'minimal' || lower === 'minimalist') return 'Minimalistic';
-		if (lower === 'maximalistic' || lower === 'maximal' || lower === 'maximalist') return 'Maximalistic';
-		if (lower === 'funky' || lower === 'fun') return 'Funky';
-		if (lower === 'futuristic' || lower === 'future') return 'Futuristic';
-
-		// Keyword matches
-		if (lower.includes('minimalistic') || lower.includes('minimal') || lower.includes('clean') || lower.includes('simple') || lower.includes('sleek') || lower.includes('elegant')) {
+		// Direct matches ONLY - these are explicit style mentions
+		// Accept: "minimalistic", "minimal", "minimalist"
+		if (lower === 'minimalistic' || lower === 'minimal' || lower === 'minimalist') {
 			return 'Minimalistic';
 		}
-		if (lower.includes('maximalistic') || lower.includes('maximal') || lower.includes('bold') || lower.includes('busy') || lower.includes('ornate') || lower.includes('elaborate')) {
+		// Accept: "maximalistic", "maximal", "maximalist"
+		if (lower === 'maximalistic' || lower === 'maximal' || lower === 'maximalist') {
 			return 'Maximalistic';
 		}
-		if (lower.includes('funky') || lower.includes('playful') || lower.includes('quirky') || lower.includes('creative') || lower.includes('colorful') || lower.includes('vibrant') || lower.includes('fun')) {
+		// Accept: "funky", "funk"
+		if (lower === 'funky' || lower === 'funk') {
 			return 'Funky';
 		}
-		if (lower.includes('futuristic') || lower.includes('modern') || lower.includes('tech') || lower.includes('innovative') || lower.includes('cutting-edge') || lower.includes('high-tech')) {
+		// Accept: "futuristic", "future"
+		if (lower === 'futuristic' || lower === 'future') {
 			return 'Futuristic';
 		}
 
-		// If the API returned one of the exact values, use it
+		// If the API returned one of the exact capitalized values, use it
 		if (style === 'Minimalistic' || style === 'Maximalistic' || style === 'Funky' || style === 'Futuristic') {
 			return style;
 		}
 
-		return null; // Style not recognized, will ask user
+		// DO NOT auto-map generic keywords like "modern", "clean", "tech", "playful", etc.
+		// If user didn't explicitly mention a style name, return null so chatbot will ask
+		return null; // Style not explicitly mentioned, will ask user to choose from 4 options
 	}
 
 	// ============================================================================
@@ -657,6 +749,10 @@
 			suggestions: questionSuggestions,
 			inputType: question.type
 		});
+
+		// Wait for reactivity to update currentQuestion, then update UI
+		await tick();
+		updateUIForCurrentQuestion();
 
 		focusInput();
 	}
@@ -843,7 +939,49 @@
 
 		const summaryText = Object.entries(summary)
 			.filter(([key, value]) => value && key !== 'logo')
-			.map(([key, value]) => `- **${key}**: ${typeof value === 'string' ? value.substring(0, 50) : value}`)
+			.map(([key, value]) => {
+				let displayValue: string;
+				if (typeof value === 'string') {
+					// Use longer limit for description
+					const limit = key === 'description' ? 100 : 50;
+					displayValue = value.length > limit ? value.substring(0, limit) + '...' : value;
+				} else if (Array.isArray(value)) {
+					// Format array of color objects or other arrays
+					if (value.length > 0 && typeof value[0] === 'object') {
+						displayValue = value.map((v: any) => {
+							if (v.hex) return `${v.name || 'Color'}: ${v.hex}`;
+							if (v.name) return v.name;
+							return JSON.stringify(v);
+						}).join(', ');
+						if (displayValue.length > 80) displayValue = displayValue.substring(0, 80) + '...';
+					} else {
+						displayValue = value.join(', ').substring(0, 80);
+					}
+				} else if (typeof value === 'object' && value !== null) {
+					// Format single object (e.g., typography)
+					if (value.hex) {
+						displayValue = `${value.name || 'Color'}: ${value.hex}`;
+					} else if (value.primary || value.secondary) {
+						// Typography or color system object
+						displayValue = Object.entries(value)
+							.filter(([k, v]) => v && typeof v === 'string')
+							.slice(0, 3)
+							.map(([k, v]) => `${k}: ${v}`)
+							.join(', ');
+					} else {
+						// Generic object - show first few values
+						displayValue = Object.values(value)
+							.filter(v => v && typeof v === 'string')
+							.slice(0, 2)
+							.join(', ')
+							.substring(0, 60);
+					}
+					if (!displayValue) displayValue = '[configured]';
+				} else {
+					displayValue = String(value);
+				}
+				return `- **${key}**: ${displayValue}`;
+			})
 			.join('\n');
 
 		await addBotMessage(
@@ -874,9 +1012,48 @@
 		// Handle initial prompt
 		if (chatState.phase === 'initial') {
 			if (!trimmedInput) return;
+			
+			// Add user message FIRST so it's saved before component re-renders
 			await addUserMessage(trimmedInput);
+			const messageToSave = trimmedInput;
 			userInput = '';
-			await analyzePrompt(trimmedInput);
+			
+			// Lazy persistence: Create chat on first message if none exists
+			// But DON'T update parent yet - wait until after response is generated
+			// This prevents component re-render from interrupting analyzePrompt
+			let newChatId: string | null = null;
+			if (!storageKey && onSessionSave) {
+				isCreatingChat = true; // Prevent reactive block from interfering
+				const newChat = await createChatOnFirstMessage(messageToSave);
+				if (newChat?.id) {
+					newChatId = newChat.id;
+					currentChatId = newChat.id; // Use local state instead of mutating prop
+					// Save to sessionStorage with new key
+					if (saveDebounceTimer) clearTimeout(saveDebounceTimer);
+					const { messagesKey, stateKey } = getStorageKeys();
+					sessionStorage.setItem(messagesKey, JSON.stringify(serializeMessages(messages)));
+					sessionStorage.setItem(stateKey, JSON.stringify(buildPersistedState()));
+				}
+			}
+			
+			// Generate response FIRST (before updating parent to prevent re-render)
+			await analyzePrompt(messageToSave);
+			
+			// NOW update parent with chat ID after response is generated
+			// This ensures the component doesn't re-render mid-analysis
+			if (newChatId && onSessionSave) {
+				onSessionSave({
+					id: newChatId,
+					messages: serializeMessages(messages),
+					state: buildPersistedState(),
+					messageHistory,
+					logoHistory
+				});
+				isCreatingChat = false; // Clear flag after parent is notified
+			} else if (isCreatingChat) {
+				isCreatingChat = false; // Clear flag if no chat was created
+			}
+			
 			return;
 		}
 
@@ -1006,8 +1183,14 @@
 	function updateUIForCurrentQuestion() {
 		if (currentQuestion) {
 			isMultiline = currentQuestion.type === 'textarea';
-			showSuggestions = currentQuestion.type === 'text-with-suggestions';
+			showSuggestions = currentQuestion.type === 'text-with-suggestions' && 
+				Array.isArray(currentQuestion.suggestions) && 
+				currentQuestion.suggestions.length > 0;
 			currentSuggestions = showSuggestions && currentQuestion.suggestions ? currentQuestion.suggestions : [];
+		} else {
+			// Clear suggestions if no current question
+			showSuggestions = false;
+			currentSuggestions = [];
 		}
 	}
 
@@ -1241,11 +1424,12 @@
 		isTyping = true;
 
 		try {
-			// Get extracted colors from uploaded logo if available
+			// Get colors: prioritize user-specified colors from prompt, then uploaded logo colors
 			const logoAnswer = answers['logo'];
-			const extractedColors = logoAnswer?.extractedColors || null;
+			const promptColors = collectedInfo.extractedColors || answers['extractedColors'];
+			const uploadedLogoColors = logoAnswer?.extractedColors;
 
-			const result = await fetchWithAbort<{ success: boolean; logoData?: string; logoUrl?: string; filename?: string; format?: string; error?: string }>(
+			const result = await fetchWithAbort<{ success: boolean; logoData?: string; logoUrl?: string; filename?: string; format?: string; generatedColors?: { primary: string; secondary: string; accent1: string; accent2?: string }; error?: string }>(
 				'/api/generate-logo',
 				{
 					method: 'POST',
@@ -1257,7 +1441,8 @@
 						description: collectedInfo.description || answers['shortDescription'] || '',
 						values: collectedInfo.values || answers['brandValues'] || '',
 						audience: collectedInfo.audience || answers['audience'] || '',
-						extractedColors: extractedColors // Pass extracted colors from uploaded logo
+						userSpecifiedColors: promptColors,
+						extractedColors: uploadedLogoColors
 					})
 				}
 			);
@@ -1297,12 +1482,22 @@
 				fileData: logoData,
 				filename: defaultFilename,
 				status: 'pending-acceptance',
-				format: logoFormat
+				format: logoFormat,
+				generatedColors: result.generatedColors // Store colors for color palette step
 			};
 
 			const logoMessage = await addBotMessage(
 				"I've generated a logo for your brand. Please review it and let me know if you'd like to accept it or make changes.",
 				{ logoData: logoData, logoFilename: defaultFilename }
+			);
+
+			// Track initial logo in history
+			logoHistory = addLogoVersion(
+				logoHistory,
+				logoData,
+				defaultFilename,
+				logoFormat,
+				logoMessage.id
 			);
 
 			chatState.logoStatus = 'pending-acceptance';
@@ -1313,7 +1508,8 @@
 				logoData: logoData,
 				filename: defaultFilename,
 				format: logoFormat,
-				messageId: logoMessage.id
+				messageId: logoMessage.id,
+				generatedColors: result.generatedColors
 			};
 
 			messages = messages.map(m =>
@@ -1344,12 +1540,20 @@
 		}
 
 		// Store the accepted logo data separately (this becomes the accepted logo)
+		// Preserve generatedColors from answers['logo'] for color palette step
 		acceptedLogo = {
 			logoData: logoMessage.logoData,
 			filename: logoMessage.logoFilename || 'logo.png',
 			format: logoMessage.logoData.includes('data:image/svg+xml') ? 'svg' : 'png',
-			storageId: undefined // Will be set after saving
+			storageId: undefined,
+			generatedColors: answers['logo']?.generatedColors
 		};
+
+		// Update logo history - mark version as accepted
+		const logoVersion = logoHistory.find(v => v.messageId === messageId);
+		if (logoVersion) {
+			logoHistory = acceptLogoVersion(logoHistory, logoVersion.id) || logoHistory;
+		}
 
 		// Update message status - mark this one as accepted, unmark others
 		messages = messages.map(m => {
@@ -1362,7 +1566,7 @@
 			return m;
 		});
 
-		// Update answers with accepted logo
+		// Update answers with accepted logo (spread preserves generatedColors)
 		if (answers['logo']) {
 			answers['logo'] = {
 				...answers['logo'],
@@ -1441,12 +1645,12 @@
 		try {
 			// Determine format: use stored format, or detect from current logo, or default to PNG
 			let logoFormat: 'png' | 'svg' = chatState.currentLogoFormat || 'png';
-			
+
 			// Find the previous logo to use as context (branching approach)
 			// Priority: 1) Logo from the message being regenerated, 2) previousLogoContext, 3) current answers
 			let previousLogoData: string | null = null;
 			let previousLogoFilename: string | null = null;
-			
+
 			// Check if we're regenerating a specific message
 			const sourceLogoMessage = messages.find(m => m.id === messageId);
 			if (sourceLogoMessage && sourceLogoMessage.logoData) {
@@ -1463,11 +1667,15 @@
 				previousLogoFilename = answers['logo'].filename || null;
 				logoFormat = detectLogoFormat(answers['logo'].fileData, answers['logo'].format);
 			}
-			
+
 			// Fallback: try to detect from current logo data
 			if (!chatState.currentLogoFormat && answers['logo']?.fileData) {
 				logoFormat = detectLogoFormat(answers['logo'].fileData);
 			}
+
+			// Get colors: prioritize user-specified colors from prompt, then uploaded logo colors
+			const promptColors = collectedInfo.extractedColors || answers['extractedColors'];
+			const uploadedLogoColors = answers['logo']?.extractedColors;
 
 			const requestBody: any = {
 				brandName: collectedInfo.brandName || answers['brandName'] || '',
@@ -1477,9 +1685,11 @@
 				values: collectedInfo.values || answers['brandValues'] || '',
 				audience: collectedInfo.audience || answers['audience'] || '',
 				enhancementPrompt: feedback || 'Please improve the logo design',
-				outputFormat: logoFormat // Pass format so API can process feedback correctly
+				outputFormat: logoFormat,
+				userSpecifiedColors: promptColors,
+				extractedColors: uploadedLogoColors
 			};
-			
+
 			// Add previous logo context for branching (critical for preserving design)
 			if (previousLogoData) {
 				requestBody.previousLogoData = previousLogoData;
@@ -1487,7 +1697,7 @@
 				console.log('[Chatbot] Passing previous logo context for branching (preservation)');
 			}
 
-			const result = await fetchWithAbort<{ success: boolean; logoData?: string; logoUrl?: string; filename?: string; format?: string; error?: string }>(
+			const result = await fetchWithAbort<{ success: boolean; logoData?: string; logoUrl?: string; filename?: string; format?: string; generatedColors?: { primary: string; secondary: string; accent1: string; accent2?: string }; error?: string }>(
 				'/api/generate-logo',
 				{
 					method: 'POST',
@@ -1533,7 +1743,8 @@
 				fileData: logoData,
 				filename: defaultFilename,
 				status: 'pending-acceptance',
-				format: regeneratedFormat
+				format: regeneratedFormat,
+				generatedColors: result.generatedColors // Store colors for color palette step
 			};
 
 			const logoMessage = await addBotMessage(
@@ -1541,12 +1752,23 @@
 				{ logoData: logoData, logoFilename: defaultFilename }
 			);
 
+			// Track logo version in history
+			logoHistory = addLogoVersion(
+				logoHistory,
+				logoData,
+				defaultFilename,
+				regeneratedFormat,
+				logoMessage.id,
+				feedback
+			);
+
 			// Update previous logo context for branching (this becomes the new reference)
 			previousLogoContext = {
 				logoData: logoData,
 				filename: defaultFilename,
 				format: regeneratedFormat,
-				messageId: logoMessage.id
+				messageId: logoMessage.id,
+				generatedColors: result.generatedColors
 			};
 
 			chatState.logoStatus = 'pending-acceptance';
@@ -1629,19 +1851,36 @@
 		isGenerating: boolean;
 		isApproved: boolean;
 	}) {
+		const messageId = `step-${step.stepIndex}`;
 		const existingIndex = messages.findIndex(
 			m => m.type === 'step' && m.stepData?.stepIndex === step.stepIndex
 		);
 
+		// Track version in history instead of overwriting
+		messageHistory = addMessageVersion(
+			messageHistory,
+			messageId,
+			{ stepData: step },
+			'step',
+			{ stepIndex: step.stepIndex }
+		);
+
+		const activeVersion = getActiveVersion(messageHistory, messageId);
+		const versions = getMessageVersions(messageHistory, messageId);
+
 		const stepMessage: ChatMessage = {
-			id: `step-${step.stepIndex}-${Date.now()}`,
+			id: messageId,
 			type: 'step',
 			content: '',
 			timestamp: new Date(),
-			stepData: { ...step }
+			stepData: { ...step },
+			versionId: activeVersion?.id,
+			hasVersions: versions.length > 1,
+			versionCount: versions.length
 		};
 
 		if (existingIndex !== -1) {
+			// Update existing message but keep history
 			messages[existingIndex] = stepMessage;
 			messages = [...messages];
 		} else {
@@ -1763,7 +2002,8 @@ CURRENT CONTENT: ${typeof currentContent === 'string' ? currentContent.substring
 				filename: acceptedLogo.filename,
 				status: 'accepted',
 				format: acceptedLogo.format,
-				storageId: acceptedLogo.storageId
+				storageId: acceptedLogo.storageId,
+				generatedColors: acceptedLogo.generatedColors
 			};
 		} else if (answers['logo']) {
 			const logoAnswer = answers['logo'];
@@ -1775,7 +2015,9 @@ CURRENT CONTENT: ${typeof currentContent === 'string' ? currentContent.substring
 					filename: logoAnswer.filename || `${brandName.toLowerCase().replace(/\s+/g, '-')}-logo.svg`,
 					status: logoAnswer.status || 'generated',
 					format: logoAnswer.format,
-					storageId: logoAnswer.storageId
+					storageId: logoAnswer.storageId,
+					generatedColors: logoAnswer.generatedColors,
+					extractedColors: logoAnswer.extractedColors // For uploaded logos
 				};
 			}
 		}
@@ -1794,7 +2036,9 @@ CURRENT CONTENT: ${typeof currentContent === 'string' ? currentContent.substring
 			customPrompt: answers['customPrompt'] || collectedInfo.description || '',
 			logoData,
 			groundingData,
-			industrySpecificInfo
+			industrySpecificInfo,
+			extractedColors: collectedInfo.extractedColors || answers['extractedColors'] || undefined,
+			extractedTypography: collectedInfo.extractedTypography || answers['extractedTypography'] || undefined
 		};
 
 		onComplete(formData);
@@ -1807,6 +2051,10 @@ CURRENT CONTENT: ${typeof currentContent === 'string' ? currentContent.substring
 	export function clearChatState() {
 		abortOngoingRequests();
 		cancelAllAutoApproves();
+		
+		// Reset local chat ID and creation flag
+		currentChatId = null;
+		isCreatingChat = false;
 
 		messages = [];
 		answers = {};
@@ -1848,8 +2096,54 @@ CURRENT CONTENT: ${typeof currentContent === 'string' ? currentContent.substring
 	// LIFECYCLE
 	// ============================================================================
 
+	// Track previous storageKey to detect changes (only after mount)
+	let previousStorageKey: string | null = null;
+	let isMounted = false;
+	
+	// Reload state when storageKey changes AFTER mount (e.g., when switching chats)
+	// BUT NOT during chat creation to prevent interference
+	// Also skip if storageKey matches currentChatId (means parent just updated after we created chat)
+	$: if (isMounted && !isCreatingChat && storageKey !== previousStorageKey && typeof window !== 'undefined') {
+		// If storageKey changed to match currentChatId, it means parent updated after chat creation
+		// In this case, we already have the state loaded, so just update the key reference
+		if (storageKey && storageKey === currentChatId) {
+			previousStorageKey = storageKey;
+			// State is already loaded, just need to migrate sessionStorage keys if needed
+			// (The state is already in memory, so no reload needed)
+		} else {
+			previousStorageKey = storageKey;
+			
+			if (storageKey) {
+				// Chat selected - load state from sessionStorage
+				setTimeout(() => {
+					const restored = loadState();
+					if (restored) {
+						// State loaded successfully - scroll to bottom
+						tick().then(() => scrollToBottom());
+					}
+				}, 150);
+			} else {
+				// New chat - clear any old state
+				clearStoredState();
+				messages = [];
+				chatState.phase = 'initial';
+				chatState.questionIndex = -1;
+				answers = {};
+				collectedInfo = {};
+				allQuestions = [];
+				userInput = '';
+				isTyping = false;
+				currentChatId = null; // Reset local chat ID
+				// Welcome message will be shown in onMount
+			}
+		}
+	}
+
 	onMount(async () => {
 		if (typeof window === 'undefined') return;
+		
+		isMounted = true;
+		previousStorageKey = storageKey;
 
 		// Try to restore state
 		const restored = loadState();
@@ -1870,13 +2164,35 @@ CURRENT CONTENT: ${typeof currentContent === 'string' ? currentContent.substring
 			}
 			await scrollToBottom();
 		} else {
-			// Fresh start
-			chatState.phase = 'initial';
-			await delay(300);
-			await addBotMessage(
-				"Hi! I'm your Brand Builder Assistant. I'll help you create comprehensive brand guidelines.\n\n" +
-				"**Please describe what you'd like to create.** Tell me about your brand name, industry, style preferences, or any other details."
-			);
+			// Fresh start - ensure clean state for new chat
+			if (!storageKey) {
+				// This is a new chat (storageKey is null)
+				// Clear any residual state
+				messages = [];
+				chatState.phase = 'initial';
+				chatState.questionIndex = -1;
+				answers = {};
+				collectedInfo = {};
+				allQuestions = [];
+				userInput = '';
+				isTyping = false;
+				showSuggestions = false;
+				currentSuggestions = [];
+				
+				await delay(300);
+				await addBotMessage(
+					"Hi! I'm your Brand Builder Assistant. I'll help you create comprehensive brand guidelines.\n\n" +
+					"**Please describe what you'd like to create.** Tell me about your brand name, industry, style preferences, or any other details."
+				);
+			} else {
+				// StorageKey exists but no state found - show welcome anyway
+				chatState.phase = 'initial';
+				await delay(300);
+				await addBotMessage(
+					"Hi! I'm your Brand Builder Assistant. I'll help you create comprehensive brand guidelines.\n\n" +
+					"**Please describe what you'd like to create.** Tell me about your brand name, industry, style preferences, or any other details."
+				);
+			}
 		}
 
 		focusInput();
@@ -2053,32 +2369,26 @@ CURRENT CONTENT: ${typeof currentContent === 'string' ? currentContent.substring
 				/>
 			{/if}
 
-			<!-- Text input -->
+			<!-- Text input - Auto-expanding -->
 			<div class="flex items-end gap-2">
-				{#if isMultiline && !chatState.isEditing}
-					<Textarea
-						bind:ref={inputElement}
-						bind:value={userInput}
-						placeholder={chatState.phase === 'complete' ? 'Add more details or start a new brand...' : 'Type your answer...'}
-						rows={3}
-						class="flex-1 resize-none"
-						onkeydown={handleKeyPress}
-					/>
-				{:else}
-					<Input
-						bind:ref={inputElement}
-						bind:value={userInput}
-						placeholder={
-							chatState.phase === 'initial' ? "Describe your brand (e.g., 'TechFlow, a modern SaaS company')..." :
-							chatState.phase === 'generating' ? "Type to approve or request changes..." :
-							chatState.phase === 'complete' ? "Add more details or start a new brand..." :
-							chatState.logoStatus === 'pending-acceptance' ? "Type feedback for logo changes..." :
-							"Type your answer..."
-						}
-						class="flex-1"
-						onkeydown={handleKeyPress}
-					/>
-				{/if}
+				<textarea
+					bind:this={inputElement}
+					bind:value={userInput}
+					placeholder={
+						chatState.phase === 'initial' ? "Describe your brand (e.g., 'TechFlow, a modern SaaS company')..." :
+						chatState.phase === 'generating' ? "Type to approve or request changes..." :
+						chatState.phase === 'complete' ? "Add more details or start a new brand..." :
+						chatState.logoStatus === 'pending-acceptance' ? "Type feedback for logo changes..." :
+						"Type your answer..."
+					}
+					rows={1}
+					oninput={handleAutoResize}
+					onkeydown={handleKeyPress}
+					class="flex-1 min-h-[44px] max-h-[200px] resize-none overflow-hidden
+					       rounded-lg border border-input bg-background px-4 py-3 text-sm
+					       focus:outline-none focus:ring-2 focus:ring-orange-500
+					       transition-all duration-200"
+				/>
 
 				<Button
 					onclick={handleSubmit}

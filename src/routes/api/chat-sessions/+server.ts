@@ -36,6 +36,8 @@ export const POST: RequestHandler = async ({ locals, request }) => {
 			brandName: body.brandName?.trim() || null,
 			messages: body.messages ? JSON.stringify(body.messages) : null,
 			state: body.state ? JSON.stringify(body.state) : null,
+			messageHistory: body.messageHistory || null,
+			logoHistory: body.logoHistory || null,
 			createdAt: now,
 			updatedAt: now
 		})

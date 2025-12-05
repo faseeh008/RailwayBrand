@@ -20,6 +20,8 @@ export const PUT: RequestHandler = async ({ locals, params, request }) => {
 			brandName: body.brandName?.trim() || null,
 			messages: body.messages ? JSON.stringify(body.messages) : null,
 			state: body.state ? JSON.stringify(body.state) : null,
+			messageHistory: body.messageHistory || undefined,
+			logoHistory: body.logoHistory || undefined,
 			updatedAt: new Date()
 		})
 		.where(and(eq(brandBuilderChats.id, chatId), eq(brandBuilderChats.userId, session.user.id)))

@@ -466,29 +466,75 @@ function createColorPalettePrompt(
 	feedback?: string,
 	logoColors?: { primary: string; secondary: string; accent1: string; accent2?: string }
 ): string {
-	// If we have logo colors (from logo generation), use those EXACT colors
-	const logoColorsContext = logoColors
-		? `\n\n🎨 LOGO COLORS (MANDATORY - USE THESE EXACT COLORS):\nThese colors were generated for the logo and MUST be used in the color palette:\n- Primary: ${logoColors.primary}\n- Secondary: ${logoColors.secondary}\n- Accent 1: ${logoColors.accent1}\n${logoColors.accent2 ? `- Accent 2: ${logoColors.accent2}\n` : ''}\n\nCRITICAL: You MUST use these EXACT hex codes in your color palette response. The logo and color palette MUST have identical colors.`
-		: '';
+	// Parse extractedColors - could be from user prompt or extracted from logo
+	let parsedExtractedColors: any = null;
+	if (extractedColors) {
+		try {
+			parsedExtractedColors = typeof extractedColors === 'string' ? JSON.parse(extractedColors) : extractedColors;
+		} catch {
+			// If not JSON, treat as string description
+			parsedExtractedColors = extractedColors;
+		}
+	}
 
-	const colorContext = extractedColors && !logoColors
-		? `\n\n🎨 EXTRACTED COLORS FROM LOGO:\n${extractedColors}\n\n⚠️ REFERENCE ONLY: Use these extracted colors as inspiration if they align with the ${industry} industry. Analyze the grounding search data to determine if these colors are appropriate for this industry.`
-		: '';
+	// Check if user specified colors in their prompt (has hex codes with context indicating from prompt)
+	// User prompt colors have priority over logo-generated colors
+	const isUserPromptColors = parsedExtractedColors && Array.isArray(parsedExtractedColors) &&
+		parsedExtractedColors.some((c: any) => c.hex && (c.context?.includes('prompt') || c.context?.includes('primary') || c.context?.includes('secondary') || c.context?.includes('user')));
+
+	// Build color context based on priority:
+	// 1. User-specified colors from prompt (HIGHEST PRIORITY)
+	// 2. Logo-generated colors (if no user colors)
+	// 3. Extracted colors from logo file (reference only)
+
+	let colorContext = '';
+	let useLogoColors = false;
+
+	if (isUserPromptColors && parsedExtractedColors) {
+		// USER-SPECIFIED COLORS FROM PROMPT - HIGHEST PRIORITY
+		colorContext = `\n\n🎨 USER-SPECIFIED COLORS (MANDATORY - USE THESE EXACT COLORS):
+The user has explicitly specified these colors in their brand description:
+${parsedExtractedColors.map((c: any) => `- ${c.role || 'Color'}: ${c.hex || ''} ${c.name ? `(${c.name})` : ''}`).join('\n')}
+
+⚠️ CRITICAL: You MUST use these EXACT hex codes specified by the user. These colors take priority over any other color source.
+Do NOT generate different colors - use the provided hex codes exactly as specified by the user.`;
+	} else if (logoColors) {
+		// LOGO-GENERATED COLORS - use when no user prompt colors
+		useLogoColors = true;
+		colorContext = `\n\n🎨 LOGO COLORS (MANDATORY - USE THESE EXACT COLORS):
+These colors were generated for the logo and MUST be used in the color palette:
+- Primary: ${logoColors.primary}
+- Secondary: ${logoColors.secondary}
+- Accent 1: ${logoColors.accent1}
+${logoColors.accent2 ? `- Accent 2: ${logoColors.accent2}\n` : ''}
+CRITICAL: You MUST use these EXACT hex codes in your color palette response. The logo and color palette MUST have identical colors.`;
+	} else if (extractedColors) {
+		// EXTRACTED COLORS FROM LOGO FILE - reference only
+		if (parsedExtractedColors && Array.isArray(parsedExtractedColors)) {
+			colorContext = `\n\n🎨 EXTRACTED COLORS FROM LOGO:
+${parsedExtractedColors.map((c: any) => `- ${c.hex || c.name || 'Color'}: ${c.hex || ''} ${c.name || ''}`).join('\n')}
+
+⚠️ REFERENCE ONLY: Use these extracted colors as inspiration if they align with the ${industry} industry.`;
+		} else {
+			colorContext = `\n\n🎨 EXTRACTED COLORS FROM LOGO:\n${extractedColors}\n\n⚠️ REFERENCE ONLY: Use these extracted colors as inspiration if they align with the ${industry} industry.`;
+		}
+	}
 
 	const feedbackContext = feedback
 		? `\n\n🚨 USER FEEDBACK: "${feedback}"\nIncorporate this feedback while ensuring colors remain appropriate for the ${industry} industry.`
 		: '';
 
+	// Determine which color source we're using for the prompt requirements
+	const hasSpecificColors = isUserPromptColors || useLogoColors;
+
 	return `You are a color design expert. Generate a color palette for "${brandName}" in the ${industry} industry.
 
-${contextInfo}${logoColorsContext}${colorContext}${feedbackContext}
+${contextInfo}${colorContext}${feedbackContext}
 
 🎯 PRIMARY REQUIREMENTS (MANDATORY):
-${logoColors ? `- CRITICAL: Use the EXACT colors provided above from logo generation (${logoColors.primary}, ${logoColors.secondary}, ${logoColors.accent1}${logoColors.accent2 ? `, ${logoColors.accent2}` : ''})
-- These colors MUST match the logo exactly - same hex codes, same color values
+${hasSpecificColors ? `- CRITICAL: Use the EXACT colors provided above - these are mandatory
 - Generate color names, RGB values, and usage descriptions for these EXACT colors
 - DO NOT generate different colors - use the provided hex codes exactly
-- The logo and color palette MUST have identical colors - this is CRITICAL for brand consistency
 - Generate exactly 4 MANDATORY colors: Primary, Secondary, Accent 1, Accent 2 (using the provided hex codes)
 - Optionally generate 1 additional color if it enhances the palette for this specific industry
 - All colors must include hex codes and rgb values
@@ -503,12 +549,12 @@ ${logoColors ? `- CRITICAL: Use the EXACT colors provided above from logo genera
 - Return structured JSON only; no markdown
 - Colors should be appropriate for the ${industry} industry based on real-world analysis from grounding data`}
 
-${logoColors ? `CRITICAL GENERATION PROCESS (WHEN LOGO COLORS PROVIDED):
-1. FIRST: Use the EXACT hex codes provided above from logo generation
+${hasSpecificColors ? `CRITICAL GENERATION PROCESS (WHEN COLORS PROVIDED):
+1. FIRST: Use the EXACT hex codes provided above
 2. SECOND: Generate appropriate color names for these hex codes based on their actual color values
 3. THIRD: Calculate and provide accurate RGB values for these hex codes
 4. FOURTH: Generate usage descriptions that explain how to use these colors effectively
-5. FIFTH: Optionally add 1 additional color if it enhances the palette, but keep the 4 main colors EXACTLY as provided` : `CRITICAL GENERATION PROCESS:
+5. FIFTH: Optionally add 1 additional color if it enhances the palette, but keep the main colors EXACTLY as provided` : `CRITICAL GENERATION PROCESS:
 1. FIRST: Analyze the grounding search data provided above to understand what colors successful brands in the ${industry} industry actually use
 2. SECOND: Consider the industry context, target audience, and brand positioning from the context
 3. THIRD: Let the ${style} style influence your color selection approach (e.g., minimalistic = more muted, maximalistic = more vibrant) but industry research is PRIMARY
@@ -516,15 +562,15 @@ ${logoColors ? `CRITICAL GENERATION PROCESS (WHEN LOGO COLORS PROVIDED):
 5. FIFTH: Ensure all colors are appropriate for the ${industry} industry based on real-world analysis`}
 
 EXAMPLE STRUCTURE (DO NOT COPY COLORS - USE AS FORMAT REFERENCE ONLY):
-${logoColors ? `{
+{
   "step": "color-palette",
   "brand_name": "[Brand Name]",
   "colors": {
-    "primary": { "name": "[Color name for ${logoColors.primary}]", "hex": "${logoColors.primary}", "rgb": "[RGB values for ${logoColors.primary}]", "usage": "[Usage description]" },
-    "secondary": { "name": "[Color name for ${logoColors.secondary}]", "hex": "${logoColors.secondary}", "rgb": "[RGB values for ${logoColors.secondary}]", "usage": "[Usage description]" },
-    "accent1": { "name": "[Color name for ${logoColors.accent1}]", "hex": "${logoColors.accent1}", "rgb": "[RGB values for ${logoColors.accent1}]", "usage": "[Usage description]" },
-    "accent2": { "name": "[Color name for ${logoColors.accent2 || 'accent2'}]", "hex": "${logoColors.accent2 || '#HEXCODE'}", "rgb": "[RGB values]", "usage": "[Usage description]" },
-    "optional": { "name": "[Optional color name]", "hex": "#HEXCODE", "rgb": "[RGB values]", "usage": "[Usage description]" } OR null
+    "primary": { "name": "[Color name]", "hex": "#HEXCODE", "rgb": "R,G,B", "usage": "[Usage description]" },
+    "secondary": { "name": "[Color name]", "hex": "#HEXCODE", "rgb": "R,G,B", "usage": "[Usage description]" },
+    "accent1": { "name": "[Color name]", "hex": "#HEXCODE", "rgb": "R,G,B", "usage": "[Usage description]" },
+    "accent2": { "name": "[Color name]", "hex": "#HEXCODE", "rgb": "R,G,B", "usage": "[Usage description]" },
+    "optional": { "name": "[Color name]", "hex": "#HEXCODE", "rgb": "R,G,B", "usage": "[Usage description]" } OR null
   },
   "usage": {
     "backgrounds": "[Guidance for background color usage]",
@@ -535,35 +581,18 @@ ${logoColors ? `{
   "contrast_guidelines": ["Contrast guideline 1", "Contrast guideline 2"]
 }
 
-⚠️ CRITICAL: The hex codes above (${logoColors.primary}, ${logoColors.secondary}, ${logoColors.accent1}${logoColors.accent2 ? `, ${logoColors.accent2}` : ''}) are the EXACT colors from logo generation. You MUST use these EXACT hex codes in your response.` : `{
-  "step": "color-palette",
-  "brand_name": "[Brand Name]",
-  "colors": {
-    "primary": { "name": "[Dynamically generated color name based on industry]", "hex": "#[Dynamically generated hex]", "rgb": "[Dynamically generated rgb]", "usage": "[Usage description]" },
-    "secondary": { "name": "[Dynamically generated color name based on industry]", "hex": "#[Dynamically generated hex]", "rgb": "[Dynamically generated rgb]", "usage": "[Usage description]" },
-    "accent1": { "name": "[Dynamically generated color name based on industry]", "hex": "#[Dynamically generated hex]", "rgb": "[Dynamically generated rgb]", "usage": "[Usage description]" },
-    "accent2": { "name": "[Dynamically generated color name based on industry]", "hex": "#[Dynamically generated hex]", "rgb": "[Dynamically generated rgb]", "usage": "[Usage description]" },
-    "optional": { "name": "[Dynamically generated color name based on industry]", "hex": "#[Dynamically generated hex]", "rgb": "[Dynamically generated rgb]", "usage": "[Usage description]" } OR null
-  },
-  "usage": {
-    "backgrounds": "[Guidance for background color usage based on generated colors]",
-    "text": "[Guidance for text color usage based on generated colors]",
-    "buttons": "[Guidance for button color usage based on generated colors]",
-    "gradients": ["Gradient tip 1", "Gradient tip 2"]
-  },
-  "contrast_guidelines": ["Contrast guideline 1", "Contrast guideline 2"]
-}`}
+${hasSpecificColors ? `⚠️ CRITICAL: You MUST use the EXACT hex codes provided above. Do NOT generate different colors.` : ''}
 
 NOW GENERATE FOR:
 ${contextInfo}${colorContext}${feedbackContext}
 
 CRITICAL INSTRUCTIONS:
-${logoColors ? `1. Use the EXACT hex codes provided above from logo generation: ${logoColors.primary}, ${logoColors.secondary}, ${logoColors.accent1}${logoColors.accent2 ? `, ${logoColors.accent2}` : ''}
-2. Generate appropriate color names for these hex codes (e.g., analyze the hex code and create a descriptive name like "Vibrant Pink" for a pink color)
+${hasSpecificColors ? `1. Use the EXACT hex codes provided above - these are mandatory and take priority
+2. Generate appropriate color names for these hex codes (e.g., analyze the hex code and create a descriptive name like "Electric Blue" for #007BFF)
 3. Calculate accurate RGB values for these hex codes
 4. Generate usage descriptions that explain how to use these colors effectively for "${brandName}" in the ${industry} industry
-5. Optionally add 1 additional color if it enhances the palette, but keep the 4 main colors EXACTLY as provided
-6. The logo and color palette MUST have identical colors - this ensures brand consistency
+5. Optionally add 1 additional color if it enhances the palette, but keep the main colors EXACTLY as provided
+6. Brand colors MUST match exactly - this ensures brand consistency
 7. DO NOT generate different colors - use the provided hex codes exactly` : `1. Analyze the grounding search data to understand what colors successful brands in the ${industry} industry actually use
 2. Consider the industry context, target audience, and brand positioning
 3. Style (${style}) should influence your color choices but industry research is PRIMARY
@@ -578,10 +607,10 @@ FORMAT AS VALID JSON (NO MARKDOWN, NO EXTRA TEXT, NO CODE BLOCKS):
   "step": "color-palette",
   "brand_name": "${brandName}",
   "colors": {
-    "primary": { "name": "[Color name]", "hex": "${logoColors ? logoColors.primary : '#HEXCODE'}", "rgb": "R,G,B", "usage": "[Usage description]" },
-    "secondary": { "name": "[Color name]", "hex": "${logoColors ? logoColors.secondary : '#HEXCODE'}", "rgb": "R,G,B", "usage": "[Usage description]" },
-    "accent1": { "name": "[Color name]", "hex": "${logoColors ? logoColors.accent1 : '#HEXCODE'}", "rgb": "R,G,B", "usage": "[Usage description]" },
-    "accent2": { "name": "[Color name]", "hex": "${logoColors ? (logoColors.accent2 || '#HEXCODE') : '#HEXCODE'}", "rgb": "R,G,B", "usage": "[Usage description]" },
+    "primary": { "name": "[Color name]", "hex": "#HEXCODE", "rgb": "R,G,B", "usage": "[Usage description]" },
+    "secondary": { "name": "[Color name]", "hex": "#HEXCODE", "rgb": "R,G,B", "usage": "[Usage description]" },
+    "accent1": { "name": "[Color name]", "hex": "#HEXCODE", "rgb": "R,G,B", "usage": "[Usage description]" },
+    "accent2": { "name": "[Color name]", "hex": "#HEXCODE", "rgb": "R,G,B", "usage": "[Usage description]" },
     "optional": { "name": "[Color name]", "hex": "#HEXCODE", "rgb": "R,G,B", "usage": "[Usage description]" } OR null
   },
   "usage": {
@@ -596,12 +625,7 @@ FORMAT AS VALID JSON (NO MARKDOWN, NO EXTRA TEXT, NO CODE BLOCKS):
 CRITICAL JSON REQUIREMENTS:
 - Return ONLY valid JSON - no markdown, no code blocks, no backticks, no explanations
 - The "colors" object MUST contain at minimum: primary, secondary, accent1, accent2
-${logoColors ? `- CRITICAL: You MUST use these EXACT hex codes from logo generation:
-  * primary: "${logoColors.primary}"
-  * secondary: "${logoColors.secondary}"
-  * accent1: "${logoColors.accent1}"
-  ${logoColors.accent2 ? `* accent2: "${logoColors.accent2}"` : ''}
-- These hex codes MUST match the logo exactly - do NOT generate different colors
+${hasSpecificColors ? `- CRITICAL: You MUST use the EXACT hex codes provided above - do NOT generate different colors
 - Generate appropriate color names, RGB values, and usage descriptions for these EXACT hex codes` : `- Each color object MUST have: "name" (string), "hex" (string starting with #), "rgb" (string like "R,G,B"), "usage" (string)`}
 - The "optional" color can be null if not needed
 - All hex codes must be valid (format: "#RRGGBB" where RR, GG, BB are hexadecimal values)
@@ -618,8 +642,21 @@ function createTypographyPrompt(
 	extractedTypography?: string,
 	feedback?: string
 ): string {
+	// Parse extractedTypography - could be from logo or user prompt
+	let parsedExtractedTypography: any = null;
+	if (extractedTypography) {
+		try {
+			parsedExtractedTypography = typeof extractedTypography === 'string' ? JSON.parse(extractedTypography) : extractedTypography;
+		} catch {
+			// If not JSON, treat as string description
+			parsedExtractedTypography = extractedTypography;
+		}
+	}
+	
 	const typographyContext = extractedTypography
-		? `\n\n🔤 EXTRACTED TYPOGRAPHY FROM LOGO:\n${extractedTypography}\n\n⚠️ SECONDARY: Use this as reference ONLY if it aligns with ${style} vibe and ${industry} industry. If it conflicts, IGNORE it and generate typography based on Industry + Vibe ONLY.`
+		? parsedExtractedTypography && typeof parsedExtractedTypography === 'object' && !Array.isArray(parsedExtractedTypography)
+			? `\n\n🔤 USER-SPECIFIED TYPOGRAPHY (MANDATORY - USE THESE FONTS):\nThe user has specified these fonts in their prompt:\n${parsedExtractedTypography.primary ? `- Primary: ${parsedExtractedTypography.primary}` : ''}\n${parsedExtractedTypography.secondary ? `- Secondary: ${parsedExtractedTypography.secondary}` : ''}\n${parsedExtractedTypography.weights ? `- Weights: ${parsedExtractedTypography.weights.join(', ')}` : ''}\n${parsedExtractedTypography.style ? `- Style: ${parsedExtractedTypography.style}` : ''}\n\nCRITICAL: You MUST use these EXACT fonts specified by the user. If specific font names are provided, use them. If only font families are provided, select appropriate fonts from those families.`
+			: `\n\n🔤 EXTRACTED TYPOGRAPHY FROM LOGO:\n${extractedTypography}\n\n⚠️ SECONDARY: Use this as reference ONLY if it aligns with ${style} vibe and ${industry} industry. If it conflicts, IGNORE it and generate typography based on Industry + Vibe ONLY.`
 		: '';
 
 	const feedbackContext = feedback

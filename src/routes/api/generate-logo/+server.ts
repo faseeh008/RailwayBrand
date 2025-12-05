@@ -75,7 +75,8 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 			audience,
 			previousLogoData,
 			previousLogoFilename,
-			extractedColors // Extracted colors from uploaded logo
+			extractedColors, // Extracted colors from uploaded logo
+			userSpecifiedColors // Colors specified by user in prompt (highest priority)
 		} = body;
 
 		if (!brandName) {
@@ -638,14 +639,32 @@ ${isSizeOnly ? `\n🚨 REMEMBER: For size-only requests, the logo must be RECOGN
 		const enhancementPrompt = processFeedback(rawFeedback, outputFormat);
 		
 		// Generate colors dynamically using AI (same approach as color palette step)
+		// Priority: 1) User-specified colors from prompt, 2) Extracted from uploaded logo, 3) AI-generated
 		let generatedColors: { primary: string; secondary: string; accent1: string; accent2?: string } | null = null;
-		if (industry && style) {
+
+		// Check if user specified colors in their prompt (highest priority)
+		if (userSpecifiedColors && Array.isArray(userSpecifiedColors) && userSpecifiedColors.length > 0) {
+			// Use user's exact colors from prompt
+			const colors = userSpecifiedColors.filter((c: any) => c.hex);
+			if (colors.length >= 2) {
+				generatedColors = {
+					primary: colors[0]?.hex || '#000000',
+					secondary: colors[1]?.hex || '#666666',
+					accent1: colors[2]?.hex || colors[0]?.hex || '#333333',
+					accent2: colors[3]?.hex
+				};
+				console.log('[generate-logo] Using USER-SPECIFIED colors from prompt:', generatedColors);
+			}
+		}
+
+		// If no user-specified colors, try extracted colors from uploaded logo or generate new ones
+		if (!generatedColors && industry && style) {
 			// Check if feedback specifically requests color changes
 			const feedbackRequestsColorChange = rawFeedback && (
 				/change.*color|color.*change|different.*color|new.*color|update.*color|switch.*color|replace.*color/i.test(rawFeedback) ||
 				/use.*color|make.*color|set.*color/i.test(rawFeedback)
 			);
-			
+
 			// Generate colors unless feedback specifically requests color changes (then we'll use those)
 			// ALWAYS generate colors for first-time generation to ensure brand consistency
 			if (!feedbackRequestsColorChange) {
@@ -1852,6 +1871,7 @@ Remember: This is a LOGO, not a photograph or 3D render. It must be simple, flat
 			type: 'ai-generated',
 			format: result.format,
 			model: result.model,
+			generatedColors: generatedColors || undefined, // Store colors for color palette step
 			...(result.format === 'svg' && result.svgCode ? { svgCode: result.svgCode } : {})
 		});
 	} catch (error: any) {
